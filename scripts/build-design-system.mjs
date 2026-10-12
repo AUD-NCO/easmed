@@ -12,6 +12,7 @@
  */
 import { copyFileSync, mkdirSync, readFileSync, readdirSync, statSync, writeFileSync } from 'node:fs';
 import { basename, join } from 'node:path';
+import { createHash } from 'node:crypto';
 
 const root = new URL('..', import.meta.url).pathname;
 const out = join(root, 'preview-dist/design-system');
@@ -561,5 +562,7 @@ const html = `<!doctype html>
 </body>
 </html>`;
 
-writeFileSync(join(out, 'index.html'), html);
+// Images keep their names across versions, so tag each with a hash of its contents: a changed image always reloads.
+const fingerprint = (file) => createHash('sha1').update(readFileSync(join(out, 'img', file))).digest('hex').slice(0, 8);
+writeFileSync(join(out, 'index.html'), html.replace(/img\/([\w.-]+\.(?:png|jpg|svg))/g, (m, file) => `${m}?v=${fingerprint(file)}`));
 console.log(`Design system written to preview-dist/design-system/index.html (${(html.length / 1024).toFixed(0)} KB, ${icons.length} icons, ${components.reduce((n, g) => n + g.items.length, 0)} components)`);
