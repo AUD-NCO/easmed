@@ -328,6 +328,22 @@ const html = `<!doctype html>
   .images { display:grid; gap:16px; grid-template-columns:repeat(auto-fill,minmax(180px,1fr)); }
   .images figure { margin:0; }
   .images img { width:100%; border-radius:16px; display:block; background:var(--deep); }
+  /* App icons, as each platform shows them */
+  .appicons { display:flex; flex-wrap:wrap; gap:24px 32px; align-items:flex-start; }
+  .appicons figure { margin:0; width:120px; }
+  .appicons figcaption { margin-top:8px; font-size:13px; color:var(--mist); }
+  .appicons .group { display:flex; flex-direction:column; gap:12px; }
+  .appicons .group > b { font-size:14px; }
+  .appicons .row { display:flex; flex-wrap:wrap; gap:16px; }
+  .ai { width:120px; height:120px; display:block; overflow:hidden; }
+  .ai.ios { border-radius:22.37%; }
+  /* Android adaptive: background and foreground stacked; the launcher shows the middle 72/108, so draw them at 150% */
+  .ai.android { background-image:url(img/android-icon-foreground.png), url(img/android-icon-background.png); background-size:150%, 150%; background-position:center, center; }
+  .ai.themed { background-image:url(img/android-icon-monochrome.png); background-size:150%; background-position:center; background-color:#3C465A; border-radius:50%; }
+  .ai.circle { border-radius:50%; }
+  .ai.squircle { border-radius:32%; }
+  .ai.rounded { border-radius:14%; }
+  .ai.teardrop { border-radius:50% 50% 50% 14%; }
   .images figcaption { font-size:14px; color:var(--mist); margin-top:8px; }
   .comp-group { margin-top:40px; }
   .comps { display:grid; gap:12px; grid-template-columns:repeat(auto-fill,minmax(320px,1fr)); }
@@ -468,11 +484,23 @@ const html = `<!doctype html>
   <p class="muted" style="margin-top:12px">Moon on dark, white on the splash gradient, Mist in footers. Horizontal logo not used yet. Files: <a href="${REPO}/assets/brand/airese-logo.svg">airese-logo.svg</a>, <a href="${REPO}/assets/brand/airese-logo-hori.svg">airese-logo-hori.svg</a>.</p>
   <h3>App icon and splash</h3>
   <p class="muted">The Airese mark in white on the splash gradient (Midnight to blue), 56% of the icon’s width. The icon’s mark has slightly thicker bars than the logo, so they stay visible at 29 pt. Native splash: plain Midnight, handing over to the animated splash screen. Play Store listing: <a href="${REPO}/assets/store/play-store-512.png">play-store-512.png</a>.</p>
-  <div class="images">
-    <figure><img src="img/icon.png" alt="Airese app icon"><figcaption>App icon (iOS, App Store): 1024, no transparency</figcaption></figure>
-    <figure><img src="img/android-icon-foreground.png" alt="Android adaptive icon foreground" style="background:url(img/android-icon-background.png) center/cover"><figcaption>Android adaptive: foreground on background</figcaption></figure>
-    <figure><img src="img/android-icon-monochrome.png" alt="Android themed icon" style="background:#3C465A"><figcaption>Android monochrome (themed icons)</figcaption></figure>
+  <div class="appicons">
+    <div class="group"><b>iOS · one icon</b>
+      <div class="row">
+        <figure><img class="ai ios" src="img/icon.png" alt="Airese app icon on iOS"><figcaption>icon.png, 1024, no transparency. iOS rounds the corners.</figcaption></figure>
+      </div>
+    </div>
+    <div class="group"><b>Android · one adaptive icon, cut to the launcher’s shape</b>
+      <div class="row">
+        <figure><span class="ai android circle" role="img" aria-label="Android icon, circle"></span><figcaption>Circle (Pixel)</figcaption></figure>
+        <figure><span class="ai android squircle" role="img" aria-label="Android icon, squircle"></span><figcaption>Squircle (Samsung)</figcaption></figure>
+        <figure><span class="ai android rounded" role="img" aria-label="Android icon, rounded square"></span><figcaption>Rounded square</figcaption></figure>
+        <figure><span class="ai android teardrop" role="img" aria-label="Android icon, teardrop"></span><figcaption>Teardrop</figcaption></figure>
+        <figure><span class="ai themed" role="img" aria-label="Android themed icon"></span><figcaption>Themed (Android 13+), from the monochrome layer</figcaption></figure>
+      </div>
+    </div>
   </div>
+  <p class="muted" style="margin-top:16px">Android files: <a href="${REPO}/assets/android-icon-foreground.png">foreground</a>, <a href="${REPO}/assets/android-icon-background.png">background</a>, <a href="${REPO}/assets/android-icon-monochrome.png">monochrome</a>, all 1024; the mark stays inside the central safe zone, so every shape keeps it whole.</p>
   <h3>Illustrations</h3>
   <p class="muted">One style for every prompt: glowing line art on a deep blue sphere, warm Lamp highlights. Shown at 200 pt.</p>
   <div class="images">
