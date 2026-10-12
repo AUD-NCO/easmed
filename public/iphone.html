@@ -12,20 +12,27 @@
   :root[data-theme="dark"] { --page: #0A0D16; --ink: #F2F3F5; --muted: #8C93A6; --field: #141A28; --field-edge: #2A3244; }
   * { box-sizing: border-box; }
   html, body { margin: 0; height: 100%; background: var(--page); font-family: Montserrat, system-ui, sans-serif; color: var(--ink); }
-  body { display: flex; align-items: center; justify-content: center; overflow: hidden; }
+  body { display: flex; overflow: hidden; }
 
+  /* Demo: every screen as a link in the left pane (desktop only) */
+  .nav { flex: 0 0 260px; height: 100%; overflow-y: auto; padding: 24px 16px 32px; border-right: 1px solid var(--field-edge); background: var(--field); }
+  .nav-title { margin: 0 12px 20px; }
+  .nav-title b { font-weight: 600; font-size: 16px; }
+  .nav-title span { display: block; font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .nav h2 { margin: 20px 12px 6px; font: 600 12px/1.4 Montserrat, system-ui, sans-serif; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); }
+  .nav ul { list-style: none; margin: 0; padding: 0; }
+  .nav button { display: block; width: 100%; min-height: 44px; padding: 10px 12px; border: 0; border-radius: 10px; background: none; text-align: left; cursor: pointer;
+    font: 400 14px/1.4 Montserrat, system-ui, sans-serif; color: var(--ink); }
+  .nav button:hover { background: var(--page); }
+  .nav button[aria-current="page"] { background: var(--page); font-weight: 600; }
+  .nav button:focus-visible { outline: 2px solid #9DB4FF; outline-offset: -2px; }
+
+  .pane { flex: 1; min-width: 0; height: 100%; display: flex; align-items: center; justify-content: center; overflow: hidden; }
   .stage { display: flex; flex-direction: column; align-items: center; gap: 18px; transform-origin: center center; }
-  .meta { text-align: center; }
-  .meta b { font-weight: 700; font-size: 15px; }
-  .meta span { display: block; font-size: 12px; color: var(--muted); margin-top: 2px; }
-
-  /* Demo: jump to any screen (desktop only) */
-  .jump { display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--muted); }
-  .jump select { appearance: none; -webkit-appearance: none; font: 500 14px/1 Montserrat, system-ui, sans-serif; color: var(--ink);
-    background: var(--field) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5 6 6.5l5-5' fill='none' stroke='%238C93A6' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") no-repeat right 14px center;
-    border: 1px solid var(--field-edge); border-radius: 999px; padding: 10px 40px 10px 16px; min-height: 40px; cursor: pointer; }
-  .jump select:hover { border-color: var(--muted); }
-  .jump select:focus-visible { outline: 2px solid #9DB4FF; outline-offset: 2px; }
+  /* Under-phone note for the screen on show: what it does, and its route */
+  .meta { width: 426px; min-height: 58px; text-align: center; }
+  .meta p { margin: 0; font: 400 14px/1.5 Inter, system-ui, sans-serif; color: var(--ink); }
+  .meta code { display: block; margin-top: 4px; font: 400 12px/1.5 ui-monospace, Menlo, monospace; color: var(--muted); }
 
   /* iPhone 17 Pro: 402 × 874 pt screen */
   .phone { position: relative; width: 426px; height: 898px; border-radius: 68px; padding: 12px;
@@ -48,42 +55,21 @@
   /* On a real phone: no frame, the app fills the screen */
   @media (max-width: 500px) {
     body { display: block; }
+    .pane { display: block; }
     .stage { transform: none !important; display: block; height: 100%; }
-    .jump, .meta, .statusbar, .island, .home, .phone::before, .phone::after { display: none; }
+    .nav, .meta, .statusbar, .island, .home, .phone::before, .phone::after { display: none; }
     .phone { width: 100%; height: 100%; border-radius: 0; padding: 0; background: none; box-shadow: none; }
     .screen { width: 100%; height: 100%; border-radius: 0; }
   }
 </style>
 </head>
 <body>
+<nav class="nav" id="nav" aria-label="Screens">
+  <div class="nav-title"><b>Airese</b><span>Prototype screens</span></div>
+</nav>
+<main class="pane">
 <div class="stage" id="stage">
-  <label class="jump">Jump to
-    <select id="jump" aria-label="Jump to screen">
-      <optgroup label="Getting started">
-        <option value="splash">Splash</option>
-        <option value="onboarding">Walkthrough</option>
-        <option value="microphone">Microphone access</option>
-        <option value="notifications">Notifications</option>
-        <option value="details">Your details</option>
-      </optgroup>
-      <optgroup label="App">
-        <option value="home">Home</option>
-        <option value="home-after-first-night">Home · after first night</option>
-        <option value="recording">Recording</option>
-        <option value="reports">Reports</option>
-        <option value="profile">Profile</option>
-      </optgroup>
-      <optgroup label="Reports · last night">
-        <option value="night-steady">Ordinary night</option>
-        <option value="night-unusual">Unusual night</option>
-        <option value="night-pattern">Repeated pattern</option>
-        <option value="night-first">First night</option>
-        <option value="night-poor">Couldn’t hear clearly</option>
-        <option value="night-processing">Processing</option>
-      </optgroup>
-    </select>
-  </label>
-  <div class="meta"><b>Airese</b><span>iPhone 17 Pro · 402 × 874 pt · live from localhost</span></div>
+  <div class="meta" id="meta" aria-live="polite"><p></p><code></code></div>
   <div class="phone">
     <div class="screen">
       <div class="statusbar"><span>9:41</span><span class="icons">
@@ -97,6 +83,7 @@
     </div>
   </div>
 </div>
+</main>
 <script>
   // Fits the phone to the window. On a real phone the frame drops away.
   (function () {
@@ -104,29 +91,81 @@
     document.getElementById('app').src = small ? '/' : '/?frame=iphone';
     function fit() {
       if (window.matchMedia('(max-width: 500px)').matches) return;
-      var s = Math.min(1, (window.innerHeight - 24) / 1020, (window.innerWidth - 24) / 440);
+      var pane = document.querySelector('.pane');
+      var s = Math.min(1, (pane.clientHeight - 24) / 990, (pane.clientWidth - 24) / 440);
       document.getElementById('stage').style.transform = 'scale(' + s + ')';
     }
     fit(); window.addEventListener('resize', fit);
   })();
 
   // Demo: jump to a screen. On localhost the phone loads that route; in the shared preview
-  // (no router) the app listens for 'airese:jump'. Either way the menu follows the app.
+  // (no router) the app listens for 'airese:jump'. Either way the nav follows the app.
+  // To add a screen: one line here (key, label, route).
   (function () {
-    var ROUTES = { splash: '/', onboarding: '/onboarding', microphone: '/permissions/microphone', notifications: '/permissions/notifications', details: '/details', home: '/home', 'home-after-first-night': '/home?state=after-first-night', recording: '/recording', reports: '/reports', profile: '/profile',
-      'night-steady': '/reports?state=steady', 'night-unusual': '/reports?state=unusual', 'night-pattern': '/reports?state=pattern',
-      'night-first': '/reports?state=first', 'night-poor': '/reports?state=poor', 'night-processing': '/reports?state=processing' };
-    var select = document.getElementById('jump');
+    var SCREENS = [
+      { group: 'Getting started', items: [
+        ['splash', 'Splash', '/', 'App launch. The logo arrives, then falls away into the walkthrough.'],
+        ['onboarding', 'Walkthrough', '/onboarding', 'Three pages. Swipe or tap the dashes; Continue on the last page.'],
+        ['microphone', 'Microphone access', '/permissions/microphone', 'Asks for the mic, saying why first. Skip or Don’t Allow opens a second-chance sheet.'],
+        ['notifications', 'Notifications', '/permissions/notifications', 'Asks for notifications. Same pattern as the microphone screen.'],
+        ['details', 'Your details', '/details', 'A few details and agreeing to Terms and Privacy, then Home.'] ] },
+      { group: 'App', items: [
+        ['home', 'Home', '/home', 'Tap the dial to record. The banner shows the one most useful message.'],
+        ['home-after-first-night', 'Home · after first night', '/home?state=after-first-night', 'One night recorded, no Night Notes yet for tonight.'],
+        ['recording', 'Recording', '/recording', 'Shown all night. Tap the ring and confirm to stop. Stops by itself after 8 hours.'],
+        ['reports', 'Reports', '/reports', 'The latest night’s report. The calendar (top right) picks another night.'],
+        ['profile', 'Profile', '/profile', 'Details, notification settings, sleep centres, and deleting data.'] ] },
+      { group: 'Reports · last night', items: [
+        ['night-steady', 'Ordinary night', '/reports?state=steady', 'Blue verdict card. Next step: Keep tracking.'],
+        ['night-unusual', 'Unusual night', '/reports?state=unusual', 'Warm verdict card. Next step: Try using a remedy.'],
+        ['night-pattern', 'Repeated pattern', '/reports?state=pattern', 'Wine verdict card. Next step: Book a call (the one coral button).'],
+        ['night-first', 'First night', '/reports?state=first', 'Nothing to compare with yet, so the night in sound comes first.'],
+        ['night-processing', 'Processing', '/reports?state=processing', 'Right after stopping: “Looking through your night”, then the report.'] ] },
+      { group: 'Recording problems', items: [
+        ['no-space', 'Not enough space', '/recording-problem?kind=space', 'On tapping record. Try again checks the space again (demo: it works and recording starts). × back to Home.'],
+        ['start-failed', 'Didn’t start', '/recording-problem?kind=start', 'On tapping record. Try again (demo: it keeps failing). × back to Home.'],
+        ['night-poor', 'Couldn’t hear clearly', '/reports?state=poor', 'Morning after, on Reports. Recorded, but the sound can’t be used. Record tonight goes to Home.'],
+        ['night-stopped-phone', 'Stopped in the night', '/reports?state=stopped-phone', 'Morning after, on Reports. See what was saved opens the saved part (under 2 hr: clips only). Other causes: ?state=stopped-app, stopped-space.'],
+        ['recording-paused', 'Paused · app closed', '/recording?state=paused', 'Back in Airese after another app closed it. Carry on recording continues the same night; × stops for the night.'] ] },
+      { group: 'Prompts', items: [
+        ['update', 'App update', '/update', 'Forced update: no Skip, no swipe back. Update now opens the store.'] ] },
+    ];
+    var nav = document.getElementById('nav');
     var frame = document.getElementById('app');
-    select.addEventListener('change', function () {
-      if (frame) frame.src = ROUTES[select.value] + (ROUTES[select.value].indexOf('?') > -1 ? '&' : '?') + 'frame=iphone';
-      else window.dispatchEvent(new CustomEvent('airese:jump', { detail: select.value }));
+    var ROUTES = {}, NOTES = {}, buttons = {}, current = 'splash';
+    var meta = document.getElementById('meta');
+
+    SCREENS.forEach(function (section) {
+      var h = document.createElement('h2'); h.textContent = section.group; nav.appendChild(h);
+      var ul = document.createElement('ul'); nav.appendChild(ul);
+      section.items.forEach(function (item) {
+        ROUTES[item[0]] = item[2]; NOTES[item[0]] = item[3];
+        var li = document.createElement('li'), btn = document.createElement('button');
+        btn.type = 'button'; btn.textContent = item[1];
+        btn.addEventListener('click', function () { go(item[0]); });
+        buttons[item[0]] = btn; li.appendChild(btn); ul.appendChild(li);
+      });
     });
-    window.addEventListener('airese:screen', function (e) { select.value = e.detail; });
+
+    function mark(key) {
+      if (!buttons[key]) return;
+      if (buttons[current]) buttons[current].removeAttribute('aria-current');
+      buttons[key].setAttribute('aria-current', 'page'); current = key;
+      meta.querySelector('p').textContent = NOTES[key];
+      meta.querySelector('code').textContent = frame ? ROUTES[key] : '';
+    }
+    function go(key) {
+      mark(key);
+      if (frame) frame.src = ROUTES[key] + (ROUTES[key].indexOf('?') > -1 ? '&' : '?') + 'frame=iphone';
+      else window.dispatchEvent(new CustomEvent('airese:jump', { detail: key }));
+    }
+    mark(current);
+
+    window.addEventListener('airese:screen', function (e) { mark(e.detail); });
     if (frame) setInterval(function () {
       try {
         var loc = frame.contentWindow.location, m = loc.search.match(/state=([a-z-]+)/), path = loc.pathname + (m ? '?state=' + m[1] : '');
-        for (var key in ROUTES) if (ROUTES[key] === path && select.value !== key) select.value = key;
+        for (var key in ROUTES) if (ROUTES[key] === path && current !== key) mark(key);
       } catch (err) {}
     }, 500);
   })();

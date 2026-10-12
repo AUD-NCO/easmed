@@ -9,7 +9,6 @@ export default function Profile() {
       backLabel="Home"
       onBack={() => (router.canGoBack() ? router.back() : router.replace('/home'))}
       onOpenDetails={() => router.push('/profile-details')}
-      onOpenNotifications={() => router.push('/profile-notifications')}
       onOpenCentres={() => router.push('/centres')}
       onErased={() => {
         eraseEverything();

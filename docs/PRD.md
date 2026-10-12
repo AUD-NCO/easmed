@@ -134,13 +134,13 @@ Splash ─► Onboarding walkthrough ─► Microphone ─► Notifications ─�
 
 ### 5.2 Onboarding walkthrough
 
-Three slides, each with an illustration, a headline, one line of body and an (i) for more in a sheet.
+Three slides, each with an illustration, a headline (no subtext) and an (i) for more in a sheet.
 
-| # | Headline | Body |
-| --- | --- | --- |
-| 1 | Let's find out what happens while you sleep. | Your phone does the work. No watch, ring or mat. |
-| 2 | Private by default. | Your recordings stay on your phone. |
-| 3 | A clearer next step. | Know when to watch, when to share, and when to get checked. |
+| # | Headline |
+| --- | --- |
+| 1 | Record your sleep with just your phone. |
+| 2 | Private. Recordings stay on your phone. |
+| 3 | Know when it's worth getting checked. |
 
 Each (i) adds one or two plain sentences (how a night is recorded; nothing leaves the phone unless shared; Airese only suggests a doctor when the same thing shows up night after night). The slides follow BRAND.md's four promises.
 
@@ -159,8 +159,8 @@ Two screens in onboarding, then a second chance in context whenever a permission
 
 #### Notifications
 
-- **Onboarding screen:** "Turn on notifications." / "A reminder at bedtime, and a note when your night is ready. Choose which in Profile."
-- **If off:** the Home banner ("Turn on notifications to know when your night is ready.") and Profile → Notifications show **Turn on**.
+- **Onboarding screen:** "Turn on notifications." / "A reminder at bedtime, so you don't miss a night."
+- **If off:** the Home banner ("Turn on notifications for a bedtime reminder.") and the Bedtime reminder row in Profile → Settings show **Turn on**.
 
 #### The second-chance sheet
 
@@ -211,7 +211,7 @@ The bedtime screen. One job: start a night's recording.
 | Priority | When | Message | Action |
 | --- | --- | --- | --- |
 | P0 | Microphone off | "Airese needs your microphone to record your night." | **Turn on microphone** (permission sheet) |
-| P1 | Notifications off | "Turn on notifications to know when your night is ready." | **Turn on notifications** |
+| P1 | Notifications off | "Turn on notifications for a bedtime reminder." | **Turn on notifications** |
 | P2 | Not dismissed yet | "Keep your phone on charge while you record. A night of listening uses more battery." | **Got it** (hides it) |
 | P3 | Otherwise | "Add Night Notes before you sleep, so you can track your progress over time." Once added: "Tonight's Night Notes: Blocked nose · Alcohol" | **Add Night Notes** / **Edit Night Notes** |
 
@@ -372,10 +372,10 @@ Account settings, opened from the avatar on Home. One short page of rows; anythi
 | --- | --- |
 | You | Initials (no photo), name and phone (or email) → **Your details**. When empty: "Add your details · Name, phone and a little about you". |
 | Sleep care | **Talk to a sleep care team** (dials; shows hours) · **Our centres ›** ("Find The Air Station near you") |
-| Settings | **Notifications ›** ("On · 2 of 3" or "Off") · **Microphone** ("On · needed to record your night", or "Off · Airese can't record without it" with **Turn on**) |
-| About | **How Airese works** · **Privacy policy** · **Terms of use** (each in a sheet). Footer: "Airese is not a medical device and doesn't diagnose. Talk to a doctor about any health concerns." |
-| Your data | **Delete all recordings** ("12 nights on this phone"; greyed out when none) · **Erase everything and start again** ("Details, recordings, notes and settings"). Footer: "Everything Airese keeps is on this phone." |
-| Brand | The Airese logo in muted grey, "Powered by The Air Station", the version. Quiet, at the end. |
+| Settings | **Bedtime reminder** (a switch; "Notifications are off" with **Turn on** while the permission is off) · **Microphone** ("On · needed to record your night", or "Off · Airese can't record without it" with **Turn on**) |
+| About | **How Airese works** · **Privacy policy** · **Terms of use** (each in a sheet). |
+| Your data | **Delete all recordings** ("12 nights on this phone"; greyed out when none) · **Erase everything and start again** ("Details, recordings, notes and settings"). |
+| Brand | The Airese logo in muted grey, "Powered by The Air Station", "Everything Airese keeps is on this phone.", the version. Quiet, at the end. |
 
 **Confirmations.** Both destructive actions confirm first.
 
@@ -388,8 +388,6 @@ Account settings, opened from the avatar on Home. One short page of rows; anythi
 
 - **Fields:** the same as onboarding (section 5.4): name, phone, email, and the About you tiles (gender, age, height, weight, where you live).
 - **Saving:** edits are a draft with a sticky **Save**; Back discards them. Each field is checked when you leave it, and all are checked again on Save.
-
-**Notifications (page):** a "Notifications are off" row with **Turn on** while the permission is off, then the three switches (section 5.11). Footer: "To turn off all notifications, use your phone's Settings."
 
 **Our centres (page):**
 
@@ -405,16 +403,17 @@ Account settings, opened from the avatar on Home. One short page of rows; anythi
 
 ### 5.11 Notifications
 
+One notification: the bedtime reminder, switched on in Profile → Settings (Oct 2026).
+
 | Notification | Default | When | Example |
 | --- | --- | --- | --- |
-| Tell me when my results are ready | On | When a night's analysis finishes | "Your night is ready. Have a listen." |
-| Remind me to stop recording | On | Recording still running at the user's usual wake time (learned from earlier nights) | "Still recording. Stop now to see your night." |
-| Remind me to record each night | Off | Around the user's usual bedtime | "Ready to record tonight?" |
+| Bedtime reminder | Off | Around the user's usual bedtime | "Ready to record tonight?" |
 
-- **Permission:** all three need the system permission. While it's off, the switches are greyed out.
+- **Not sent:** "results are ready" (the report appears as soon as recording stops) and "stop recording" (recording stops by itself after 8 hours).
+- **Permission:** needs the system permission. While it's off, the row shows **Turn on**; allowing it turns the reminder on.
 - **Wording:** follows the "one finding across channels" rule in BRAND.md. Push stays general ("There's a pattern worth looking at this week"); detail lives in the app.
 
-> **To confirm:** exact copy and timing; how "usual" bedtime and wake time are learned.
+> **To confirm:** exact copy and timing; how the "usual" bedtime is learned.
 
 ---
 
@@ -511,7 +510,7 @@ Full detail in [BRAND.md](BRAND.md).
   - guide ranges: `src/lib/benchmarks.ts`;
   - Sound Score formula: `soundScoreParts` in `src/lib/nightDetails.ts`;
   - privacy policy and terms: `src/screens/ProfileScreen.tsx`.
-- **Browser preview:** `preview/index.tsx` mirrors the routes for review; `public/iphone.html` adds the iPhone frame and a "Jump to" menu for every screen and state. It's published to GitHub Pages on every push to `main`.
+- **Browser preview:** `preview/index.tsx` mirrors the routes for review; `public/iphone.html` adds the iPhone frame, with every screen and state listed as links in a left pane. It's published to GitHub Pages on every push to `main`.
 
 ---
 

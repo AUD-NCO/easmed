@@ -34,10 +34,13 @@ export default function RootLayout() {
         {/* Profile (from the avatar), and its pages one level deeper: the same push */}
         <Stack.Screen name="profile" options={PUSH} />
         <Stack.Screen name="profile-details" options={PUSH} />
-        <Stack.Screen name="profile-notifications" options={PUSH} />
         <Stack.Screen name="centres" options={PUSH} />
         {/* Terms and Privacy, from the agreement on the details screen */}
         <Stack.Screen name="legal/[doc]" options={PUSH} />
+        {/* Recording can't start (no space, or the recorder failed) */}
+        <Stack.Screen name="recording-problem" />
+        {/* Update prompt: no swipe-back, so the update can't be dismissed */}
+        <Stack.Screen name="update" options={{ gestureEnabled: false }} />
         {/* Recording draws its own entrance over Home (the button's blue fills the screen); no swipe-back mid-night */}
         <Stack.Screen name="recording" options={{ presentation: 'transparentModal', animation: 'none', gestureEnabled: false, contentStyle: { backgroundColor: 'transparent' } }} />
       </Stack>

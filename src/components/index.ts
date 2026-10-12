@@ -18,6 +18,7 @@ export * from './AmbientGradient';
 
 export * from './PageTitle';
 export * from './PermissionSheet';
+export * from './PromptLayout';
 export * from './ToggleChip';
 export * from './DetailPage';
 export * from './ComparisonIndicator';

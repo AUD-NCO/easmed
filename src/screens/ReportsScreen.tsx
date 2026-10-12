@@ -5,6 +5,7 @@ import { AppText, Button, Icon, MonthCalendar, titleControl, PAGE_SIDE, Permissi
 import { nightState } from '../lib/nightDetails';
 import { usePermissionStatus } from '../lib/permissionStatus';
 import { setNotificationPref, useNotificationPrefs } from '../lib/profile';
+import { POOR_COPY, demoStop, stopCopy } from '../lib/recordingIssues';
 import { useAnalysing, useNights } from '../lib/recordings';
 import { MISSED_NIGHTS_NUDGE, calendarNights, dayKey, recordedOfRecent } from '../lib/reports';
 import { colors, radius, space, useInsets } from '../theme';
@@ -16,6 +17,8 @@ import { NightScreen } from './NightScreen';
  * its report. No ring means nothing was recorded that night.
  * When several recent nights are missing, the calendar suggests a bedtime reminder (and asks for
  * notifications first if they're off).
+ * A night with a recording problem keeps the usual header, with the problem in the middle (image, problem,
+ * reason, how to solve): couldn't hear clearly → Record tonight; stopped early → See what was saved.
  * `demoState`: the demo menu's Recording Details states, applied to the latest night (prototype only).
  */
 export function ReportsScreen({ demoState, onRecordAgain }: { demoState?: string; onRecordAgain: () => void }) {
@@ -24,6 +27,7 @@ export function ReportsScreen({ demoState, onRecordAgain }: { demoState?: string
   const latest = nights[0];
   const [selected, setSelected] = useState<string | undefined>(latest?.id);
   const [calendar, setCalendar] = useState(false);
+  const [savedOpen, setSavedOpen] = useState<string | null>(null); // stopped early: "See what was saved" tapped, for this night
   // Straight after a recording: the latest night, "Looking through your night", then its report.
   const analysing = useAnalysing();
   if (analysing && latest && selected !== latest.id) setSelected(latest.id);
@@ -36,27 +40,40 @@ export function ReportsScreen({ demoState, onRecordAgain }: { demoState?: string
   const yesterday = new Date();
   yesterday.setDate(yesterday.getDate() - 1);
   const tag = dayKey(night.date) === dayKey(yesterday) ? 'Last night' : undefined;
+  const stop = state === 'stopped' ? demoStop(demoState) : undefined;
+
+  const calendarButton = (inBar: boolean) => (
+    // Title row: the glassy circle, like the avatar on Home. Compact bar: a plain Breath glyph, like "‹ Back".
+    <Pressable
+      onPress={() => setCalendar(true)}
+      accessibilityRole="button"
+      accessibilityLabel="Choose a night"
+      hitSlop={4}
+      style={({ pressed }) => [inBar ? styles.calendarGlyph : styles.calendarButton, pressed && { opacity: 0.8 }]}
+    >
+      <Icon name="calendar_month" size={24} color={inBar ? 'accent' : 'text'} />
+    </Pressable>
+  );
+
+  const problem =
+    state === 'poor'
+      ? { copy: POOR_COPY, cta: 'Record tonight', onCta: onRecordAgain }
+      : stop && savedOpen !== night.id
+        ? { copy: stopCopy(night, stop), cta: 'See what was saved', onCta: () => setSavedOpen(night.id) }
+        : null;
+
   return (
     <View style={styles.root}>
       <NightScreen
-        key={`${night.id}${state === 'processing' ? ':analysing' : ''}`} // analysis done: the report arrives
+        key={`${night.id}${state === 'processing' ? ':analysing' : ''}${problem ? ':problem' : ''}`} // analysis done, or the saved part opened: a new page
         night={night}
         state={state}
+        stop={stop}
+        problem={problem ?? undefined}
         bottomInset={TAB_BAR_CLEARANCE}
         tag={tag}
         onRecordAgain={onRecordAgain}
-        trailing={(inBar) => (
-          // Title row: the glassy circle, like the avatar on Home. Compact bar: a plain Breath glyph, like "‹ Back".
-          <Pressable
-            onPress={() => setCalendar(true)}
-            accessibilityRole="button"
-            accessibilityLabel="Choose a night"
-            hitSlop={4}
-            style={({ pressed }) => [inBar ? styles.calendarGlyph : styles.calendarButton, pressed && { opacity: 0.8 }]}
-          >
-            <Icon name="calendar_month" size={24} color={inBar ? 'accent' : 'text'} />
-          </Pressable>
-        )}
+        trailing={calendarButton}
       />
 
       <TopSheet visible={calendar} onClose={() => setCalendar(false)}>

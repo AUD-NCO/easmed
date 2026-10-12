@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import { Linking, Pressable, StyleSheet, View } from 'react-native';
 import Constants from 'expo-constants';
-import { AppText, BottomSheet, Button, DetailPage, ExplainSheet, FormDivider, FormGroup, Icon, Logo, PAGE_SIDE, PermissionSheet, SettingRow, Toast } from '../components';
+import { AppText, BottomSheet, Button, DetailPage, ExplainSheet, FormDivider, FormGroup, Icon, Logo, PAGE_SIDE, PermissionSheet, SettingRow, SettingSwitch, Toast } from '../components';
 import { SUPPORT } from '../lib/airStation';
 import { EXPLAIN } from '../lib/nightDetails';
 import { usePermissionStatus } from '../lib/permissionStatus';
-import { initials, phoneDisplay, useNotificationPrefs, useProfile } from '../lib/profile';
+import { initials, phoneDisplay, setNotificationPref, useNotificationPrefs, useProfile } from '../lib/profile';
 import { deleteAllRecordings, useNights } from '../lib/recordings';
 import { alpha, colors, space } from '../theme';
 
@@ -41,10 +41,10 @@ const ABOUT: Record<About, { title: string; body: string }> = {
  *
  *   you          initials (no photo), name, email · Edit details ›
  *   sleep care   Talk to a sleep care team (call) · Our centres ›   (same words as Recording Details)
- *   settings     Notifications › · Microphone (with "Turn on" while it's off)
- *   about        How Airese works · Privacy policy · Terms of use · "not a medical device"
+ *   settings     Bedtime reminder (a switch; "Turn on" while notifications are off) · Microphone ("Turn on" while it's off)
+ *   about        How Airese works · Privacy policy · Terms of use
  *   your data    Delete all recordings · Erase everything and start again (each confirms; a toast after)
- *   brand        the Airese logo, "Powered by The Air Station", the version: quiet, at the end
+ *   brand        the Airese logo, "Powered by The Air Station", where your data lives, the version: quiet, at the end
  *
  * No sign-in or sign-out yet (so no "account" to delete: erase is what's on the phone).
  */
@@ -52,14 +52,12 @@ export function ProfileScreen({
   backLabel = 'Home',
   onBack,
   onOpenDetails,
-  onOpenNotifications,
   onOpenCentres,
   onErased,
 }: {
   backLabel?: string;
   onBack: () => void;
   onOpenDetails: () => void;
-  onOpenNotifications: () => void;
   onOpenCentres: () => void;
   onErased: () => void;
 }) {
@@ -69,13 +67,13 @@ export function ProfileScreen({
   const notificationsOn = usePermissionStatus('notifications') === 'granted';
   const micOn = usePermissionStatus('microphone') === 'granted';
   const [micSheet, setMicSheet] = useState(false);
+  const [notificationsSheet, setNotificationsSheet] = useState(false);
   const [confirm, setConfirm] = useState<Confirm | null>(null);
   const [lastConfirm, setLastConfirm] = useState<Confirm>('recordings'); // keeps the copy while the sheet closes
   const [about, setAbout] = useState<About | null>(null);
   const [toast, setToast] = useState<string | null>(null);
   const name = `${profile.firstName} ${profile.lastName}`.trim();
   const contact = profile.phone ? phoneDisplay(profile) : profile.email;
-  const sentCount = Object.values(prefs).filter(Boolean).length;
   const version = Constants.expoConfig?.version ?? '';
 
   const ask = (c: Confirm) => {
@@ -125,7 +123,11 @@ export function ProfileScreen({
 
           {/* Settings */}
           <FormGroup title="Settings">
-            <SettingRow icon="notifications" title="Notifications" detail={notificationsOn ? `On · ${sentCount} of 3` : 'Off'} chevron onPress={onOpenNotifications} />
+            {notificationsOn ? (
+              <SettingSwitch icon="notifications" title="Bedtime reminder" value={prefs.bedtime} onChange={(on) => setNotificationPref('bedtime', on)} />
+            ) : (
+              <SettingRow icon="notifications" title="Bedtime reminder" detail="Notifications are off" action={{ label: 'Turn on', onPress: () => setNotificationsSheet(true) }} />
+            )}
             <FormDivider />
             <SettingRow
               icon="mic"
@@ -136,7 +138,7 @@ export function ProfileScreen({
           </FormGroup>
 
           {/* About */}
-          <FormGroup title="About" footer="Airese is not a medical device and doesn’t diagnose. Talk to a doctor about any health concerns.">
+          <FormGroup title="About">
             <SettingRow icon="info" title="How Airese works" chevron onPress={() => setAbout('how')} />
             <FormDivider />
             <SettingRow icon="lock" title="Privacy policy" chevron onPress={() => setAbout('privacy')} />
@@ -145,7 +147,7 @@ export function ProfileScreen({
           </FormGroup>
 
           {/* Your data: last, on its own */}
-          <FormGroup title="Your data" footer="Everything Airese keeps is on this phone.">
+          <FormGroup title="Your data">
             <SettingRow
               icon="delete"
               title="Delete all recordings"
@@ -158,10 +160,13 @@ export function ProfileScreen({
           </FormGroup>
 
           {/* Brand: quiet, at the end */}
-          <View style={styles.brand} accessible accessibilityLabel={`Airese, powered by The Air Station. Version ${version}`}>
+          <View style={styles.brand} accessible accessibilityLabel={`Airese, powered by The Air Station. Everything Airese keeps is on this phone. Version ${version}`}>
             <Logo width={52} color="mist" />
             <AppText variant="small" color="textMuted" style={{ marginTop: space.lg }}>
               Powered by The Air Station
+            </AppText>
+            <AppText variant="small" color="textMuted" style={{ marginTop: space.xs, textAlign: 'center' }}>
+              Everything Airese keeps is on this phone.
             </AppText>
             {version ? (
               <AppText variant="caption" color="textMuted" style={{ marginTop: space.xs }}>
@@ -173,6 +178,16 @@ export function ProfileScreen({
       </DetailPage>
 
       <PermissionSheet kind="microphone" visible={micSheet} onAllowed={() => setMicSheet(false)} onNotNow={() => setMicSheet(false)} />
+      {/* Bedtime reminder while notifications are off: allow them, and the reminder is on */}
+      <PermissionSheet
+        kind="notifications"
+        visible={notificationsSheet}
+        onAllowed={() => {
+          setNotificationsSheet(false);
+          setNotificationPref('bedtime', true);
+        }}
+        onNotNow={() => setNotificationsSheet(false)}
+      />
       <ExplainSheet content={about ? ABOUT[about] : null} onClose={() => setAbout(null)} />
 
       <BottomSheet visible={confirm !== null} onClose={() => setConfirm(null)} fit>

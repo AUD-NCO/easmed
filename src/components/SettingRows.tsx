@@ -9,7 +9,7 @@ import { alpha, colors, radius, space } from '../theme';
  *
  *   SettingRow     icon, title and an optional line of detail. A tap does one thing: a chevron
  *                  means it opens a page; an `action` pill does something here ("Turn on").
- *   SettingSwitch  one plain label and a switch. Greyed out (and off) while `enabled` is false.
+ *   SettingSwitch  a label (with an optional icon) and a switch. Greyed out (and off) while `enabled` is false.
  */
 export function SettingRow({
   icon,
@@ -65,9 +65,10 @@ export function SettingRow({
   );
 }
 
-export function SettingSwitch({ title, value, enabled = true, onChange }: { title: string; value: boolean; enabled?: boolean; onChange: (on: boolean) => void }) {
+export function SettingSwitch({ icon, title, value, enabled = true, onChange }: { icon?: IconName; title: string; value: boolean; enabled?: boolean; onChange: (on: boolean) => void }) {
   return (
     <View style={[styles.row, !enabled && styles.disabled]}>
+      {icon && <Icon name={icon} size={24} color="text" />}
       <AppText color="text" style={{ flex: 1 }}>
         {title}
       </AppText>

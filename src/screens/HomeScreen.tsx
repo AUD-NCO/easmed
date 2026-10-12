@@ -5,6 +5,8 @@ import { AmbientGradient, AppText, Avatar, Button, Icon, PAGE_SIDE, PAGE_TITLE_T
 import { initials, useProfile } from '../lib/profile';
 import { refreshPermissions, usePermissionStatus, type PermissionKind } from '../lib/permissionStatus';
 import { summarize, useNightNotes } from '../lib/nightNotes';
+import { checkCanRecord, demoLastNightStopped, demoStop, stopTime, type StartProblem } from '../lib/recordingIssues';
+import { useNights } from '../lib/recordings';
 import { recall, remember } from '../lib/session';
 import { homeMessage, type HomeMessage } from '../lib/tips';
 import { alpha, colors, motion, radius, space, useInsets } from '../theme';
@@ -28,7 +30,21 @@ const DIAL_LABEL = 84; // room under the dial for "Tap to start recording" and t
 /** Where the record button sits, in Home's own coordinates, so Recording can grow out of it. */
 export type RecordOrigin = { x: number; y: number; r: number };
 
-export function HomeScreen({ onStartRecording, onOpenNotes, onOpenProfile }: { onStartRecording?: (from: RecordOrigin) => void; onOpenNotes?: () => void; onOpenProfile?: () => void }) {
+export function HomeScreen({
+  onStartRecording,
+  onOpenNotes,
+  onOpenProfile,
+  onOpenLastNight,
+  onCantStart,
+}: {
+  onStartRecording?: (from: RecordOrigin) => void;
+  onOpenNotes?: () => void;
+  onOpenProfile?: () => void;
+  /** Last night stopped early: "See what was saved" opens its report. */
+  onOpenLastNight?: (state: string) => void;
+  /** Recording can't start (no space, or the recorder failed): opens the problem screen. */
+  onCantStart?: (problem: StartProblem) => void;
+}) {
   const notes = useNightNotes();
   const rootRef = useRef<View>(null);
   const insets = useInsets();
@@ -38,8 +54,19 @@ export function HomeScreen({ onStartRecording, onOpenNotes, onOpenProfile }: { o
   const notifications = usePermissionStatus('notifications');
   const micOff = mic !== 'granted';
   const [chargingDismissed, setChargingDismissed] = useState(() => recall('chargingTipSeen', false));
-  const message = homeMessage({ micOn: !micOff, notificationsOn: notifications === 'granted', chargingDismissed, notesTonight: summarize(notes.tonight) });
+  // Prototype: the demo nav's stopped night. Engineering: the latest night's own stop, until its report is opened.
+  const latest = useNights()[0];
+  const [stoppedState] = useState(demoLastNightStopped);
+  const stop = demoStop(stoppedState ?? undefined);
+  const message = homeMessage({
+    micOn: !micOff,
+    notificationsOn: notifications === 'granted',
+    chargingDismissed,
+    notesTonight: summarize(notes.tonight),
+    stoppedAt: stop && latest ? stopTime(latest, stop) : undefined,
+  });
   const onMessageAction = () => {
+    if (message.id === 'stopped') return stoppedState && onOpenLastNight?.(stoppedState);
     if (message.id === 'microphone' || message.id === 'notifications') return ask(message.id);
     if (message.id === 'charging') {
       remember('chargingTipSeen', true);
@@ -76,6 +103,9 @@ export function HomeScreen({ onStartRecording, onOpenNotes, onOpenProfile }: { o
       pendingStart.current = dial;
       return ask('microphone');
     }
+    // Can't start (no space, or the recorder failed): the problem screen, with Try again
+    const found = checkCanRecord();
+    if (found) return onCantStart?.(found);
     rootRef.current?.measureInWindow((rx, ry, rw) => {
       const k = width > 0 && rw > 0 ? width / rw : 1;
       onStartRecording?.({ x: (dial.x - rx + dial.width / 2) * k, y: (dial.y - ry + dial.height / 2) * k, r: (dial.button / 2) * k });
@@ -104,7 +134,7 @@ export function HomeScreen({ onStartRecording, onOpenNotes, onOpenProfile }: { o
         <View style={styles.panel}>
           {/* The dial takes the room that's left, up to its full size */}
           <View style={styles.dialArea} onLayout={(e: LayoutChangeEvent) => setDialRoom(e.nativeEvent.layout)}>
-            {dialSize > 0 && <RecordDial size={dialSize} note="Private. Recordings stay on this phone." ready={!micOff} onStart={startRecording} />}
+            {dialSize > 0 && <RecordDial size={dialSize} note="Private. Recordings stay on this phone." ready={!micOff && !checkCanRecord()} onStart={startRecording} />}
           </View>
         </View>
       </View>
@@ -123,7 +153,6 @@ export function HomeScreen({ onStartRecording, onOpenNotes, onOpenProfile }: { o
           pendingStart.current = null;
         }}
       />
-
     </View>
   );
 }

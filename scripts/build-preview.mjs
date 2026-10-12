@@ -50,7 +50,6 @@ const html = readFileSync(join(root, 'public/iphone.html'), 'utf8')
     "document.getElementById('app').src = small ? '/' : '/?frame=iphone';",
     'window.__AIRESE_PREVIEW_INSETS__ = small ? undefined : { top: 62, bottom: 34, left: 0, right: 0 };',
   )
-  .replace('live from localhost', 'prototype')
   .replace('</body>', () => `<script>${bundle}</script>\n</body>`);
 
 mkdirSync(out, { recursive: true });

@@ -26,11 +26,11 @@ const COPY: Record<PermissionKind, { icon: IconName; cta: string; why: { title: 
     cta: 'Allow notifications',
     why: {
       title: 'Get a nudge at bedtime',
-      body: 'A reminder at bedtime, and a note when your night is ready. Choose which in Profile.',
+      body: 'A reminder at bedtime, so you don’t miss a night.',
     },
     blocked: {
       title: 'Notifications are off',
-      body: 'You won’t get the bedtime reminder or the note when your night is ready. To turn them on, open Settings and allow Notifications for Airese.',
+      body: 'You won’t get the bedtime reminder. To turn it on, open Settings and allow Notifications for Airese.',
     },
   },
 };

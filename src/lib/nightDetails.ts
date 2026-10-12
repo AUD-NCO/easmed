@@ -12,6 +12,7 @@ import { sampleNights, type Night } from './recordings';
 export type NightState =
   | 'processing' // analysis not finished: no cards yet
   | 'poor' // couldn't hear clearly: no scores
+  | 'stopped' // recording stopped early: what was saved, and what it can still tell (lib/recordingIssues)
   | 'first' // first night: no personal comparison yet
   | 'steady' // ordinary night
   | 'unusual' // one night out of the ordinary
@@ -359,6 +360,7 @@ const STATES: NightState[] = ['processing', 'poor', 'first', 'steady', 'unusual'
 
 /** The state to show: a demo override (?state=…) if valid, else the sample night's own. */
 export function nightState(night: Night, override?: string): NightState {
+  if (override?.startsWith('stopped-')) return 'stopped';
   if (override && (STATES as string[]).includes(override)) return override as NightState;
   return sampleState(night, sampleNights());
 }

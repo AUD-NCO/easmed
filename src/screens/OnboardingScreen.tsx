@@ -13,7 +13,6 @@ type Illustration = { source: ImageSourcePropType; px: number; cx: number; cy: n
 
 type Slide = {
   title: string;
-  body: string;
   /** What the page's (i) says. */
   info: string;
   illustration: Illustration;
@@ -21,23 +20,20 @@ type Slide = {
   showContinue?: boolean;
 };
 
-// Copy as supplied by design (Oct 2026).
+// Headlines only, each saying the whole point in about two lines (Oct 2026); more is in each page's (i).
 const SLIDES: Slide[] = [
   {
-    title: 'Let’s find out what happens while you sleep.',
-    body: 'Your phone does the work. No watch, ring or mat.',
+    title: 'Record your sleep with just your phone.',
     info: 'Put your phone by the bed and tap record. Airese listens for snoring and breathing, and keeps short moments you can play back in the morning.',
     illustration: { source: require('../../assets/onboarding/1-hear.jpg'), px: 1254, cx: 622, cy: 598, d: 1117 },
   },
   {
-    title: 'Private by default.',
-    body: 'Your recordings stay on your phone.',
+    title: 'Private. Recordings stay on your phone.',
     info: 'Airese works out your night on your phone. Nothing leaves it unless you choose to share a report.',
     illustration: { source: require('../../assets/onboarding/2-private.jpg'), px: 1254, cx: 624, cy: 607, d: 1139 },
   },
   {
-    title: 'A clearer next step.',
-    body: 'Know when to watch, when to share, and when to get checked.',
+    title: 'Know when it’s worth getting checked.',
     info: 'One night is hard to read on its own. Airese only suggests talking to a doctor when the same thing shows up night after night.',
     illustration: { source: require('../../assets/onboarding/3-pattern.jpg'), px: 1254, cx: 633, cy: 592, d: 1100 },
     showContinue: true,
@@ -53,7 +49,7 @@ const REF_CIRCLE = 556 * 0.88; // circle diameter on the reference frame (88% of
 const REF_TOP = 12; // circle top
 const REF_GAP = 50; // circle bottom to headline
 const SHIFT_RATIO = 116 / 556; // how far the circle moves per page, relative to its size
-const TEXT_MIN = 260; // room always kept below the circle for headline, body, Continue and the home indicator
+const TEXT_MIN = 260; // room always kept below the circle for headline, Continue and the home indicator
 const DASH_H = 4;
 const DASH_W = 28;
 const TARGET = 44; // minimum touch target (WCAG 2.5.5 AAA): each dash sits in a 44 × 44 tap area
@@ -232,9 +228,6 @@ function Carousel({ width, height, onContinue }: { width: number; height: number
                 </AppText>
                 <InfoButton onPress={() => openInfo(i)} label={`More about: ${slide.title}`} />
               </View>
-              <AppText variant="body" color="textMuted" style={{ marginTop: space.sm }}>
-                {slide.body}
-              </AppText>
               {/* Part of the page: there with the text, moves and fades with it (no animation of its own) */}
               <View style={{ alignSelf: 'flex-start', marginTop: space.xl }}>
                 {slide.showContinue ? (

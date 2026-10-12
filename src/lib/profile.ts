@@ -131,11 +131,11 @@ export function placeLabel({ city, region, country }: Pick<Profile, 'city' | 're
 // ---------- Notification preferences ----------
 
 /**
- * Which notifications the user wants, on top of the system permission (which has to be on for any
- * of them). Defaults: all on. Engineering: schedule from these (expo-notifications).
+ * The one notification Airese sends: a bedtime reminder to record (Profile → Settings). Needs the
+ * system permission on. Engineering: schedule it (expo-notifications); the time is still to be decided.
  */
-export type NotificationPrefs = { nightReady: boolean; stillRecording: boolean; bedtime: boolean };
-let prefs: NotificationPrefs = recall('notificationPrefs', { nightReady: true, stillRecording: true, bedtime: false });
+export type NotificationPrefs = { bedtime: boolean };
+let prefs: NotificationPrefs = recall('notificationPrefs', { bedtime: false });
 const prefListeners = new Set<() => void>();
 
 export function setNotificationPref(key: keyof NotificationPrefs, on: boolean) {

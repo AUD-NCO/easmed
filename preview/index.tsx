@@ -19,34 +19,51 @@ import { demoAfterFirstNight, finishNight, summarize, useNightNotes } from '../s
 import { OnboardingScreen } from '../src/screens/OnboardingScreen';
 import { MicrophonePermissionScreen, NotificationsPermissionScreen } from '../src/screens/PermissionScreen';
 import { SplashScreen } from '../src/screens/SplashScreen';
+import { UpdateScreen } from '../src/screens/UpdateScreen';
 import { ProfileScreen } from '../src/screens/ProfileScreen';
 import { CentresScreen } from '../src/screens/CentresScreen';
 import { EditDetailsScreen } from '../src/screens/EditDetailsScreen';
-import { NotificationSettingsScreen } from '../src/screens/NotificationSettingsScreen';
 import { eraseEverything } from '../src/lib/account';
+import { setDemoLastNightStopped, setDemoStartProblem, type StartProblem } from '../src/lib/recordingIssues';
+import { StartProblemScreen } from '../src/screens/ProblemScreen';
 
-type Step = 'splash' | 'onboarding' | 'microphone' | 'notifications' | 'details' | 'home' | 'recording';
+type Step = 'splash' | 'onboarding' | 'microphone' | 'notifications' | 'details' | 'home' | 'recording' | 'update' | 'problem';
 
-const STEPS: Step[] = ['splash', 'onboarding', 'microphone', 'notifications', 'details', 'home', 'recording'];
+const STEPS: Step[] = ['splash', 'onboarding', 'microphone', 'notifications', 'details', 'home', 'recording', 'update', 'problem'];
 
 function PreviewApp() {
   const [step, setStep] = useState<Step>('splash');
   const [tab, setTab] = useState('home');
-  const [recording, setRecording] = useState<{ startedAt: Date; from?: RecordOrigin }>(() => ({ startedAt: new Date() }));
+  const [recording, setRecording] = useState<{ startedAt: Date; from?: RecordOrigin; pausedAt?: Date }>(() => ({ startedAt: new Date() }));
   const [reportState, setReportState] = useState<string | undefined>(); // demo menu: last night's report in a given state
   const [openProfile, setOpenProfile] = useState(false); // demo menu: Profile, over Home
   const [recordingNotes, setRecordingNotes] = useState(false); // Night Notes, opened from the Recording carousel
   const nightNotes = useNightNotes();
   const [legal, setLegal] = useState<LegalDoc | null>(null); // Terms / Privacy, over the details screen
+  const [problem, setProblem] = useState<StartProblem>('space'); // recording can't start: which problem
   const [run, setRun] = useState(0); // remounts the screen when the demo menu picks it again
 
-  // Demo menu above the phone frame (public/iphone.html): jump to any screen, and keep the menu in step.
+  // Demo nav beside the phone frame (public/iphone.html): jump to any screen, and keep the nav in step.
   useEffect(() => {
     const onJump = (e: Event) => {
       const key = (e as CustomEvent<string>).detail;
       setReportState(undefined);
       setOpenProfile(key === 'profile');
-      if (key === 'profile') {
+      // Recording problems (see src/lib/recordingIssues.ts)
+      const cantStart: StartProblem | null = key === 'no-space' ? 'space' : key === 'start-failed' ? 'start' : null;
+      setDemoStartProblem(cantStart);
+      setDemoLastNightStopped(key === 'home-after-stopped-night' ? 'stopped-phone' : null);
+      if (cantStart) {
+        setProblem(cantStart);
+        setStep('problem');
+      } else if (key === 'home-after-stopped-night') {
+        setStep('home');
+        setTab('home');
+      } else if (key === 'recording-paused') {
+        // Stopped five minutes ago, two and a half hours in
+        setRecording({ startedAt: new Date(Date.now() - 150 * 60_000), pausedAt: new Date(Date.now() - 5 * 60_000) });
+        setStep('recording');
+      } else if (key === 'profile') {
         setStep('home');
         setTab('home');
       } else if (key.startsWith('night-')) {
@@ -84,6 +101,18 @@ function PreviewApp() {
             <LegalScreen doc={legal} onBack={() => setLegal(null)} />
           </View>
         )}
+        {/* Update prompt, outside the usual flow (demo nav only). Forced: no way past it. */}
+        {step === 'update' && <UpdateScreen />}
+        {step === 'problem' && (
+          <StartProblemScreen
+            problem={problem}
+            onRecord={() => {
+              setRecording({ startedAt: new Date() });
+              setStep('recording');
+            }}
+            onClose={() => setStep('home')}
+          />
+        )}
         {(step === 'home' || step === 'recording') && (
           <HomeTabs
             tab={tab}
@@ -93,6 +122,15 @@ function PreviewApp() {
             onAccountDeleted={() => {
               setStep('splash');
               setRun((n) => n + 1);
+            }}
+            onCantStart={(kind) => {
+              setProblem(kind);
+              setStep('problem');
+            }}
+            onOpenLastNight={(night) => {
+              setDemoLastNightStopped(null);
+              setTab('reports');
+              setReportState(night);
             }}
             onStartRecording={(from) => {
               setRecording({ startedAt: new Date(), from });
@@ -105,6 +143,7 @@ function PreviewApp() {
           <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}>
             <RecordingScreen
               startedAt={recording.startedAt}
+              pausedAt={recording.pausedAt}
               from={recording.from}
               notesTonight={summarize(nightNotes.tonight)}
               onOpenNotes={() => setRecordingNotes(true)}
@@ -138,8 +177,12 @@ function HomeTabs({
   reportState,
   initialProfile,
   onAccountDeleted,
+  onOpenLastNight,
+  onCantStart,
 }: {
   tab: string;
+  onOpenLastNight: (state: string) => void;
+  onCantStart: (problem: StartProblem) => void;
   onTab: (key: string) => void;
   onStartRecording: (from: RecordOrigin) => void;
   reportState?: string;
@@ -147,11 +190,11 @@ function HomeTabs({
   onAccountDeleted: () => void;
 }) {
   const [notes, setNotes] = useState(false);
-  const [profile, setProfile] = useState<'profile' | 'details' | 'notifications' | 'centres' | null>(initialProfile ? 'profile' : null);
+  const [profile, setProfile] = useState<'profile' | 'details' | 'centres' | null>(initialProfile ? 'profile' : null);
   return (
     <View style={{ flex: 1 }}>
       {tab === 'home' ? (
-        <HomeScreen onStartRecording={onStartRecording} onOpenNotes={() => setNotes(true)} onOpenProfile={() => setProfile('profile')} />
+        <HomeScreen onStartRecording={onStartRecording} onOpenNotes={() => setNotes(true)} onOpenProfile={() => setProfile('profile')} onOpenLastNight={onOpenLastNight} onCantStart={onCantStart} />
       ) : (
         <ReportsScreen key={reportState ?? 'default'} demoState={reportState} onRecordAgain={() => onTab('home')} />
       )}
@@ -163,7 +206,6 @@ function HomeTabs({
           backLabel="Home"
           onBack={() => setProfile(null)}
           onOpenDetails={() => setProfile('details')}
-          onOpenNotifications={() => setProfile('notifications')}
           onOpenCentres={() => setProfile('centres')}
           onErased={() => {
             eraseEverything();
@@ -172,7 +214,6 @@ function HomeTabs({
         />
       )}
       {profile === 'details' && <EditDetailsScreen onBack={() => setProfile('profile')} />}
-      {profile === 'notifications' && <NotificationSettingsScreen onBack={() => setProfile('profile')} />}
       {profile === 'centres' && <CentresScreen onBack={() => setProfile('profile')} />}
     </View>
   );

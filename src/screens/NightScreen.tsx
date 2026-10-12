@@ -22,6 +22,7 @@ import {
   NightTimeline,
   PAGE_SIDE,
   PrivacyFooter,
+  PromptBody,
   RampFill,
   RecentNightsChart,
   ScoreTile,
@@ -50,6 +51,7 @@ import {
   type NightDetails,
   type NightState,
 } from '../lib/nightDetails';
+import { MIN_READABLE_MINUTES, stopTime, type ProblemCopy, type Stop } from '../lib/recordingIssues';
 import { formatNightDate, formatRecorded, formatSpan, type Night } from '../lib/recordings';
 import { formatDuration } from '../lib/time';
 import { alpha, colors, dataInk, motion, radius, space, type } from '../theme';
@@ -79,11 +81,18 @@ const SHEET_TITLE: Record<Sheet, string> = {
  * rate lives in its sheet and the report, pending Clinical. The sticky action follows the level of concern.
  * First night: proof first (the night in sound comes before the scores, which have nothing to compare with yet).
  * Colour by data: Ember snoring, Iris breathing, Dew sleep. Type: four sizes, regular and semibold.
- * States: processing, poor audio, first night (no comparisons), ordinary, unusual, repeated pattern.
+ * States: processing, stopped early (what was saved), first night (no comparisons), ordinary, unusual, repeated pattern.
+ * A recording problem (couldn't hear clearly, stopped early): the usual header, and the problem in the
+ * middle (PromptBody: image, problem, reason, how to solve, one button) in place of the cards.
+ *
+ * Stopped early, after "See what was saved": the saved part only. Scores if there's enough to read
+ * (labelled with how much was recorded, never compared with your usual), and the clips either way.
  */
 export function NightScreen({
-  night,
+  night: wholeNight,
   state: initialState,
+  stop,
+  problem,
   onBack,
   slideIn = Platform.OS === 'web',
   trailing,
@@ -93,6 +102,10 @@ export function NightScreen({
 }: {
   night: Night;
   state: NightState;
+  /** Stopped early: how and when (state 'stopped'). */
+  stop?: Stop;
+  /** A recording problem: shown in place of the cards. */
+  problem?: { copy: ProblemCopy; cta: string; onCta: () => void };
   /** Opened over something (a back button). Leave out when it's the Reports tab's own page. */
   onBack?: () => void;
   slideIn?: boolean;
@@ -106,12 +119,16 @@ export function NightScreen({
   onRecordAgain?: () => void;
 }) {
   const [state] = useState(initialState); // fixed for this page: a later change of the demo param doesn't swap it
+  // Stopped early: the page is about what was saved
+  const stopped = state === 'stopped' && stop ? stop : undefined;
+  const night = stopped ? { ...wholeNight, minutes: stopped.savedMinutes } : wholeNight;
+  const readable = !stopped || stopped.savedMinutes >= MIN_READABLE_MINUTES;
   const [sheet, setSheet] = useState<Sheet | null>(null);
   const [lastSheet, setLastSheet] = useState<Sheet>('report');
   const [explain, setExplain] = useState<ExplainKey | 'care' | 'remedy' | null>(null);
   const [heroBottom, setHeroBottom] = useState(0); // where the verdict card ends: the footer waits until it's scrolled past
   const player = useClipPlayer();
-  const d = nightDetails(night, state === 'processing' ? 'steady' : state);
+  const d = nightDetails(night, state === 'processing' || state === 'stopped' ? 'steady' : state);
   // The moment in the player: a breathing pause if there was one (the clearest proof), else the first.
   const [selected, setSelected] = useState((d.featured.find((c) => c.type === 'Interrupted breathing') ?? d.featured[0])?.id);
 
@@ -120,11 +137,12 @@ export function NightScreen({
     setSheet(s);
   };
 
-  const ready = state !== 'processing' && state !== 'poor';
+  const ready = state !== 'processing' && state !== 'poor' && state !== 'stopped';
   const concern = state === 'pattern';
   const sum = summary(d);
   const means = meaning(d);
-  const usual = d.baseline;
+  const usual = stopped ? undefined : d.baseline; // part of a night: never compared with your usual
+  const noUsual = stopped ? undefined : 'Your first night'; // part of a night: the Partial recording note says it
   const marks = benchmarks(d);
   const lead = d.featured.find((c) => c.id === selected) ?? d.featured[0];
   const sound = mark(marks, 'sound');
@@ -155,7 +173,7 @@ export function NightScreen({
         value={sound.display}
         name="Sound Score"
         level={zoneOf(sound).word}
-        detail={usual ? trendWords[trend(d.snoringMinutes, usual.snoringMinutes)] : 'Your first night'}
+        detail={usual ? trendWords[trend(d.snoringMinutes, usual.snoringMinutes)] : noUsual}
         onPress={() => open('sound')}
         accessibilityLabel={`Sound Score: ${sound.display} out of 100, ${zoneOf(sound).word}. More`}
       />
@@ -165,7 +183,7 @@ export function NightScreen({
         icon="airwave"
         name="Breathing pauses"
         level={zoneOf(breathing).word}
-        detail={usual ? trendWords[trend(d.breathingEvents.length, usual.breathingEvents)] : 'Your first night'}
+        detail={usual ? trendWords[trend(d.breathingEvents.length, usual.breathingEvents)] : noUsual}
         onPress={() => open('breathing')}
         accessibilityLabel={`Breathing pauses: ${zoneOf(breathing).word}. More`}
       />
@@ -229,12 +247,18 @@ export function NightScreen({
       >
         {(leave) => (
         <View style={styles.body}>
+          {problem && <PromptBody art={problem.copy.art} title={problem.copy.title} body={problem.copy.reason} fix={problem.copy.fix} cta={problem.cta} onCta={problem.onCta} />}
           {state === 'processing' && <Processing />}
 
-          {state === 'poor' && (
+          {stopped && !problem && (
             <>
-              <InsightCard lead tone="hero" title="We couldn’t hear enough last night" body="Try your phone closer to the bed." />
-              <View style={{ flex: 1 }} />
+              {/* One line between the header and the cards: this is only part of the night */}
+              <View style={styles.partial} accessibilityRole="text">
+                <Icon name="warning" size={18} color="lamp" />
+                <AppText variant="small" color="text">{`Partial recording · stopped at ${stopTime(wholeNight, stopped)}`}</AppText>
+              </View>
+              {readable && scores}
+              {sound_}
               <PrivacyFooter onMore={() => setExplain('privacy')} />
             </>
           )}
@@ -661,6 +685,8 @@ function Processing() {
 
 const styles = StyleSheet.create({
   body: { flex: 1, paddingHorizontal: PAGE_SIDE, marginTop: space.xl, gap: space.lg },
+  // Partial recording: a pill with a faint Lamp tint, like the header's tag (not a card)
+  partial: { flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', gap: space.sm, minHeight: 36, paddingHorizontal: space.md, borderRadius: radius.pill, backgroundColor: alpha(colors.lamp, 0.14) },
   pair: { flexDirection: 'row', gap: space.md },
   mini: { marginTop: 'auto', paddingTop: space.lg },
   semibold: { fontFamily: type.heading.fontFamily, fontWeight: type.heading.fontWeight },

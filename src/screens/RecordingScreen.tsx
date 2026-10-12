@@ -4,7 +4,9 @@ import { StatusBar } from 'expo-status-bar';
 import { AmbientGradient, AppText, BottomSheet, Button, ExplainSheet, Icon, InfoButton, ListeningRing, PAGE_SIDE, TipCarousel, type CarouselTip } from '../components';
 import { MAX_RECORDING_MINUTES, formatClock, fromMinutes, minutesSince } from '../lib/time';
 import { alpha, colors, gradients, motion, radius, space, useInsets, useReducedMotion } from '../theme';
+import { pausedCopy } from '../lib/recordingIssues';
 import type { RecordOrigin } from './HomeScreen';
+import { ProblemScreen } from './ProblemScreen';
 
 const native = motion.useNativeDriver;
 const RING_MAX = 300;
@@ -28,6 +30,10 @@ const GRADIENT_STRETCH = 1.4;
  * Runs until you stop it when you wake: tap the button, then confirm, so a half-asleep tap never
  * ends the night. Stops by itself after 8 hours (MAX_RECORDING_MINUTES) if you forget.
  * Direction: Figma "iPhone 16 & 17 Pro - 15" (Oct 2026).
+ *
+ * Paused: recording stopped in the night (another app closed Airese) and the user has come back.
+ * The problem screen (ProblemScreen): Carry on recording continues the same night; × stops for the
+ * night (with the usual confirm). Engineering: set on returning to the app after the recorder was cut off.
  */
 export function RecordingScreen({
   startedAt,
@@ -35,8 +41,11 @@ export function RecordingScreen({
   onStop,
   notesTonight = '',
   onOpenNotes,
+  pausedAt,
 }: {
   startedAt: Date;
+  /** Recording stopped at this time and hasn't carried on yet. */
+  pausedAt?: Date;
   from?: RecordOrigin;
   onStop: () => void;
   /** Tonight's Night Notes, summarised; empty when none yet. */
@@ -50,6 +59,7 @@ export function RecordingScreen({
   const [, tick] = useState(0);
   const [confirm, setConfirm] = useState(false);
   const [info, setInfo] = useState(false);
+  const [paused, setPaused] = useState(pausedAt);
 
   const flood = useRef(new Animated.Value(0)).current; // the blue circle: 0 button size → 1 fills the screen
   const surface = useRef(new Animated.Value(0)).current; // this screen fading in over the blue
@@ -109,6 +119,35 @@ export function RecordingScreen({
       },
     ],
   });
+
+  // Stopping asks first, from the ring or (paused) the ×
+  const confirmSheet = (
+    <BottomSheet visible={confirm} onClose={() => setConfirm(false)}>
+      <AppText variant="heading" color="text" accessibilityRole="header" style={styles.center}>
+        Stop recording?
+      </AppText>
+      <AppText color="textMuted" style={[styles.center, { marginTop: space.sm }]}>
+        Airese will look through your night.
+      </AppText>
+      <Button
+        label="Stop recording"
+        onPress={() => {
+          setConfirm(false);
+          onStop();
+        }}
+        style={{ marginTop: space.xl }}
+      />
+      <Button label="Keep recording" variant="quiet" onPress={() => setConfirm(false)} style={{ marginTop: space.sm }} />
+    </BottomSheet>
+  );
+
+  if (paused) {
+    return (
+      <ProblemScreen copy={pausedCopy(paused)} cta="Carry on recording" onCta={() => setPaused(undefined)} onClose={() => setConfirm(true)} closeLabel="Stop for the night">
+        {confirmSheet}
+      </ProblemScreen>
+    );
+  }
 
   return (
     <View style={styles.root} onLayout={(e: LayoutChangeEvent) => setSize(e.nativeEvent.layout)}>
@@ -199,23 +238,7 @@ export function RecordingScreen({
         </Animated.View>
       </View>
 
-      <BottomSheet visible={confirm} onClose={() => setConfirm(false)}>
-        <AppText variant="heading" color="text" accessibilityRole="header" style={styles.center}>
-          Stop recording?
-        </AppText>
-        <AppText color="textMuted" style={[styles.center, { marginTop: space.sm }]}>
-          Airese will look through your night.
-        </AppText>
-        <Button
-          label="Stop recording"
-          onPress={() => {
-            setConfirm(false);
-            onStop();
-          }}
-          style={{ marginTop: space.xl }}
-        />
-        <Button label="Keep recording" variant="quiet" onPress={() => setConfirm(false)} style={{ marginTop: space.sm }} />
-      </BottomSheet>
+      {confirmSheet}
 
       {/* (i): how recording works, plain and factual (docs/BRAND.md) */}
       <ExplainSheet

@@ -38,7 +38,8 @@ export function ScoreTile({
   icon?: IconName;
   name: string;
   level: string;
-  detail: string;
+  /** A line under the level (vs your usual); left out when there's nothing to compare. */
+  detail?: string;
   onPress?: () => void;
   accessibilityLabel?: string;
 }) {
@@ -49,7 +50,7 @@ export function ScoreTile({
       onPress={onPress}
       disabled={!onPress}
       accessibilityRole={onPress ? 'button' : undefined}
-      accessibilityLabel={accessibilityLabel ?? `${name}: ${value ? `${value}, ` : ''}${level}. ${detail}`}
+      accessibilityLabel={accessibilityLabel ?? `${name}: ${value ? `${value}, ` : ''}${level}.${detail ? ` ${detail}` : ''}`}
       style={({ pressed }) => [styles.tile, pressed && styles.pressed]}
     >
       {onPress ? (
@@ -75,9 +76,11 @@ export function ScoreTile({
           {level}
         </AppText>
       </View>
-      <AppText variant="small" color="textMuted" style={styles.detail} numberOfLines={2}>
-        {detail}
-      </AppText>
+      {detail ? (
+        <AppText variant="small" color="textMuted" style={styles.detail} numberOfLines={2}>
+          {detail}
+        </AppText>
+      ) : null}
     </Pressable>
   );
 }

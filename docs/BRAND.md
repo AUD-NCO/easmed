@@ -320,7 +320,7 @@ Also: `ambient` (9 s sine loop, for background breathing), `attention` (1.8 s la
 | Splash: logo and subtext arriving, falling away | slow |
 | Onboarding: illustration fading in | slow |
 | Onboarding: Next / Continue buttons | none (part of the page; they swipe with the text) |
-| Permission screens: graphic | none (there on load) |
+| Permission and update screens: graphic | none (there on load) |
 | Bottom sheet and top sheet: appearing and closing | fast |
 | Bottom sheet and top sheet: settling back after a short drag | fast |
 | Home banner: the next message fading in | fast |
