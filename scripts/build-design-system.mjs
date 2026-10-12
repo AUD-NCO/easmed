@@ -114,6 +114,7 @@ const BLURB = {
   "Icon": "A Material Symbol by name, size and colour token.",
   "Logo": "The stacked Airese logo.",
   "PageTitle": "Large title for a tab's page, the same on every tab, with a control on the right (Home: avatar; Reports: calendar).",
+  "PromptLayout": "Full-screen prompt: a 200 pt graphic, then headline, reason, an optional how-to-fix line with a Lamp lightbulb, one button. Skip or × top right. PromptBody is the same content inside a page with its own header.",
   "DetailPage": "Page template: back button (or none on a tab page), large title, subtitle with an optional tag, top-right control, sticky compact title on scroll, optional sticky footer.",
   "AmbientGradient": "The splash blues with two faint glows drifting across. Static with Reduce Motion.",
   "TabBar": "Floating two-tab bar for web and the preview. Native builds use the system tab bar.",
@@ -124,7 +125,7 @@ const BLURB = {
   "Avatar": "44 pt glassy circle with initials, or a person icon. Opens Profile. Exports titleControl, the look shared with the Reports calendar button.",
   "ToggleChip": "Pill that switches on and off. Reads as a checkbox.",
   "ChipGroup": "Wraps chips across lines.",
-  "SettingSwitch": "A label and a switch. Greyed out when disabled.",
+  "SettingSwitch": "A label (with an optional icon) and a switch. Greyed out when disabled.",
   "SegmentedControl": "iOS-style segmented control with a sliding Breath thumb.",
   "FormGroup": "Grouped form card with a title and footer. Outlines on focus and on error. onSheet for use inside a sheet.",
   "FormTitle": "The one section label: small, uppercase, Mist, 1 pt tracking.",
@@ -141,7 +142,7 @@ const BLURB = {
   "VerdictCard": "The night's verdict: headline, a sentence, one button by mood, and the week as a graph behind the words within a 7:1 contrast budget, drawn on load by a shine.",
   "DataCard": "Results card in two shapes, wide and square: label, visual or number, one line of insight.",
   "BigNumber": "The big number in a card. No small units.",
-  "ScoreTile": "Headline score: a ring with the number or an icon, the name, a level word, a trend.",
+  "ScoreTile": "Headline score: a ring with the number or an icon, the name, a level word, and a trend line when there's one to show.",
   "BottomSheet": "Sheet over a dimmed screen. Tap outside or drag down to close.",
   "ExplainSheet": "Short explanation in a sheet, with an optional action.",
   "TopSheet": "The bottom sheet's twin, dropping down from the top (the Reports calendar). Drag up or tap outside to close.",
@@ -169,7 +170,7 @@ const BLURB = {
 
 const GROUPS = [
   ['Foundations', [['AppText'], ['Icon'], ['Logo']]],
-  ['Page structure and templates', [['PageTitle'], ['DetailPage'], ['AmbientGradient'], ['TabBar'], ['Screen']]],
+  ['Page structure and templates', [['PageTitle'], ['DetailPage'], ['PromptLayout'], ['AmbientGradient'], ['TabBar'], ['Screen']]],
   ['Buttons and controls', [['Button'], ['IconButton'], ['InfoButton'], ['Avatar'], ['ToggleChip', 'ToggleChip'], ['ChipGroup', 'ToggleChip'], ['SettingSwitch', 'SettingRows'], ['SegmentedControl']]],
   ['Forms and rows', [['FormGroup', 'Form'], ['FormTitle', 'Form'], ['FormInput', 'Form'], ['FormDivider', 'Form'], ['PhoneField'], ['Checkbox'], ['WheelPicker', 'Pickers'], ['RulerPicker', 'Pickers'], ['AboutYou'], ['SettingRow', 'SettingRows']]],
   ['Cards', [['Card'], ['VerdictCard'], ['InsightCard'], ['DataCard'], ['BigNumber', 'DataCard'], ['ScoreTile']]],
@@ -195,7 +196,12 @@ const logo = (file) => read(`assets/brand/${file}`).replace(/fill="white"/g, 'fi
 // ---------- Copy images ----------
 
 mkdirSync(join(out, 'img'), { recursive: true });
-const IMAGES = ['onboarding/1-hear.jpg', 'onboarding/2-private.jpg', 'onboarding/3-pattern.jpg', 'permissions/microphone.png', 'permissions/notifications.png', 'icon.png', 'android-icon-foreground.png', 'splash-icon.png'];
+const IMAGES = [
+  'onboarding/1-hear.jpg', 'onboarding/2-private.jpg', 'onboarding/3-pattern.jpg',
+  'permissions/microphone.png', 'permissions/notifications.png', 'prompts/update.png',
+  'problems/space.png', 'problems/start.png', 'problems/faint.png', 'problems/stopped.png', 'problems/app-closed.png',
+  'icon.png', 'android-icon-foreground.png', 'android-icon-background.png', 'android-icon-monochrome.png',
+];
 for (const img of IMAGES) copyFileSync(join(root, 'assets', img), join(out, 'img', basename(img)));
 
 // Logos on a Midnight tile for the README (white logos vanish on GitHub's light theme).
@@ -459,20 +465,27 @@ const html = `<!doctype html>
     <div class="logo-tile" style="background:var(--midnight);border:1px solid var(--line);color:var(--mist)"><div style="width:240px">${logo('airese-logo-hori.svg')}</div></div>
   </div>
   <p class="muted" style="margin-top:12px">Moon on dark, white on the splash gradient, Mist in footers. Horizontal logo not used yet. Files: <a href="${REPO}/assets/brand/airese-logo.svg">airese-logo.svg</a>, <a href="${REPO}/assets/brand/airese-logo-hori.svg">airese-logo-hori.svg</a>.</p>
-  <h3>App icon and splash <span class="tag">placeholder</span></h3>
-  <p class="muted">Expo template images. Replace before release.</p>
+  <h3>App icon and splash</h3>
+  <p class="muted">The Airese mark in white on the splash gradient (Midnight to blue), 56% of the icon’s width. The icon’s mark has slightly thicker bars than the logo, so they stay visible at 29 pt. Native splash: plain Midnight, handing over to the animated splash screen. Play Store listing: <a href="${REPO}/assets/store/play-store-512.png">play-store-512.png</a>.</p>
   <div class="images">
-    <figure><img src="img/icon.png" alt="App icon (Expo placeholder)"><figcaption>App icon</figcaption></figure>
-    <figure><img src="img/android-icon-foreground.png" alt="Android adaptive icon (Expo placeholder)" style="background:#2E3A5A"><figcaption>Android icon on #2E3A5A</figcaption></figure>
-    <figure><img src="img/splash-icon.png" alt="Splash icon (Expo placeholder)"><figcaption>Splash icon</figcaption></figure>
+    <figure><img src="img/icon.png" alt="Airese app icon"><figcaption>App icon (iOS, App Store): 1024, no transparency</figcaption></figure>
+    <figure><img src="img/android-icon-foreground.png" alt="Android adaptive icon foreground" style="background:url(img/android-icon-background.png) center/cover"><figcaption>Android adaptive: foreground on background</figcaption></figure>
+    <figure><img src="img/android-icon-monochrome.png" alt="Android themed icon" style="background:#3C465A"><figcaption>Android monochrome (themed icons)</figcaption></figure>
   </div>
   <h3>Illustrations</h3>
+  <p class="muted">One style for every prompt: glowing line art on a deep blue sphere, warm Lamp highlights. Shown at 200 pt.</p>
   <div class="images">
-    <figure><img src="img/1-hear.jpg" alt="" loading="lazy"><figcaption>Onboarding 1: Let’s find out what happens while you sleep</figcaption></figure>
-    <figure><img src="img/2-private.jpg" alt="" loading="lazy"><figcaption>Onboarding 2: Private by default</figcaption></figure>
-    <figure><img src="img/3-pattern.jpg" alt="" loading="lazy"><figcaption>Onboarding 3: A clearer next step</figcaption></figure>
+    <figure><img src="img/1-hear.jpg" alt="" loading="lazy"><figcaption>Onboarding 1: Record your sleep with just your phone</figcaption></figure>
+    <figure><img src="img/2-private.jpg" alt="" loading="lazy"><figcaption>Onboarding 2: Private. Recordings stay on your phone</figcaption></figure>
+    <figure><img src="img/3-pattern.jpg" alt="" loading="lazy"><figcaption>Onboarding 3: Know when it’s worth getting checked</figcaption></figure>
     <figure><img src="img/microphone.png" alt="" loading="lazy"><figcaption>Microphone permission</figcaption></figure>
     <figure><img src="img/notifications.png" alt="" loading="lazy"><figcaption>Notifications permission</figcaption></figure>
+    <figure><img src="img/update.png" alt="" loading="lazy"><figcaption>App update</figcaption></figure>
+    <figure><img src="img/space.png" alt="" loading="lazy"><figcaption>Not enough space (and space ran out)</figcaption></figure>
+    <figure><img src="img/start.png" alt="" loading="lazy"><figcaption>Couldn’t start recording</figcaption></figure>
+    <figure><img src="img/faint.png" alt="" loading="lazy"><figcaption>Couldn’t hear clearly</figcaption></figure>
+    <figure><img src="img/stopped.png" alt="" loading="lazy"><figcaption>Stopped in the night</figcaption></figure>
+    <figure><img src="img/app-closed.png" alt="" loading="lazy"><figcaption>Paused: another app closed Airese</figcaption></figure>
   </div>
   <h3>Fonts</h3>
   <p>Montserrat via <code>@expo-google-fonts/montserrat</code> and Inter via <code>@expo-google-fonts/inter</code>, 400 and 600 of each.</p>

@@ -124,7 +124,8 @@ Wording and thresholds depend on what Engineering can detect with confidence.
 | Good night | Quiet | A steadier night. |
 | A recording | Matter of fact | 2:14 am. 40 seconds. Have a listen. |
 | Sharing with a partner | Kind | Here's what last night sounded like. |
-| No data | Helpful | We couldn't hear enough last night. Try your phone closer to the bed. |
+| No data | Helpful | Couldn't hear clearly. Put your phone closer to the bed. |
+| A recording problem | Plain, no blame | Recording stopped at 2:14 am. Your phone interrupted it. Keep it charging, with Do Not Disturb on. |
 | Getting better | Encouraging | Your breathing was steadier this week. |
 
 ### Wording swaps
@@ -320,7 +321,7 @@ Also: `ambient` (9 s sine loop, for background breathing), `attention` (1.8 s la
 | Splash: logo and subtext arriving, falling away | slow |
 | Onboarding: illustration fading in | slow |
 | Onboarding: Next / Continue buttons | none (part of the page; they swipe with the text) |
-| Permission and update screens: graphic | none (there on load) |
+| Permission, update and recording problem screens: graphic | none (there on load) |
 | Bottom sheet and top sheet: appearing and closing | fast |
 | Bottom sheet and top sheet: settling back after a short drag | fast |
 | Home banner: the next message fading in | fast |
@@ -333,6 +334,8 @@ Overlap steps instead of chaining them, so motion flows. Swipes and scrolls foll
 ### Imagery
 
 **Black and white. Deep blue. Real.** Use real people asleep in a dim room, toned blue, with an occasional warm bedside lamp. Show couples (the partner who hears the snoring). Avoid stock-photo cheer and sci-fi glow.
+
+**Prompt graphics** (permissions, app update, recording problems; Oct 2026): one consistent style of glowing line art on a deep blue sphere, with warm Lamp highlights. One idea per graphic, shown at 200 pt. All are in the design system (Brand assets → Illustrations).
 
 ### Reference screens (mood board)
 
@@ -350,7 +353,7 @@ Overlap steps instead of chaining them, so motion flows. Swipes and scrolls foll
 ## 5. Open questions
 
 - **Light vs dark: settled, dark.** `src/theme/tokens.ts` now maps its roles to the night palette: background is Midnight, surface Deep, text Moon, muted text Mist.
-- **Navy `#2E3A5A`.** It's the logo and deck colour. Is it still used in the app, or only for marketing?
+- **Navy `#2E3A5A`.** It's the logo and deck colour. Is it still used in the app, or only for marketing? (The app icon now uses the splash gradient, not Navy.)
 - **Monospace font** for data isn't named in the deck.
 - **Mood-board mockups** use reddish snore bars and an "up-arrow, more than your usual" badge. Both conflict with "no red / no scary warnings". Use Lamp in their place.
 - **Splash gradient blues.** The splash (Figma "iPhone 16 & 17 Pro - 1") fades from Midnight `#0B1020` (Figma had `#16131B`; changed so the splash hands over seamlessly to the Midnight app background) through `#1C3470` to `#225ED8`. These blues aren't in the deck palette; Breath `#9DB4FF` is the only blue there. They live in `gradients.splash` in `src/theme/tokens.ts`. Decide whether this blue joins the palette (for example as a brand blue) or stays splash-only.

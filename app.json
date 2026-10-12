@@ -14,7 +14,7 @@
     "android": {
       "package": "com.easmed.airese",
       "adaptiveIcon": {
-        "backgroundColor": "#2E3A5A",
+        "backgroundColor": "#0B1020",
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
@@ -29,7 +29,12 @@
     "plugins": [
       "expo-router",
       "expo-font",
-      "expo-splash-screen",
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#0B1020"
+        }
+      ],
       [
         "expo-audio",
         {

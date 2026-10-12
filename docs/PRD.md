@@ -34,6 +34,8 @@ When this document and the code disagree, raise it: either the code has a bug or
    - 5.9 [Reports](#59-reports)
    - 5.10 [Profile](#510-profile)
    - 5.11 [Notifications](#511-notifications)
+   - 5.12 [Recording problems](#512-recording-problems)
+   - 5.13 [App update](#513-app-update)
 6. [Measures and how they're calculated](#6-measures-and-how-theyre-calculated)
 7. [The escalation ladder](#7-the-escalation-ladder)
 8. [Privacy and data](#8-privacy-and-data)
@@ -84,7 +86,7 @@ Full detail in [BRAND.md](BRAND.md). The ones that shape requirements:
 
 ### In the prototype
 
-Splash, onboarding walkthrough, microphone and notification permissions, your details, Home (banner, record button), Night Notes, the Recording screen, Reports (Recording Details in six states, and the calendar), Profile (details, notifications, sleep care, centres, about, your data).
+Splash, onboarding walkthrough, microphone and notification permissions, your details, Home (banner, record button), Night Notes, the Recording screen, Reports (Recording Details in six states, and the calendar), Profile (details, bedtime reminder, sleep care, centres, about, your data), recording problems (section 5.12), the forced app update (section 5.13), and the app icon.
 
 ### Not yet built
 
@@ -94,7 +96,9 @@ Splash, onboarding walkthrough, microphone and notification permissions, your de
 | Real audio capture and analysis | All results use sample data generated per night (section 10). |
 | Sharing a report with a doctor | The night report exists; sharing or exporting it doesn't. |
 | Callback request flow | "Request a callback" closes the sheet; contact details and consent still to design. |
-| Notification delivery | Preferences are stored; nothing is scheduled. |
+| Notification delivery | The bedtime reminder preference is stored; nothing is scheduled. |
+| Detecting recording problems | Free space, start failures and interruptions are simulated by the demo nav (section 5.12). |
+| Version check for updates | The update screen exists; nothing decides when to show it yet (section 5.13). |
 | Partner sharing ("send this clip") | Proposed, needs a privacy design. |
 | Remedy experiments ("did mouth tape help?") | Night Notes are captured but not yet compared across nights. |
 | Photo upload | Out of scope by decision. |
@@ -110,10 +114,12 @@ Splash ─► Onboarding walkthrough ─► Microphone ─► Notifications ─�
    │                                                                          │
    ├─ Night Notes (push)                                                      ├─ Last night's report (Recording Details)
    ├─ Record button ─► Recording (full screen) ─► stop ─► Reports              │    └─ sheets: scores, snoring, breathing,
-   └─ Avatar ─► Profile (push)                                                │       sleep, clips, recent nights, night report
-                 ├─ Your details (push)                                       └─ Calendar (top sheet) ─► another night's report
-                 ├─ Notifications (push)
+   │    └─ can't start ─► Recording problem (full screen)                     │       sleep, clips, recent nights, night report
+   └─ Avatar ─► Profile (push)                                                └─ Calendar (top sheet) ─► another night's report
+                 ├─ Your details (push)
                  └─ Our centres (push)
+
+Outside the flow: App update (full screen, forced) · Recording paused (over Recording)
 ```
 
 - **Tabs:** Home and Reports, in a floating tab bar.
@@ -206,11 +212,12 @@ The bedtime screen. One job: start a night's recording.
 
 **Header:** "Home" and the avatar (initials, or a person icon). The avatar opens Profile.
 
-**Banner messages** (four for launch; the first that applies shows, and a new one fades in):
+**Banner messages** (five for launch; the first that applies shows, and a new one fades in):
 
 | Priority | When | Message | Action |
 | --- | --- | --- | --- |
 | P0 | Microphone off | "Airese needs your microphone to record your night." | **Turn on microphone** (permission sheet) |
+| P0 | Last night stopped early (the morning after) | "Last night's recording stopped at 2:14 am. Everything up to then is saved." | **See what was saved** (that night's report) |
 | P1 | Notifications off | "Turn on notifications for a bedtime reminder." | **Turn on notifications** |
 | P2 | Not dismissed yet | "Keep your phone on charge while you record. A night of listening uses more battery." | **Got it** (hides it) |
 | P3 | Otherwise | "Add Night Notes before you sleep, so you can track your progress over time." Once added: "Tonight's Night Notes: Blocked nose · Alcohol" | **Add Night Notes** / **Edit Night Notes** |
@@ -225,6 +232,7 @@ P3 is always there underneath, so it's also Home's way into Night Notes (there's
 - **At rest:** the button breathes very gently, and now and then a light runs round the ring.
 - **Under it:** "Tap to start recording", and a quiet pill with a lock: "Private. Recordings stay on this phone."
 - **No stop time to set.** Recording runs until the user stops it (section 5.7).
+- **Can't start** (not enough space, or the recorder failed): the recording problem screen instead (section 5.12).
 
 ### 5.6 Night Notes
 
@@ -268,6 +276,8 @@ The full rule set and its reasons are in [RECORDING.md](RECORDING.md).
 - **Bottom:**
   - An outlined pill: **Stops by itself after 8 hours**. Screen readers hear the exact time.
 
+**Paused:** if recording stopped in the night (another app closed Airese) and the user comes back to Airese, the Recording screen shows the recording problem template instead (section 5.12): **Carry on recording** continues the same night; × stops for the night, with the usual confirm.
+
 > **To confirm (Engineering):** recording must survive a locked screen and Do Not Disturb, and the 8-hour cap must be checked against battery and storage measurements.
 
 ### 5.8 Recording Details
@@ -284,7 +294,8 @@ The most important screen: one night's results. It is the Reports tab's page (se
 | State | When | What the page shows |
 | --- | --- | --- |
 | Processing | Straight after stopping | "Looking through your night" / "Finding the moments worth showing you." with a soft progress shimmer. No empty cards. |
-| Couldn't hear clearly | Poor audio | "We couldn't hear enough last night" / "Try your phone closer to the bed." Privacy footer. No scores. |
+| Couldn't hear clearly | Poor audio | The usual header, with the recording problem template in the middle (section 5.12). No cards. |
+| Stopped early | The recording stopped in the night | The usual header, with the recording problem template (section 5.12). **See what was saved** then shows the saved part: a "Partial recording · stopped at 2:14 am" note (Lamp icon, faint Lamp pill), the scores if 2 hours or more were saved (no trend line, never compared with your usual), and the night in sound. |
 | First night | No history yet | Proof first: the night in sound comes **before** the scores. No comparisons. "Your first night" note instead of recent nights. |
 | Ordinary | Close to usual | "A steadier night". Blue card, low calm graph, **Keep tracking**. |
 | Unusual | One night out of the ordinary | "More snoring than usual". Warm dusk card, climbing Lamp graph, **Try using a remedy**. |
@@ -417,6 +428,33 @@ One notification: the bedtime reminder, switched on in Profile → Settings (Oct
 
 ---
 
+### 5.12 Recording problems
+
+One template for every case, the same as the permission screens (`PromptLayout`): **image, problem, reason, how to solve, one button**. A few words each; the picture does most of the work. Copy and logic: `src/lib/recordingIssues.ts`.
+
+| Case | Where | Problem | Reason | How to solve (Lamp lightbulb) | Button | Top right |
+| --- | --- | --- | --- | --- | --- | --- |
+| Not enough space | Full screen, on tapping record | Not enough space to record | We need at least 200 MB of space. | Clear files you don't need. | **Try again** (checks again; starts if it can) | × to Home |
+| Couldn't start | Full screen, on tapping record | Oops! Couldn't start recording | Something went wrong somewhere. | Close the app and try again. | **Try again** | × to Home |
+| Couldn't hear clearly | Reports, that night (usual header) | Couldn't hear clearly | The sound was too faint last night. | Put your phone closer to the bed. | **Record tonight** (to Home) | Calendar |
+| Stopped in the night | Reports, that night (usual header) | Recording stopped at 2:14 am | Your phone interrupted it. 3h 9m saved. | Keep it charging, with Do Not Disturb on. | **See what was saved** | Calendar |
+| Paused | Over Recording, back in Airese that night | Recording paused at 1:30 am | Another app closed Airese. | Keep Airese open. Just lock your phone. | **Carry on recording** | × stop for the night |
+
+- **Other causes of a stop** share the template, with their own reason, fix and image: another app closed Airese ("Keep Airese open. Just lock your phone."), or space ran out ("Clear files you don't need.").
+- **What was saved:** under 2 hours, clips only; 2 hours or more, the scores too. The night never changes the user's usual.
+- **Images:** one per case, in the same glowing style as the permission graphics (`assets/problems/`).
+
+> **To confirm (Engineering):** how much space a night needs (200 MB is a placeholder); the shortest stretch worth scoring (2 hours, with Clinical); detecting a failed start, an interruption and the app being closed (AppState, audio interruptions); free space from `expo-file-system`.
+
+### 5.13 App update
+
+A full-screen prompt (`PromptLayout`), **forced for now**: no Skip, no swipe back.
+
+- **Copy:** "Update Airese to keep recording." / "This version is out of date. Your recordings and reports stay on your phone. See what's new in the App Store." ("Google Play" on Android.)
+- **Button:** **Update now** opens the store page. What's new is told in the store listing, not here.
+
+> **To confirm (Engineering):** the version check (the server compares the installed version with the oldest supported one); the App Store ID (a placeholder in `src/lib/appUpdate.ts`). Recordings stay through an update (confirmed by Engineering, Oct 2026).
+
 ## 6. Measures and how they're calculated
 
 All ranges below are **placeholders for Clinical to confirm**. Words stay calm: no "bad", no "critical".
@@ -510,7 +548,7 @@ Full detail in [BRAND.md](BRAND.md).
   - guide ranges: `src/lib/benchmarks.ts`;
   - Sound Score formula: `soundScoreParts` in `src/lib/nightDetails.ts`;
   - privacy policy and terms: `src/screens/ProfileScreen.tsx`.
-- **Browser preview:** `preview/index.tsx` mirrors the routes for review; `public/iphone.html` adds the iPhone frame, with every screen and state listed as links in a left pane. It's published to GitHub Pages on every push to `main`.
+- **Browser preview:** `preview/index.tsx` mirrors the routes for review; `public/iphone.html` adds the iPhone frame, with every screen and state listed as links in a left pane, and a one-line note under the phone saying what the screen does (and its route, on localhost). It's published to GitHub Pages on every push to `main`.
 
 ---
 

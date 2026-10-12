@@ -79,7 +79,7 @@ The swatch images on this page are written from `tokens.ts` every time the desig
 | ![](swatches/error-mark.svg) | Error mark | `colors.errorMark` | Flare: the field ring and icon, never text |
 | ![](swatches/urgent-action.svg) | Urgent action | `colors.urgentAction` | Coral `#FF7F72`, Flare lightened: **only** Book a call on a repeated pattern. Midnight label 7.7:1; 5.3:1 against the wine card |
 | ![](swatches/tint-accent.svg) | Breath wash | `colors.tintAccent` | Breath at 16%: profile tile badges, the selected gender tile, the missed-nights note, the Last night tag |
-| ![](swatches/brand.svg) | Airese navy | `colors.brand` | `#2E3A5A`: logo, decks, Android icon background |
+| ![](swatches/brand.svg) | Airese navy | `colors.brand` | `#2E3A5A`: logo, decks |
 | ![](swatches/white.svg) | White | `colors.white` | `#FFFFFF`: logo on the splash, switch thumbs |
 
 ### Data colours
@@ -238,7 +238,7 @@ The UI is flat: depth comes from colour (Midnight → Deep), not shadows.
 | Navigation | `chevron_left`, `chevron_right`, `keyboard_arrow_down`, `arrow_forward`, `keyboard_double_arrow_right`, `close`, `home`, `home_fill` |
 | Actions | `add`, `remove`, `edit`, `edit_note`, `delete`, `call`, `location_on`, `search`, `play_fill`, `pause_fill`, `stop_fill`, `check` |
 | Forms | `check_box`, `check_box_outline_blank` |
-| Recording and sound | `mic`, `mic_fill`, `graphic_eq`, `airwave`, `monitoring`, `history` |
+| Recording and sound | `mic`, `mic_fill`, `mic_off`, `graphic_eq`, `airwave`, `monitoring`, `history`, `hard_drive` |
 | Sleep and time | `bedtime`, `bedtime_fill`, `schedule`, `schedule_fill`, `calendar_month`, `bed` |
 | Status and trends | `check_circle`, `visibility`, `trending_up`, `trending_down`, `trending_flat`, `warning`, `error`, `info`, `lightbulb` |
 | People and settings | `person`, `group`, `notifications`, `settings`, `lock`, `mail`, `description` |
@@ -271,20 +271,29 @@ The UI is flat: depth comes from colour (Midnight → Deep), not shadows.
 
 | Asset | File | Notes |
 | --- | --- | --- |
-| iOS / default icon | [`assets/icon.png`](../assets/icon.png) | **Placeholder:** still Expo's default template image |
-| Android adaptive icon | [`android-icon-foreground.png`](../assets/android-icon-foreground.png), [`-background.png`](../assets/android-icon-background.png), [`-monochrome.png`](../assets/android-icon-monochrome.png) | **Placeholder artwork** (Expo template) on Airese navy `#2E3A5A` |
-| Splash | [`assets/splash-icon.png`](../assets/splash-icon.png) | **Placeholder** (Expo template). The animated splash itself is a screen (`SplashScreen.tsx`) and uses the real logo |
-| Favicon (web preview) | [`assets/favicon.png`](../assets/favicon.png) | |
+| iOS / App Store icon | [`assets/icon.png`](../assets/icon.png) | 1024, square, no transparency (iOS rounds it). The white mark, 56% wide, on the splash gradient (Midnight → `#1C3470` → `#225ED8`) |
+| Android adaptive icon | [`android-icon-foreground.png`](../assets/android-icon-foreground.png), [`-background.png`](../assets/android-icon-background.png), [`-monochrome.png`](../assets/android-icon-monochrome.png) | All 1024. Foreground: the mark on transparent, sized to match iOS inside the visible 72/108 area. Background: the gradient (fallback colour Midnight in `app.json`). Monochrome: the mark, for Android 13 themed icons |
+| Play Store listing | [`assets/store/play-store-512.png`](../assets/store/play-store-512.png) | 512, the full icon. Uploaded in Play Console, not set in `app.json` |
+| Splash (native) | `app.json` → `expo-splash-screen` | Plain Midnight, no image, so it hands over to the animated splash screen (`SplashScreen.tsx`) without a flash |
+| Favicon (web preview) | [`assets/favicon.png`](../assets/favicon.png) | The app icon at 48 |
+
+The icon's mark has slightly thicker bars than the logo (the second and third bars 1.3× and 1.7× wider), so all four stay visible at 29 pt. The logo files are unchanged.
 
 ### Illustrations
 
-| Onboarding 1: Let's find out what happens while you sleep | Onboarding 2: Private by default | Onboarding 3: A clearer next step |
+One style for every prompt: glowing line art on a deep blue sphere, with warm Lamp highlights. Shown at 200 pt (`PromptLayout`); files are 600 × 600, transparent.
+
+| Onboarding 1: Record your sleep with just your phone | Onboarding 2: Private. Recordings stay on your phone | Onboarding 3: Know when it's worth getting checked |
 | --- | --- | --- |
 | <img src="../assets/onboarding/1-hear.jpg" width="160" alt=""> | <img src="../assets/onboarding/2-private.jpg" width="160" alt=""> | <img src="../assets/onboarding/3-pattern.jpg" width="160" alt=""> |
 
-| Microphone permission | Notifications permission |
-| --- | --- |
-| <img src="../assets/permissions/microphone.png" width="140" alt=""> | <img src="../assets/permissions/notifications.png" width="140" alt=""> |
+| Microphone permission | Notifications permission | App update |
+| --- | --- | --- |
+| <img src="../assets/permissions/microphone.png" width="140" alt=""> | <img src="../assets/permissions/notifications.png" width="140" alt=""> | <img src="../assets/prompts/update.png" width="140" alt=""> |
+
+| Not enough space | Couldn't start recording | Couldn't hear clearly | Stopped in the night | Paused: app closed |
+| --- | --- | --- | --- | --- |
+| <img src="../assets/problems/space.png" width="120" alt=""> | <img src="../assets/problems/start.png" width="120" alt=""> | <img src="../assets/problems/faint.png" width="120" alt=""> | <img src="../assets/problems/stopped.png" width="120" alt=""> | <img src="../assets/problems/app-closed.png" width="120" alt=""> |
 
 **Imagery direction** (BRAND.md): black and white, deep blue, real. Real people asleep in a dim room, toned blue, with an occasional warm bedside lamp. No stock-photo cheer or sci-fi glow.
 
@@ -311,7 +320,8 @@ All in [`src/components/`](../src/components/), imported from `'../components'`.
 | Component | What it is | Key props | Used in |
 | --- | --- | --- | --- |
 | [`PageTitle`](../src/components/PageTitle.tsx) | A tab page's title row: the same size, colour (Moon), position and height on every tab, with a control on the right. Exports `PAGE_SIDE`, `PAGE_TITLE_TOP`. | `title`, `trailing` | Home, Reports (through `DetailPage`) |
-| [`DetailPage`](../src/components/DetailPage.tsx) | Page template: "‹ Back" (or no back on a tab's own page, which then uses `PageTitle`'s row), large title, subtitle (`\n` for a second line) with an optional tag pill, a top-right control (glassy in the title row, a plain glyph in the compact bar), sticky frosted compact title on scroll, optional sticky footer. Slides itself in on web. | `title`, `subtitle`, `subtitleTag`, `backLabel` + `onBack`, `trailing`, `footer(leave)`, `bottomInset` | Reports, Night Notes, Profile, Your details, Notifications, Our centres, Terms and Privacy |
+| [`DetailPage`](../src/components/DetailPage.tsx) | Page template: "‹ Back" (or no back on a tab's own page, which then uses `PageTitle`'s row), large title, subtitle (`\n` for a second line) with an optional tag pill, a top-right control (glassy in the title row, a plain glyph in the compact bar), sticky frosted compact title on scroll, optional sticky footer. Slides itself in on web. | `title`, `subtitle`, `subtitleTag`, `backLabel` + `onBack`, `trailing`, `footer(leave)`, `bottomInset` | Reports, Night Notes, Profile, Your details, Our centres, Terms and Privacy |
+| [`PromptLayout`](../src/components/PromptLayout.tsx) · `PromptBody` | Full-screen prompt: a 200 pt graphic centred above, then headline, reason, an optional how-to-fix line (Lamp lightbulb) and one button, anchored low. Skip or × top right. `PromptBody` is the same content inside a page with its own header (a problem night on Reports). | `art`, `title`, `body`, `fix`, `cta` + `onCta`, `onSkip`, `onClose` | Permission screens, app update, recording problems |
 | [`AmbientGradient`](../src/components/AmbientGradient.tsx) | The splash blues with two soft glows drifting slowly. Static with Reduce Motion. | `width`, `height` | Home, Recording |
 | [`TabBar`](../src/components/TabBar.tsx) | Floating two-tab bar (Home, Reports) for web and the preview (native uses the platform tab bar). Exports `HOME_TABS`, `TAB_BAR_CLEARANCE`. | `items`, `selected`, `onSelect` | Web tabs layout, preview |
 | [`Screen`](../src/components/Screen.tsx) | Background, safe areas, edges, status bar. | `children` | Not used (see Housekeeping) |
@@ -325,14 +335,14 @@ All in [`src/components/`](../src/components/), imported from `'../components'`.
 | [`InfoButton`](../src/components/InfoButton.tsx) | The (i) that opens an explanation. | `onPress`, `label`, `size`, `color` | Onboarding, details, Recording, cards |
 | [`Avatar`](../src/components/Avatar.tsx) | 44 pt glassy circle with initials (or a person icon); opens Profile. Exports `titleControl`, the look it shares with the Reports calendar button. | `initials`, `onPress` | Home |
 | [`ToggleChip`](../src/components/ToggleChip.tsx) · `ChipGroup` | Multi-select pill (reads as a checkbox) and the wrapping row that holds them. | `label`, `selected`, `onToggle` | Night Notes |
-| [`SettingSwitch`](../src/components/SettingRows.tsx) | A plain label and a native switch (Breath track, white thumb). Greyed out when disabled. | `title`, `value`, `enabled`, `onChange` | Notifications |
+| [`SettingSwitch`](../src/components/SettingRows.tsx) | A label (with an optional icon, to line up with `SettingRow`) and a native switch (Breath track, white thumb). Greyed out when disabled. | `icon`, `title`, `value`, `enabled`, `onChange` | Profile (Bedtime reminder) |
 | [`SegmentedControl`](../src/components/SegmentedControl.tsx) | iOS-style segmented control with a sliding Breath thumb. Radio group for screen readers. | `segments`, `selected`, `onSelect`, `label` | Height and weight sheets (units) |
 
 ### Forms and rows
 
 | Component | What it is | Key props | Used in |
 | --- | --- | --- | --- |
-| [`FormGroup`](../src/components/Form.tsx) | iOS Settings-style group: section label, Deep card, optional footer. Outlines in Breath while focused, in error red with an icon and message on error. `onSheet` gives the card the app background inside a sheet. | `title`, `titleAction`, `footer`, `error`, `row`, `onSheet` | Your details (onboarding and Profile), Profile, Notifications, sheets |
+| [`FormGroup`](../src/components/Form.tsx) | iOS Settings-style group: section label, Deep card, optional footer. Outlines in Breath while focused, in error red with an icon and message on error. `onSheet` gives the card the app background inside a sheet. | `title`, `titleAction`, `footer`, `error`, `row`, `onSheet` | Your details (onboarding and Profile), Profile, sheets |
 | [`FormTitle`](../src/components/Form.tsx) | **The one section label**: small, uppercase, Mist, 1 pt tracking. | `title`, `action` | Form groups, About you, Night Notes remedies |
 | [`FormInput`](../src/components/Form.tsx) | A plain native text input row (52 pt), with optional leading and trailing controls. | TextInput props, `leading`, `trailing` | Your details, sheets |
 | [`FormDivider`](../src/components/Form.tsx) | Hairline between rows (or between inputs in a row group). | `vertical` | Forms, Profile groups |
@@ -341,7 +351,7 @@ All in [`src/components/`](../src/components/), imported from `'../components'`.
 | [`WheelPicker`](../src/components/Pickers.tsx) | A scroll wheel for one number from a range. Scroll, tap a row, or swipe up and down with a screen reader. | `min`, `max`, `value`, `onChange`, `label`, `format` | Age sheet (year of birth) |
 | [`RulerPicker`](../src/components/Pickers.tsx) | A ruler you drag under a needle, with − / + and a number you can type. | `min`, `max`, `value`, `onChange`, `label`, `unit`, `display` | Height and weight sheets |
 | [`AboutYou`](../src/components/AboutYou.tsx) | Gender, age, height, weight and where you live as tiles; each opens a small sheet for that one question, then shows the answer. All optional, with (i). | `value`, `onChange` | Your details (onboarding and Profile) |
-| [`SettingRow`](../src/components/SettingRows.tsx) | Row inside a group: icon, title, optional detail; a chevron opens a page, an action pill does something here ("Turn on"). 64 pt. | `icon`, `title`, `detail`, `chevron`, `action`, `disabled`, `onPress` | Profile, Notifications |
+| [`SettingRow`](../src/components/SettingRows.tsx) | Row inside a group: icon, title, optional detail; a chevron opens a page, an action pill does something here ("Turn on"). 64 pt. | `icon`, `title`, `detail`, `chevron`, `action`, `disabled`, `onPress` | Profile |
 
 ### Cards
 
@@ -349,9 +359,9 @@ All in [`src/components/`](../src/components/), imported from `'../components'`.
 | --- | --- | --- | --- |
 | [`Card`](../src/components/Card.tsx) | Deep surface, 16 pt corners, 20 pt padding, optional title row with (i). | `title`, `onInfo` | Inside `InsightCard` |
 | [`VerdictCard`](../src/components/VerdictCard.tsx) | The night's verdict: headline, a sentence, one button by mood, and the week as a graph behind the words (see Verdict moods). Drawn on load by a shine. | `mood`, `title`, `body`, `values`, `action` | Reports |
-| [`InsightCard`](../src/components/InsightCard.tsx) · `HeroBackground` | A plain-language takeaway. Tones: `plain`, `hero` (the no-data night), `warm` (Lamp wash, "what it means"). `HeroBackground` is the mood gradient and glow, shared with `VerdictCard`. | `title`, `body`, `lead`, `icon`, `iconColor`, `tone`, `onInfo` | Reports |
+| [`InsightCard`](../src/components/InsightCard.tsx) · `HeroBackground` | A plain-language takeaway. Tones: `plain`, `hero`, `warm` (Lamp wash, "what it means"). `HeroBackground` is the mood gradient and glow, shared with `VerdictCard`. | `title`, `body`, `lead`, `icon`, `iconColor`, `tone`, `onInfo` | Reports |
 | [`DataCard`](../src/components/DataCard.tsx) · `BigNumber` | The Recording Details card: label with the data's icon, a visual or big number, one line of insight, "›" for more. Shapes: `wide`, `square`. | `shape`, `icon`, `tone`, `label`, `title`, `insight`, `onPress` | Reports |
-| [`ScoreTile`](../src/components/ScoreTile.tsx) | Headline score, half width: a big ring with the number (or icon) inside, the name, a level word on a tint, a trend line. | `tone`, `fraction`, `value` or `icon`, `name`, `level`, `detail` | Reports (Sound Score, Breathing pauses) |
+| [`ScoreTile`](../src/components/ScoreTile.tsx) | Headline score, half width: a big ring with the number (or icon) inside, the name, a level word on a tint, and a trend line when there's one (left out on part of a night). | `tone`, `fraction`, `value` or `icon`, `name`, `level`, `detail` | Reports (Sound Score, Breathing pauses) |
 
 ### Sheets and feedback
 
@@ -361,7 +371,7 @@ All in [`src/components/`](../src/components/), imported from `'../components'`.
 | [`TopSheet`](../src/components/TopSheet.tsx) | The bottom sheet's twin, dropping down from the top; drag up or tap outside to close. | `visible`, `onClose` | Reports (calendar) |
 | [`ExplainSheet`](../src/components/ExplainSheet.tsx) | Small explanation: title, a few sentences, optional action, "Got it". | `content`, `onClose`, `action` | Reports, Recording, details, Profile (About) |
 | [`LargeSheet`](../src/components/LargeSheet.tsx) | Near full-height sheet for "more" on a card, with a title, × and drag-down. | `visible`, `title`, `onClose` | Reports (score, snoring, breathing, sleep, clips, recent nights, night report) |
-| [`PermissionSheet`](../src/components/PermissionSheet.tsx) | A second chance at a permission; picks "why it matters" or "open Settings" from where the permission stands. | `kind`, `visible`, `onAllowed`, `onNotNow` | Home, Reports, Profile, Notifications, permission screens |
+| [`PermissionSheet`](../src/components/PermissionSheet.tsx) | A second chance at a permission; picks "why it matters" or "open Settings" from where the permission stands. | `kind`, `visible`, `onAllowed`, `onNotNow` | Home, Reports, Profile, permission screens |
 | [`Toast`](../src/components/Toast.tsx) | A short confirmation pill with a check; fades in and out; announced once to screen readers. | `message`, `onDone` | Profile (after deleting recordings) |
 | [`SystemAlertHost`](../src/components/SystemAlertHost.tsx) | **Browser preview only.** Stand-in for the iOS permission alert (iOS styling on purpose). Renders nothing on device. | — | Root layout, preview |
 
@@ -488,7 +498,7 @@ Design-relevant packages (all Expo SDK 57 compatible):
 
 Things to tidy or decide before handover:
 
-- **App icon and splash icon are placeholders.** They're Expo's default template images. Replace them with the Airese mark before any store build.
+- **App icon:** the Airese mark is in place (section 6). Check it on a release build; iOS dark and tinted variants aren't made yet.
 - **Unused:** `Screen` and the horizontal logo (`airese-logo-hori.svg`). Keep them or remove them.
 - **Overlaps:** `NightTimeline` and `SnoringChart` both draw the night. The timeline now only appears in the All clips sheet.
 - **Lint:** the React Compiler rules (`react-hooks/refs`, `set-state-in-effect`) flag the `Animated.Value` refs used across the animation code. It's a known pattern, not a bug; moving animations to Reanimated would clear it.
