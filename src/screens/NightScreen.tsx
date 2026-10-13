@@ -73,15 +73,14 @@ const SHEET_TITLE: Record<Sheet, string> = {
  * card has a visual, one line of insight and "›" to a large sheet with the full story.
  *
  * Three layers, for three readers:
- *   glance   (everyone, at 6 am) the verdict and "Have a listen" · Sound Score and breathing as plain levels
+ *   glance   (everyone, at 6 am) Sound Score and breathing as plain levels · the verdict and its one next step
  *   explore  your night in sound: the chart is the index to the clips; tap a moment to hear it, with the
  *            pause and the breath after it marked · snoring time and sleep · recent nights · what it means
  *   report   (the curious, and doctors) the night report sheet: zoomable chart, every measure, how it's measured
  * Snoring is a score (comparable, safe to track). Breathing is a plain level on the page; its exact
  * rate lives in its sheet and the report, pending Clinical. The sticky action follows the level of concern.
- * First night: proof first (the night in sound comes before the scores, which have nothing to compare with yet).
  * Colour by data: Ember snoring, Iris breathing, Dew sleep. Type: four sizes, regular and semibold.
- * States: processing, stopped early (what was saved), first night (no comparisons), ordinary, unusual, repeated pattern.
+ * States: processing, stopped early (what was saved), ordinary, unusual, repeated pattern.
  * A recording problem (couldn't hear clearly, stopped early): the usual header, and the problem in the
  * middle (PromptBody: image, problem, reason, how to solve, one button) in place of the cards.
  *
@@ -141,8 +140,7 @@ export function NightScreen({
   const concern = state === 'pattern';
   const sum = summary(d);
   const means = meaning(d);
-  const usual = stopped ? undefined : d.baseline; // part of a night: never compared with your usual
-  const noUsual = stopped ? undefined : 'Your first night'; // part of a night: the Partial recording note says it
+  const usual = stopped ? undefined : d.baseline; // part of a night: never compared with your usual (the Partial recording note says it)
   const marks = benchmarks(d);
   const lead = d.featured.find((c) => c.id === selected) ?? d.featured[0];
   const sound = mark(marks, 'sound');
@@ -155,7 +153,7 @@ export function NightScreen({
 
   // The night's one next step, in the verdict card and (once that's scrolled away) the sticky footer:
   // the same button in both places (label, icon, colour), so the page never offers two different actions.
-  // Ordinary or first night: keep tracking. Unusual: something to try tonight. Repeated pattern: book a call.
+  // Ordinary night: keep tracking. Unusual: something to try tonight. Repeated pattern: book a call.
   const mood: Mood = concern ? 'urgent' : state === 'unusual' ? 'watch' : 'calm';
   const step = (leave: (then: () => void) => void) =>
     concern
@@ -173,7 +171,7 @@ export function NightScreen({
         value={sound.display}
         name="Sound Score"
         level={zoneOf(sound).word}
-        detail={usual ? trendWords[trend(d.snoringMinutes, usual.snoringMinutes)] : noUsual}
+        detail={usual && trendWords[trend(d.snoringMinutes, usual.snoringMinutes)]}
         onPress={() => open('sound')}
         accessibilityLabel={`Sound Score: ${sound.display} out of 100, ${zoneOf(sound).word}. More`}
       />
@@ -183,7 +181,7 @@ export function NightScreen({
         icon="airwave"
         name="Breathing pauses"
         level={zoneOf(breathing).word}
-        detail={usual ? trendWords[trend(d.breathingEvents.length, usual.breathingEvents)] : noUsual}
+        detail={usual && trendWords[trend(d.breathingEvents.length, usual.breathingEvents)]}
         onPress={() => open('breathing')}
         accessibilityLabel={`Breathing pauses: ${zoneOf(breathing).word}. More`}
       />
@@ -265,27 +263,26 @@ export function NightScreen({
 
           {ready && (
             <>
+              {scores}
+
               {/* The verdict: the words, the night's one next step, and the week as a graph behind them */}
               <View onLayout={(e) => setHeroBottom(e.nativeEvent.layout.y + e.nativeEvent.layout.height)}>
                 <VerdictCard
                   mood={mood}
                   title={sum.headline}
                   body={sum.body}
-                  // The week behind the words: last 7 nights of snoring (tonight last), or tonight hour by hour on a first night
-                  values={d.recent.length ? d.recent.map((r) => r.snoringMinutes) : d.hourly.map((h) => h.minutes)}
+                  values={d.recent.map((r) => r.snoringMinutes)} // the week behind the words: last 7 nights of snoring, tonight last
                   action={step(leave)}
                 />
               </View>
 
-              {usual && scores}
               {sound_}
-              {!usual && scores}
 
               {/* Snoring time and sleep */}
               <View style={styles.pair}>
                 <DataCard shape="square" icon="graphic_eq" tone="snoring" label="Snoring" onPress={() => open('snoring')} accessibilityLabel={`Snoring time: ${formatDuration(d.snoringMinutes)}. More`}>
                   <BigNumber value={shortDuration(d.snoringMinutes)} />
-                  {usual ? <Trend value={d.snoringMinutes} usual={usual.snoringMinutes} /> : <Note>{`${pct(d.snoringMinutes, d.night.minutes)}% of the night`}</Note>}
+                  <Trend value={d.snoringMinutes} usual={d.baseline.snoringMinutes} />
                   <View style={styles.mini}>
                     <HourlyBars compact hours={d.hourly} />
                   </View>
@@ -299,14 +296,10 @@ export function NightScreen({
                 </DataCard>
               </View>
 
-              {/* Recent nights, or a first-night note */}
-              {usual ? (
-                <DataCard title="Your recent nights" insight={recentLine(d)} onPress={() => open('recent')}>
-                  <RecentNightsChart nights={d.recent.map((r) => ({ day: r.day, value: r.snoringMinutes, tonight: r.tonight }))} usual={usual.snoringMinutes} level={scaleAt(mark(marks, 'snoring'))} format={formatDuration} />
-                </DataCard>
-              ) : (
-                <InsightCard icon="lightbulb" title="Your first night" body="This gives us a starting point. Record a few more nights and Airese can show you what’s typical for you." />
-              )}
+              {/* Recent nights */}
+              <DataCard title="Your recent nights" insight={recentLine(d)} onPress={() => open('recent')}>
+                <RecentNightsChart nights={d.recent.map((r) => ({ day: r.day, value: r.snoringMinutes, tonight: r.tonight }))} usual={d.baseline.snoringMinutes} level={scaleAt(mark(marks, 'snoring'))} format={formatDuration} />
+              </DataCard>
 
               {/* What it means */}
               {means && <InsightCard tone="warm" icon="lightbulb" title={means.title} body={means.body} onInfo={() => setExplain('deciding')} infoLabel="How Airese decides what to say" />}
@@ -416,7 +409,6 @@ function breathingByHour(d: NightDetails) {
 }
 
 function recentLine(d: NightDetails) {
-  if (!d.baseline) return '';
   const t = trend(d.snoringMinutes, d.baseline.snoringMinutes);
   const usual = formatDuration(d.baseline.snoringMinutes);
   return t === 'less' ? `Less snoring than your usual ${usual}.` : t === 'more' ? `More snoring than your usual ${usual}.` : `About your usual ${usual} of snoring.`;

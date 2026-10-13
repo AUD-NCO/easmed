@@ -296,29 +296,28 @@ The most important screen: one night's results. It is the Reports tab's page (se
 | Processing | Straight after stopping | "Looking through your night" / "Finding the moments worth showing you." with a soft progress shimmer. No empty cards. |
 | Couldn't hear clearly | Poor audio | The usual header, with the recording problem template in the middle (section 5.12). No cards. |
 | Stopped early | The recording stopped in the night | The usual header, with the recording problem template (section 5.12). **See what was saved** then shows the saved part: a "Partial recording · stopped at 2:14 am" note (Lamp icon, faint Lamp pill), the scores if 2 hours or more were saved (no trend line, never compared with your usual), and the night in sound. |
-| First night | No history yet | Proof first: the night in sound comes **before** the scores. No comparisons. "Your first night" note instead of recent nights. |
 | Ordinary | Close to usual | "A steadier night". Blue card, low calm graph, **Keep tracking**. |
 | Unusual | One night out of the ordinary | "More snoring than usual". Warm dusk card, climbing Lamp graph, **Try using a remedy**. |
-| Repeated pattern | The same thing on many recent nights | "Worth a closer look". Wine card, drawn Flare climb, **Book a call** (coral). The sticky footer repeats it. |
+| Repeated pattern | The same thing on many recent nights | A headline that varies by night: "Time to get this checked", "This keeps happening", "Not just one night" or "Your breathing needs a look". Wine card, drawn Flare climb, **Book a call** (coral). The sticky footer repeats it. |
 
 #### Three levels of detail
 
 | Level | For | What |
 | --- | --- | --- |
-| Glance | Everyone, at 6 am | The verdict and **Have a listen** · Sound Score and breathing pauses |
+| Glance | Everyone, at 6 am | Sound Score and breathing pauses · the verdict and its one next step |
 | Explore | The engaged user | Your night in sound (chart and clips) · snoring and sleep · recent nights · what it means |
 | Report | The curious, and doctors | The night report sheet: zoomable chart, every measure, how it's measured |
 
 #### The page, top to bottom (ordinary, unusual and pattern nights)
 
-1. **The verdict card.** Full-width words over the night's mood colours, with the week as a graph behind them (no dial).
-   - A headline and a sentence or two, e.g. "Worth a closer look" / "You snored for 4 hr 40 min, mostly between 3 and 5 am. Your breathing paused often on 5 of the last 7 nights."
-   - **The graph** is real data: the last seven nights of snoring, tonight at the right edge (first night: tonight hour by hour). The shape is the data's; how high it reaches follows the verdict: low and nearly flat (ordinary, Breath line), climbing to mid-card (unusual, Lamp line). **Pattern** is drawn, not plotted: a zoomed-out picture of a pattern building up, one steady climb from bottom left to top right with small wobbles (Flare line on wine). The words carry the facts. Hidden from screen readers: the words say it. On load a tiny shine draws the line from left to right (glint preset); after a long rest it glides along the finished line again, now and then. Reduce Motion: the graph is simply there, no shine.
-   - **The graph runs behind the words, within a readability budget:** behind the text, the fill (4%) and line (6 to 14%) are held so Moon body text stays at 7:1 or more at the card's brightest point (measured 9:1 or better). Below the text it fades up to full strength behind the button. The card's corner glow was softened to make room. The shine dims behind the words too.
-   - **One button,** coloured by the night: **Keep tracking** (Breath) · **Try using a remedy** (Lamp, the one warm light) · **Book a call** with a phone icon (coral `urgentAction`, the one button allowed a red tint; BRAND §4).
-2. **Two score tiles, side by side.** Each opens a sheet.
+1. **Two score tiles, side by side.** Each opens a sheet.
    - **Sound Score:** a big ring with the number inside (e.g. 88), a level word (Low, Moderate, High) and the trend ("More than usual", "About usual", "Less than usual").
    - **Breathing pauses:** a ring with an icon, not a number. A plain level word (Rarely, Sometimes, Often) and the trend. The exact rate per hour is only in its sheet and the night report.
+2. **The verdict card.** Full-width words over the night's mood colours, with the week as a graph behind them (no dial).
+   - A headline and one short, general line: no numbers or times, 120 characters at most, two lines at most. The numbers live in the cards around it. E.g. "A steadier night" / "Your breathing was steadier than on your recent nights."
+   - **The graph** is real data: the last seven nights of snoring, tonight at the right edge. The shape is the data's; how high it reaches follows the verdict: low and nearly flat (ordinary, Breath line), climbing to mid-card (unusual, Lamp line). **Pattern** is drawn, not plotted: a zoomed-out picture of a pattern building up, one steady climb from bottom left to top right with small wobbles (Flare line on wine). The words carry the facts. Hidden from screen readers: the words say it. On load a tiny shine draws the line from left to right (glint preset); after a long rest it glides along the finished line again, now and then. Reduce Motion: the graph is simply there, no shine.
+   - **The graph runs behind the words, within a readability budget:** behind the text, the fill (4%) and line (6 to 14%) are held so Moon body text stays at 7:1 or more at the card's brightest point (measured 9:1 or better). Below the text it fades up to full strength behind the button. The card's corner glow was softened to make room. The shine dims behind the words too.
+   - **One button,** coloured by the night: **Keep tracking** (Breath) · **Try using a remedy** (Lamp, the one warm light) · **Book a call** with a phone icon (coral `urgentAction`, the one button allowed a red tint; BRAND §4).
 3. **Your night in sound.** The chart and the clips in one card.
    - **Opening line,** e.g. "Louder than a conversation for 1 hr 30 min, mostly between 12 and 2 am."
    - **The chart:**
@@ -332,7 +331,7 @@ The most important screen: one night's results. It is the Reports tab's page (se
 4. **Snoring and Sleep tiles,** side by side.
    - **Snoring:** total time (e.g. "4h 57m"), the trend, and small bars by hour.
    - **Sleep:** estimated sleep (e.g. "7h 46m"), a level ("In range"), and a line with gaps where restless.
-5. **Your recent nights:** a bar per night for the last 7, tonight highlighted, a line for your usual, and a sentence ("About your usual 4 hr 17 min of snoring."). On a first night: "Your first night. This gives us a starting point. Record a few more nights and Airese can show you what's typical for you."
+5. **Your recent nights:** a bar per night for the last 7, tonight highlighted, a line for your usual, and a sentence ("About your usual 4 hr 17 min of snoring.").
 6. **What it means.** A warm card whose message follows the ladder (section 7), with an (i) for "How Airese decides what to say".
 7. **Night report** card: "Every measure from last night, and how Airese got it. Handy to show a doctor." It previews the loudest level, pauses per hour, and time above 60 dB.
 8. **Private by default** footer: "Your recordings stay on your phone." Link: "How Airese keeps it private".
@@ -571,7 +570,7 @@ Full detail in [BRAND.md](BRAND.md).
 | Start now, stop when you wake; 8-hour safety stop; no stop time at bedtime | A stop time is a guess people can't make at bedtime, and stopping too early loses data. The morning stop leads straight to the results. See RECORDING.md. |
 | Tap to start (not press and hold) | Simpler. Stopping still confirms, so a stray tap costs nothing. |
 | No scheduled start, no alarm | Platform limits; an unreliable alarm would be the worst failure. |
-| Verdict first, then scores; on a first night, proof before scores | Belief comes from hearing yourself; scores mean little without a comparison. |
+| Scores first, then the verdict | The two numbers people look for sit at the top; the verdict below says what they mean, in plain words, with the next step. |
 | Chart and clips merged into one card | The chart is the index of what you can hear. |
 | Breathing pauses as a plain word on the page, exact rate one level down | The rate reads as a sleep apnoea index; it needs Clinical and regulatory agreement. |
 | Three levels: glance, explore, report | Simple for most, detailed for the curious and for doctors. |

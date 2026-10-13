@@ -30,7 +30,6 @@ const LINE: Record<Mood, ColorName> = { calm: 'accent', watch: 'lamp', urgent: '
  * it reaches follows the verdict (which the words already state), so the card's urgency reads at a
  * glance: a steady week is a low, nearly flat line, an unusual night climbs to mid-card. A repeated
  * pattern is drawn, not plotted (PATTERN_SHAPE): a steady climb across the whole card.
- * First night (no history yet): tonight's own snoring, hour by hour.
  * The graph is decorative for screen readers: the words say the same thing.
  * Arrives with the card: rises into place (slow ease-out); Reduce Motion: fades in.
  */
