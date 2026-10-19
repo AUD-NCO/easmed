@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Airese · iPhone 17 Pro</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Montserrat:wght@400;600&display=swap" />
+<style>
+  :root { --page: #E9EBF0; --ink: #1A1A1A; --muted: #6B6F78; --field: #FFFFFF; --field-edge: #D3D6DE; --frame: #2B3140; --frame-edge: #4A5266; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --page: #0A0D16; --ink: #F2F3F5; --muted: #8C93A6; --field: #141A28; --field-edge: #2A3244; } }
+  :root[data-theme="dark"] { --page: #0A0D16; --ink: #F2F3F5; --muted: #8C93A6; --field: #141A28; --field-edge: #2A3244; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: var(--page); font-family: Montserrat, system-ui, sans-serif; color: var(--ink); }
+  body { display: flex; overflow: hidden; }
+
+  /* Demo: every screen as a link in the left pane (desktop only) */
+  .nav { flex: 0 0 260px; height: 100%; overflow-y: auto; padding: 24px 16px 32px; border-right: 1px solid var(--field-edge); background: var(--field); }
+  .nav-title { margin: 0 12px 20px; }
+  .nav-title b { font-weight: 600; font-size: 16px; }
+  .nav-title span { display: block; font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .nav h2 { margin: 20px 12px 6px; font: 600 12px/1.4 Montserrat, system-ui, sans-serif; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); }
+  .nav ul { list-style: none; margin: 0; padding: 0; }
+  .nav button { display: block; width: 100%; min-height: 44px; padding: 10px 12px; border: 0; border-radius: 10px; background: none; text-align: left; cursor: pointer;
+    font: 400 14px/1.4 Montserrat, system-ui, sans-serif; color: var(--ink); }
+  .nav button:hover { background: var(--page); }
+  .nav button[aria-current="page"] { background: var(--page); font-weight: 600; }
+  .nav button:focus-visible { outline: 2px solid #9DB4FF; outline-offset: -2px; }
+
+  .pane { flex: 1; min-width: 0; height: 100%; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+  .stage { display: flex; flex-direction: column; align-items: center; gap: 18px; transform-origin: center center; }
+  /* Under-phone note for the screen on show: what it does, and its route */
+  .meta { width: 426px; min-height: 58px; text-align: center; }
+  .meta p { margin: 0; font: 400 14px/1.5 Inter, system-ui, sans-serif; color: var(--ink); }
+  .meta code { display: block; margin-top: 4px; font: 400 12px/1.5 ui-monospace, Menlo, monospace; color: var(--muted); }
+
+  /* iPhone 17 Pro: 402 × 874 pt screen */
+  .phone { position: relative; width: 426px; height: 898px; border-radius: 68px; padding: 12px;
+    background: linear-gradient(145deg, var(--frame-edge), var(--frame) 30%, var(--frame) 70%, var(--frame-edge));
+    box-shadow: 0 0 0 1.5px #1a1e28, 0 30px 80px rgba(10,14,30,.35), inset 0 0 0 2px rgba(255,255,255,.08); }
+  .phone::before, .phone::after { content: ''; position: absolute; width: 4px; border-radius: 2px; background: var(--frame); }
+  .phone::before { left: -4px; top: 190px; height: 64px; box-shadow: 0 84px 0 var(--frame); }
+  .phone::after { right: -4px; top: 230px; height: 100px; }
+  .screen { position: relative; width: 402px; height: 874px; border-radius: 56px; overflow: hidden; background: #fff; isolation: isolate; }
+  #app { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; display: block; }
+
+  .statusbar { position: absolute; z-index: 10; top: 0; left: 0; right: 0; height: 62px; pointer-events: none;
+    display: flex; align-items: center; justify-content: space-between; padding: 6px 34px 0 52px;
+    font: 600 17px/1 -apple-system, "SF Pro Text", system-ui, sans-serif;
+    color: #fff; } /* the app is dark throughout */
+  .statusbar .icons { display: flex; gap: 7px; align-items: center; }
+  .island { position: absolute; z-index: 11; top: 11px; left: 50%; transform: translateX(-50%); width: 126px; height: 37px; border-radius: 20px; background: #000; }
+  .home { position: absolute; z-index: 10; bottom: 8px; left: 50%; transform: translateX(-50%); width: 140px; height: 5px; border-radius: 3px; background: #fff; pointer-events: none; }
+
+  /* On a real phone: no frame, the app fills the screen */
+  @media (max-width: 500px) {
+    body { display: block; }
+    .pane { display: block; }
+    .stage { transform: none !important; display: block; height: 100%; }
+    .nav, .meta, .statusbar, .island, .home, .phone::before, .phone::after { display: none; }
+    .phone { width: 100%; height: 100%; border-radius: 0; padding: 0; background: none; box-shadow: none; }
+    .screen { width: 100%; height: 100%; border-radius: 0; }
+  }
+</style>
+</head>
+<body>
+<nav class="nav" id="nav" aria-label="Screens">
+  <div class="nav-title"><b>Airese</b><span>Prototype screens</span></div>
+</nav>
+<main class="pane">
+<div class="stage" id="stage">
+  <div class="meta" id="meta" aria-live="polite"><p></p><code></code></div>
+  <div class="phone">
+    <div class="screen">
+      <div class="statusbar"><span>9:41</span><span class="icons">
+        <svg width="18" height="12" viewBox="0 0 18 12" fill="currentColor"><rect x="0" y="8" width="3" height="4" rx="1"/><rect x="5" y="5.5" width="3" height="6.5" rx="1"/><rect x="10" y="3" width="3" height="9" rx="1"/><rect x="15" y="0" width="3" height="12" rx="1"/></svg>
+        <svg width="16" height="12" viewBox="0 0 16 12" fill="currentColor"><path d="M8 2.2c2.3 0 4.4.9 6 2.4l1.1-1.2A10.2 10.2 0 0 0 8 .6 10.2 10.2 0 0 0 .9 3.4L2 4.6a8.6 8.6 0 0 1 6-2.4Zm0 3.3c1.4 0 2.7.5 3.7 1.4l1.1-1.2A7 7 0 0 0 8 3.9a7 7 0 0 0-4.8 1.8l1.1 1.2c1-.9 2.3-1.4 3.7-1.4Zm0 3.3c.6 0 1.1.2 1.5.5L8 11 6.5 9.3c.4-.3.9-.5 1.5-.5Z"/></svg>
+        <svg width="27" height="13" viewBox="0 0 27 13" fill="none"><rect x=".5" y=".5" width="23" height="12" rx="3.5" stroke="currentColor" opacity=".4"/><rect x="2" y="2" width="20" height="9" rx="2" fill="currentColor"/><path d="M25 4.5v4c.8-.3 1.3-1.1 1.3-2s-.5-1.7-1.3-2Z" fill="currentColor" opacity=".5"/></svg>
+      </span></div>
+      <div class="island"></div>
+      <iframe id="app" title="Airese app"></iframe>
+      <div class="home"></div>
+    </div>
+  </div>
+</div>
+</main>
+<script>
+  // Fits the phone to the window. On a real phone the frame drops away.
+  (function () {
+    var small = window.matchMedia('(max-width: 500px)').matches;
+    document.getElementById('app').src = small ? '/' : '/?frame=iphone';
+    function fit() {
+      if (window.matchMedia('(max-width: 500px)').matches) return;
+      var pane = document.querySelector('.pane');
+      var s = Math.min(1, (pane.clientHeight - 24) / 990, (pane.clientWidth - 24) / 440);
+      document.getElementById('stage').style.transform = 'scale(' + s + ')';
+    }
+    fit(); window.addEventListener('resize', fit);
+  })();
+
+  // Demo: jump to a screen. On localhost the phone loads that route; in the shared preview
+  // (no router) the app listens for 'airese:jump'. Either way the nav follows the app.
+  // To add a screen: one line here (key, label, route).
+  (function () {
+    var SCREENS = [
+      { group: 'Getting started', items: [
+        ['splash', 'Splash', '/', 'App launch. The logo arrives, then falls away into the walkthrough.'],
+        ['onboarding', 'Walkthrough', '/onboarding', 'Three pages. Swipe or tap the dashes; Continue on the last page.'],
+        ['microphone', 'Microphone access', '/permissions/microphone', 'Asks for the mic, saying why first. Skip or Don’t Allow opens a second-chance sheet.'],
+        ['notifications', 'Notifications', '/permissions/notifications', 'Asks for notifications. Same pattern as the microphone screen.'],
+        ['details', 'Your details', '/details', 'A few details and agreeing to Terms and Privacy, then Home.'] ] },
+      { group: 'App', items: [
+        ['home', 'Home', '/home', 'Tap the dial to record. The banner shows the one most useful message.'],
+        ['home-after-first-night', 'Home · after first night', '/home?state=after-first-night', 'One night recorded, no Night Notes yet for tonight.'],
+        ['recording', 'Recording', '/recording', 'Shown all night. Tap the ring and confirm to stop. Stops by itself after 8 hours.'],
+        ['reports', 'Reports', '/reports', 'The latest night’s report. The calendar (top right) picks another night.'],
+        ['profile', 'Profile', '/profile', 'Details, notification settings, sleep centres, and deleting data.'] ] },
+      { group: 'Reports · last night', items: [
+        ['night-steady', 'Ordinary night', '/reports?state=steady', 'Blue verdict card. Next step: Keep tracking.'],
+        ['night-unusual', 'Unusual night', '/reports?state=unusual', 'Warm verdict card. Next step: Try using a remedy.'],
+        ['night-pattern', 'Repeated pattern', '/reports?state=pattern', 'Wine verdict card. Next step: Book a call (the one coral button).'],
+        ['night-processing', 'Processing', '/reports?state=processing', 'Right after stopping: “Looking through your night”, then the report.'] ] },
+      { group: 'Recording problems', items: [
+        ['no-space', 'Not enough space', '/recording-problem?kind=space', 'On tapping record. Try again checks the space again (demo: it works and recording starts). × back to Home.'],
+        ['start-failed', 'Didn’t start', '/recording-problem?kind=start', 'On tapping record. Try again (demo: it keeps failing). × back to Home.'],
+        ['night-poor', 'Couldn’t hear clearly', '/reports?state=poor', 'Morning after, on Reports. Recorded, but the sound can’t be used. Record tonight goes to Home.'],
+        ['night-stopped-phone', 'Stopped in the night', '/reports?state=stopped-phone', 'Morning after, on Reports. See what was saved opens the saved part (under 2 hr: clips only). Other causes: ?state=stopped-app, stopped-space.'],
+        ['recording-paused', 'Paused · app closed', '/recording?state=paused', 'Back in Airese after another app closed it. Carry on recording continues the same night; × stops for the night.'] ] },
+      { group: 'Prompts', items: [
+        ['update', 'App update', '/update', 'Forced update: no Skip, no swipe back. Update now opens the store.'] ] },
+    ];
+    var nav = document.getElementById('nav');
+    var frame = document.getElementById('app');
+    var ROUTES = {}, NOTES = {}, buttons = {}, current = 'splash';
+    var meta = document.getElementById('meta');
+
+    SCREENS.forEach(function (section) {
+      var h = document.createElement('h2'); h.textContent = section.group; nav.appendChild(h);
+      var ul = document.createElement('ul'); nav.appendChild(ul);
+      section.items.forEach(function (item) {
+        ROUTES[item[0]] = item[2]; NOTES[item[0]] = item[3];
+        var li = document.createElement('li'), btn = document.createElement('button');
+        btn.type = 'button'; btn.textContent = item[1];
+        btn.addEventListener('click', function () { go(item[0]); });
+        buttons[item[0]] = btn; li.appendChild(btn); ul.appendChild(li);
+      });
+    });
+
+    function mark(key) {
+      if (!buttons[key]) return;
+      if (buttons[current]) buttons[current].removeAttribute('aria-current');
+      buttons[key].setAttribute('aria-current', 'page'); current = key;
+      meta.querySelector('p').textContent = NOTES[key];
+      meta.querySelector('code').textContent = frame ? ROUTES[key] : '';
+    }
+    function go(key) {
+      mark(key);
+      if (frame) frame.src = ROUTES[key] + (ROUTES[key].indexOf('?') > -1 ? '&' : '?') + 'frame=iphone';
+      else window.dispatchEvent(new CustomEvent('airese:jump', { detail: key }));
+    }
+    mark(current);
+
+    window.addEventListener('airese:screen', function (e) { mark(e.detail); });
+    if (frame) setInterval(function () {
+      try {
+        var loc = frame.contentWindow.location, m = loc.search.match(/state=([a-z-]+)/), path = loc.pathname + (m ? '?state=' + m[1] : '');
+        for (var key in ROUTES) if (ROUTES[key] === path && current !== key) mark(key);
+      } catch (err) {}
+    }, 500);
+  })();
+</script>
+</body>
+</html>

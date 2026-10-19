@@ -1,7 +1,9 @@
-# Builds the browser preview (iPhone frame, one self-contained HTML file)
-# and publishes it to GitHub Pages on every push to main.
-# Live at https://nimkarkedar.github.io/easemed-airese/
-name: Deploy prototype to GitHub Pages
+# Builds the browser previews (iPhone frame, one self-contained HTML file each) and the
+# shared design system page, and publishes them to GitHub Pages on every push to main.
+#   /the-air-station/airese/v1/             pilot
+#   /the-air-station/airese/v2/             full prototype
+#   /the-air-station/airese/design-system/  shared by v1 and v2
+name: Deploy prototypes to GitHub Pages
 
 on:
   push:
@@ -23,17 +25,26 @@ jobs:
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
+    defaults:
+      run:
+        working-directory: The Air Station/Airese
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: npm
+          cache-dependency-path: The Air Station/Airese/package-lock.json
       - run: npm ci
       - run: npm run preview
+      - name: Assemble site
+        run: |
+          mkdir -p ../../_site/the-air-station
+          cp -R preview-dist ../../_site/the-air-station/airese
+          printf '<!doctype html><meta http-equiv="refresh" content="0; url=the-air-station/airese/v2/"><a href="the-air-station/airese/v2/">Airese</a>\n' > ../../_site/index.html
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: preview-dist
+          path: _site
       - id: deployment
         uses: actions/deploy-pages@v4
