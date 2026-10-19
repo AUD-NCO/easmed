@@ -41,6 +41,7 @@ export function ReportsScreen({ demoState, onRecordAgain }: { demoState?: string
   yesterday.setDate(yesterday.getDate() - 1);
   const tag = dayKey(night.date) === dayKey(yesterday) ? 'Last night' : undefined;
   const stop = state === 'stopped' ? demoStop(demoState) : undefined;
+  const option2 = night === latest && demoState === 'option-2'; // demo: the worst night, laid out as Option 2
 
   const calendarButton = (inBar: boolean) => (
     // Title row: the glassy circle, like the avatar on Home. Compact bar: a plain Breath glyph, like "‹ Back".
@@ -65,7 +66,7 @@ export function ReportsScreen({ demoState, onRecordAgain }: { demoState?: string
   return (
     <View style={styles.root}>
       <NightScreen
-        key={`${night.id}${state === 'processing' ? ':analysing' : ''}${problem ? ':problem' : ''}`} // analysis done, or the saved part opened: a new page
+        key={`${night.id}${state === 'processing' ? ':analysing' : ''}${problem ? ':problem' : ''}${option2 ? ':option-2' : ''}`} // analysis done, or the saved part opened: a new page
         night={night}
         state={state}
         stop={stop}
@@ -74,6 +75,7 @@ export function ReportsScreen({ demoState, onRecordAgain }: { demoState?: string
         tag={tag}
         onRecordAgain={onRecordAgain}
         trailing={calendarButton}
+        option2={option2}
       />
 
       <TopSheet visible={calendar} onClose={() => setCalendar(false)}>

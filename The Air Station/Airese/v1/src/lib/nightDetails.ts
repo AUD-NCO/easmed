@@ -181,19 +181,14 @@ export function nightDetails(night: Night, state: NightState): NightDetails {
   const coughs = Array.from({ length: Math.round(between(1, 5)) }, () => Math.round(between(10, night.minutes - 10))).sort((a, b) => a - b);
   const movements = [...awake.map((w) => w.start), ...Array.from({ length: Math.round(between(3, 7)) }, () => Math.round(between(5, night.minutes - 5)))].sort((a, b) => a - b);
 
-  // Featured: the few clips that best explain the night, spread across it: the loudest snoring,
-  // a breathing pause (the clearest proof), and one more snoring moment far from both.
+  // Featured: at most 3 moments to hear: the two loudest snoring episodes and a breathing pause
+  // (the clearest proof), in time order. No pause that night: just the two snoring episodes.
   const levelAt = (c: Clip) => envelope[Math.min(envelope.length - 1, c.at * SAMPLES_PER_MINUTE)] ?? 0;
   const snoringClips = clips.filter((c) => c.type !== 'Interrupted breathing');
   const pauseClips = clips.filter((c) => c.type === 'Interrupted breathing');
-  const loudest = snoringClips.reduce<Clip | undefined>((b, c) => (!b || levelAt(c) > levelAt(b) ? c : b), undefined);
+  const loudest = [...snoringClips].sort((a, b) => levelAt(b) - levelAt(a)).slice(0, 2);
   const pause = pauseClips[Math.floor(pauseClips.length / 2)];
-  const chosen = [loudest, pause].filter((c): c is Clip => !!c);
-  const farthest = snoringClips.filter((c) => !chosen.includes(c)).reduce<Clip | undefined>((b, c) => {
-    const gap = (x: Clip) => Math.min(...chosen.map((k) => Math.abs(k.at - x.at)));
-    return !b || gap(c) > gap(b) ? c : b;
-  }, undefined);
-  const featured = [...chosen, ...(farthest ? [farthest] : [])].sort((a, b) => a.at - b.at);
+  const featured = [...loudest, ...(pause ? [pause] : [])].sort((a, b) => a.at - b.at);
 
   const earlier = recent.filter((r) => !r.tonight);
   const usualSnoring = Math.round(earlier.reduce((n, r) => n + r.snoringMinutes, 0) / earlier.length);
@@ -354,6 +349,7 @@ const STATES: NightState[] = ['processing', 'poor', 'steady', 'unusual', 'patter
 /** The state to show: a demo override (?state=…) if valid, else the sample night's own. */
 export function nightState(night: Night, override?: string): NightState {
   if (override?.startsWith('stopped-')) return 'stopped';
+  if (override === 'option-2') return 'pattern'; // the repeated-pattern night, laid out as Option 2 (NightScreen)
   if (override && (STATES as string[]).includes(override)) return override as NightState;
   return sampleState(night, sampleNights());
 }

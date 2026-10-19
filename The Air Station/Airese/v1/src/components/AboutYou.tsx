@@ -18,40 +18,65 @@ import { AppText } from '@ds/components/AppText';
 import { BottomSheet } from '@ds/components/BottomSheet';
 import { Button } from '@ds/components/Button';
 import { ExplainSheet } from '@ds/components/ExplainSheet';
-import { FormDivider, FormGroup, FormInput, FormTitle } from '@ds/components/Form';
+import { FormDivider, FormGroup, FormInput } from '@ds/components/Form';
 import { Icon, type IconName } from '@ds/components/Icon';
 import { InfoButton } from '@ds/components/InfoButton';
 import { RulerPicker, WheelPicker } from '@ds/components/Pickers';
 import { SegmentedControl } from '@ds/components/SegmentedControl';
 
-const ABOUT_WHY = { title: 'Why we ask about you', body: 'It helps a doctor read your report better, if you choose to consult one. All of it is optional.' };
+/** The (i) beside About you, in onboarding and Profile. */
+export const ABOUT_WHY = { title: 'Why we ask', body: 'This helps us understand your nights, and helps a doctor read your report if you share it.' };
 
 type Fields = Pick<Profile, 'gender' | 'birthYear' | 'heightCm' | 'weightKg' | 'units' | 'city' | 'region' | 'country' | 'phoneCountry'>;
 type Sheet = 'gender' | 'age' | 'height' | 'weight' | 'place' | null;
+export type AboutKey = Exclude<Sheet, null>;
+
+const ABOUT_LABEL: Record<AboutKey, string> = { gender: 'gender', age: 'age', height: 'height', weight: 'weight', place: 'where you live' };
+
+/** The questions still unanswered, in tile order. "Prefer not to say" counts as an answer. */
+export function missingAbout(v: Fields): AboutKey[] {
+  const answered: Record<AboutKey, boolean> = { gender: !!v.gender, age: !!v.birthYear, height: !!v.heightCm, weight: !!v.weightKg, place: !!v.country };
+  return (Object.keys(answered) as AboutKey[]).filter((k) => !answered[k]);
+}
+
+/** "Add your age." / "Add your age and weight." / "Add your gender, age and where you live." */
+export function missingAboutMessage(keys: AboutKey[]) {
+  const names = keys.map((k) => ABOUT_LABEL[k]);
+  const list = names.length > 1 ? `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}` : names[0];
+  return `Add your ${list}.`;
+}
 
 /**
- * "About you": gender, age, height, weight and where you live, as tiles rather than form fields.
- * Each tile opens a small sheet made for that one question (tap, pick, done) and then shows the
- * answer. All optional; (i) says why we ask (a doctor reads the report better with them).
- * Used in onboarding (DetailsScreen) and Profile → Your details.
+ * "About you": gender, age, height, weight and where you live, as a list to fill in one by one
+ * (label on the left, the answer or "Add" on the right, a chevron). Each row opens a small sheet made
+ * for that one question (tap, pick, done) and then shows the answer.
+ * All required. Onboarding (AboutYouScreen): the page has its own heading and (i) (heading={false}).
+ * Profile → Your details: the group's own title and (i). Either way the screen passes `missing` and
+ * `error` once Begin or Save is tapped with gaps.
  */
-export function AboutYou({ value, onChange }: { value: Fields; onChange: (next: Partial<Profile>) => void }) {
+export function AboutYou({ value, onChange, heading = true, missing = [], error }: { value: Fields; onChange: (next: Partial<Profile>) => void; heading?: boolean; missing?: AboutKey[]; error?: string }) {
   const [open, setOpen] = useState<Sheet>(null);
   const [why, setWhy] = useState(false);
   const close = () => setOpen(null);
   const age = ageFrom(value.birthYear);
-  const place = placeLabel(value);
 
   return (
     <View>
-      <FormTitle title="About you (optional)" action={<InfoButton size={24} onPress={() => setWhy(true)} label="Why we ask about you" />} />
-      <View style={styles.grid}>
-        <Tile icon="person" label="Gender" value={value.gender ? GENDER_LABEL[value.gender] : ''} onPress={() => setOpen('gender')} />
-        <Tile icon="cake" label="Age" value={age != null ? `${age}` : ''} onPress={() => setOpen('age')} a11yValue={age != null ? `${age} years, born ${value.birthYear}` : undefined} />
-        <Tile icon="height" label="Height" value={heightLabel(value.heightCm, value.units)} onPress={() => setOpen('height')} />
-        <Tile icon="monitor_weight" label="Weight" value={weightLabel(value.weightKg, value.units)} onPress={() => setOpen('weight')} />
-        <Tile icon="location_on" label="Where you live" value={place} onPress={() => setOpen('place')} wide />
-      </View>
+      <FormGroup
+        title={heading ? 'About you' : ''}
+        titleAction={heading ? <InfoButton size={24} onPress={() => setWhy(true)} label="Why we ask about you" /> : undefined}
+        error={error}
+      >
+        <Row icon="person" label="Gender" value={value.gender ? GENDER_LABEL[value.gender] : ''} onPress={() => setOpen('gender')} missing={missing.includes('gender')} />
+        <FormDivider />
+        <Row icon="cake" label="Age" value={age != null ? `${age}` : ''} onPress={() => setOpen('age')} a11yValue={age != null ? `${age} years, born ${value.birthYear}` : undefined} missing={missing.includes('age')} />
+        <FormDivider />
+        <Row icon="height" label="Height" value={heightLabel(value.heightCm, value.units)} onPress={() => setOpen('height')} missing={missing.includes('height')} />
+        <FormDivider />
+        <Row icon="monitor_weight" label="Weight" value={weightLabel(value.weightKg, value.units)} onPress={() => setOpen('weight')} missing={missing.includes('weight')} />
+        <FormDivider />
+        <Row icon="location_on" label="Where you live" value={placeLabel(value)} onPress={() => setOpen('place')} missing={missing.includes('place')} />
+      </FormGroup>
       <ExplainSheet content={why ? ABOUT_WHY : null} onClose={() => setWhy(false)} />
 
       <GenderSheet visible={open === 'gender'} value={value.gender} onClose={close} onPick={(gender) => (onChange({ gender }), close())} />
@@ -63,27 +88,22 @@ export function AboutYou({ value, onChange }: { value: Fields; onChange: (next: 
   );
 }
 
-function Tile({ icon, label, value, onPress, wide, a11yValue }: { icon: IconName; label: string; value: string; onPress: () => void; wide?: boolean; a11yValue?: string }) {
+/** One question: icon and label, then the answer (or "Add", in error red while it's missing) and a chevron. */
+function Row({ icon, label, value, onPress, a11yValue, missing }: { icon: IconName; label: string; value: string; onPress: () => void; a11yValue?: string; missing?: boolean }) {
   return (
     <Pressable
       onPress={onPress}
       accessibilityRole="button"
       accessibilityLabel={`${label}, ${a11yValue ?? (value || 'not added')}`}
       accessibilityHint={value ? 'Change' : 'Add'}
-      style={({ pressed }) => [styles.tile, wide && styles.tileWide, pressed && { opacity: 0.8 }]}
+      style={({ pressed }) => [styles.row, pressed && { opacity: 0.7 }]}
     >
-      <View style={styles.badge}>
-        <Icon name={icon} size={22} color="accent" />
-      </View>
-      <View style={{ flex: 1, minWidth: 0 }}>
-        <AppText variant="small" color="textMuted" numberOfLines={1}>
-          {label}
-        </AppText>
-        <AppText color={value ? 'text' : 'accent'} numberOfLines={wide ? 2 : 1}>
-          {value || 'Add'}
-        </AppText>
-      </View>
-      {wide && <Icon name="chevron_right" size={24} color="textMuted" />}
+      <Icon name={icon} size={24} color="text" />
+      <AppText style={{ flex: 1 }}>{label}</AppText>
+      <AppText color={value ? 'textMuted' : missing ? 'error' : 'accent'} numberOfLines={1} style={styles.value}>
+        {value || 'Add'}
+      </AppText>
+      <Icon name="chevron_right" size={22} color="textMuted" />
     </Pressable>
   );
 }
@@ -423,21 +443,8 @@ function BackLink({ onPress }: { onPress: () => void }) {
 }
 
 const styles = StyleSheet.create({
-  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
-  tile: {
-    flexBasis: '48%',
-    flexGrow: 1,
-    minHeight: 72,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space.md,
-    paddingHorizontal: space.md,
-    paddingVertical: space.md,
-    borderRadius: radius.lg,
-    backgroundColor: colors.surface,
-  },
-  tileWide: { flexBasis: '100%' },
-  badge: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.tintAccent },
+  row: { minHeight: 56, flexDirection: 'row', alignItems: 'center', gap: space.md, paddingHorizontal: space.lg, paddingVertical: space.sm },
+  value: { maxWidth: '55%', textAlign: 'right' },
 
   genders: { flexDirection: 'row', gap: space.sm },
   gender: {

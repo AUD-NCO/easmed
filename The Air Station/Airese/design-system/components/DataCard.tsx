@@ -43,6 +43,7 @@ export function DataCard({
   style?: ViewStyle;
   children?: React.ReactNode;
 }) {
+  const head = !!(icon || title || label || onPress); // a card can be just its content (no header row)
   return (
     <Pressable
       onPress={onPress}
@@ -51,6 +52,7 @@ export function DataCard({
       accessibilityLabel={accessibilityLabel}
       style={({ pressed }) => [styles.card, shape === 'square' && styles.square, pressed && styles.pressed, style]}
     >
+      {head && (
       <View style={styles.head}>
         {icon ? (
           <View style={[styles.badge, { backgroundColor: TINT[tone] }]}>
@@ -70,8 +72,9 @@ export function DataCard({
         </View>
         {onPress ? <Icon name="chevron_right" size={20} color="textMuted" /> : null}
       </View>
+      )}
 
-      {children ? <View style={styles.body}>{children}</View> : null}
+      {children ? <View style={head && styles.body}>{children}</View> : null}
 
       {insight ? (
         <AppText variant="small" color="text" style={styles.insight}>

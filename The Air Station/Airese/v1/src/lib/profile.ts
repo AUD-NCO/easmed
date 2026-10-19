@@ -3,8 +3,9 @@ import { AsYouType, isValidPhoneNumber, parsePhoneNumberFromString, type Country
 import { recall, remember } from './session';
 
 /**
- * The user's details, asked for in onboarding and editable in Profile. Name and phone are required;
- * the rest is optional and helps the sleep care team (and a doctor reading the report).
+ * The user's details, asked for in onboarding and editable in Profile. In onboarding everything is
+ * required: name, phone and a verified email (Your details), then About you. They help the sleep care
+ * team (and a doctor reading the report).
  * Kept in memory for the prototype.
  * Engineering: persist on device (e.g. expo-secure-store / SQLite) in line with "data stays on your phone".
  */
@@ -17,6 +18,7 @@ export type Profile = {
   phoneCountry: CountryCode; // the country code chip, e.g. 'SG'
   phone: string; // national number, digits only; see phoneE164()
   email: string;
+  verifiedEmail: string; // the address last confirmed with the 6-digit code (lib/emailCode.ts); verified when it equals `email`
   gender: Gender | '';
   birthYear: string; // stored instead of age, which goes out of date; the UI shows the age
   heightCm: string; // always stored metric; `units` only changes how it's shown
@@ -33,6 +35,7 @@ const EMPTY: Profile = {
   phoneCountry: 'SG',
   phone: '',
   email: '',
+  verifiedEmail: '',
   gender: '',
   birthYear: '',
   heightCm: '',

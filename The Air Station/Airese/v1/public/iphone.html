@@ -26,6 +26,7 @@
     font: 400 14px/1.4 Montserrat, system-ui, sans-serif; color: var(--ink); }
   .nav button:hover { background: var(--page); }
   .nav button[aria-current="page"] { background: var(--page); font-weight: 600; }
+  .nav .tag { margin-left: 8px; padding: 1px 8px; border-radius: 999px; background: #9DB4FF; color: #0B1020; font-size: 12px; font-weight: 600; vertical-align: 1px; }
   .nav button:focus-visible { outline: 2px solid #9DB4FF; outline-offset: -2px; }
 
   .pane { flex: 1; min-width: 0; height: 100%; display: flex; align-items: center; justify-content: center; overflow: hidden; }
@@ -109,17 +110,20 @@
         ['onboarding', 'Walkthrough', '/onboarding', 'Three pages. Swipe or tap the dashes; Continue on the last page.'],
         ['microphone', 'Microphone access', '/permissions/microphone', 'Asks for the mic, saying why first. Skip or Don’t Allow opens a second-chance sheet.'],
         ['notifications', 'Notifications', '/permissions/notifications', 'Asks for notifications. Same pattern as the microphone screen.'],
-        ['details', 'Your details', '/details', 'A few details and agreeing to Terms and Privacy, then Home.'] ] },
+        ['details', 'Your details', '/details', 'Name, phone, email and agreeing to Terms and Privacy, all required. Verify (in the email field) sends a code; Continue is off until the email is verified.'],
+        ['email-code', 'Email · your code', '/details?state=mail', 'The phone’s mail app, open on the Airese email. Tap the code or Copy code. Template for developers: public/email-code.html.'],
+        ['verify-email', 'Verify email', '/details?state=browser', 'The Airese page at theairstation.com/airese, in the phone’s browser, with the code filled in. Verify goes back to Your details, now verified.'],
+        ['about-you', 'About you', '/about-you', 'Gender, age, height, weight and where you live, all required. (i) says why. Begin your journey goes Home.'] ] },
       { group: 'App', items: [
         ['home', 'Home', '/home', 'Tap the dial to record. The banner shows the one most useful message.'],
-        ['home-after-first-night', 'Home · after first night', '/home?state=after-first-night', 'One night recorded, no Night Notes yet for tonight.'],
         ['recording', 'Recording', '/recording', 'Shown all night. Tap the ring and confirm to stop. Stops by itself after 8 hours.'],
         ['reports', 'Reports', '/reports', 'The latest night’s report. The calendar (top right) picks another night.'],
         ['profile', 'Profile', '/profile', 'Details, notification settings, sleep centres, and deleting data.'] ] },
       { group: 'Reports · last night', items: [
         ['night-steady', 'Ordinary night', '/reports?state=steady', 'Blue verdict card. Next step: Keep tracking.'],
         ['night-unusual', 'Unusual night', '/reports?state=unusual', 'Warm verdict card. Next step: Try using a remedy.'],
-        ['night-pattern', 'Repeated pattern', '/reports?state=pattern', 'Wine verdict card. Next step: Book a call (the one coral button).'],
+        ['night-pattern', 'Repeated pattern', '/reports?state=pattern', 'Wine verdict card. Next step: Talk to a sleep team (the one coral button).'],
+        ['night-option-2', 'Option 2', '/reports?state=option-2', 'The worst night, another way: Sound Score as one wide card (text left, ring right), Breathing pauses the same, then Talk to a sleep team. All in the first fold.', 'New'],
         ['night-processing', 'Processing', '/reports?state=processing', 'Right after stopping: “Looking through your night”, then the report.'] ] },
       { group: 'Recording problems', items: [
         ['no-space', 'Not enough space', '/recording-problem?kind=space', 'On tapping record. Try again checks the space again (demo: it works and recording starts). × back to Home.'],
@@ -142,6 +146,7 @@
         ROUTES[item[0]] = item[2]; NOTES[item[0]] = item[3];
         var li = document.createElement('li'), btn = document.createElement('button');
         btn.type = 'button'; btn.textContent = item[1];
+        if (item[4]) { var tag = document.createElement('span'); tag.className = 'tag'; tag.textContent = item[4]; btn.appendChild(tag); }
         btn.addEventListener('click', function () { go(item[0]); });
         buttons[item[0]] = btn; li.appendChild(btn); ul.appendChild(li);
       });
@@ -156,15 +161,23 @@
     }
     function go(key) {
       mark(key);
+      document.querySelector('.statusbar').style.color = ''; // white bars again, until a light screen asks
+      document.querySelector('.home').style.background = '';
       if (frame) frame.src = ROUTES[key] + (ROUTES[key].indexOf('?') > -1 ? '&' : '?') + 'frame=iphone';
       else window.dispatchEvent(new CustomEvent('airese:jump', { detail: key }));
     }
     mark(current);
 
     window.addEventListener('airese:screen', function (e) { mark(e.detail); });
+    // Light screens standing in for other apps (mail, browser) ask for dark bars (src/lib/previewFrame.ts)
+    window.addEventListener('airese:bars', function (e) {
+      var dark = e.detail === 'dark';
+      document.querySelector('.statusbar').style.color = dark ? '#000' : '';
+      document.querySelector('.home').style.background = dark ? '#000' : '';
+    });
     if (frame) setInterval(function () {
       try {
-        var loc = frame.contentWindow.location, m = loc.search.match(/state=([a-z-]+)/), path = loc.pathname + (m ? '?state=' + m[1] : '');
+        var loc = frame.contentWindow.location, m = loc.search.match(/state=([a-z0-9-]+)/), path = loc.pathname + (m ? '?state=' + m[1] : '');
         for (var key in ROUTES) if (ROUTES[key] === path && current !== key) mark(key);
       } catch (err) {}
     }, 500);

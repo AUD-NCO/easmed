@@ -7,7 +7,7 @@
  * The shared design system page is built separately: npm run design-system, from Airese/.
  */
 import { execSync } from 'node:child_process';
-import { existsSync, readFileSync, readdirSync, writeFileSync, mkdirSync, rmSync } from 'node:fs';
+import { copyFileSync, existsSync, readFileSync, readdirSync, writeFileSync, mkdirSync, rmSync } from 'node:fs';
 import { basename, extname, join, relative } from 'node:path';
 
 const root = decodeURIComponent(new URL('..', import.meta.url).pathname);
@@ -56,5 +56,7 @@ const html = readFileSync(join(root, 'public/iphone.html'), 'utf8')
 
 mkdirSync(out, { recursive: true });
 writeFileSync(join(out, 'index.html'), html);
+// Pages the app opens or links to, published next to it: the email-code page and the email template
+for (const page of ['verify-email.html', 'email-code.html']) copyFileSync(join(root, 'public', page), join(out, page));
 rmSync(tmp, { recursive: true, force: true });
 console.log(`\nPreview written to Airese/preview-dist/${version}/index.html (${(html.length / 1024).toFixed(0)} KB)`);

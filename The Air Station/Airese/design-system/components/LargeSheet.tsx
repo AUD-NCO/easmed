@@ -41,7 +41,7 @@ export function LargeSheet({ visible, title, onClose, children }: { visible: boo
   }, [visible]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
-    if (!visible) return;
+    if (!visible || Platform.OS === 'web') return; // Android only: the web has no back button to catch
     const sub = BackHandler.addEventListener('hardwareBackPress', () => {
       closeRef.current();
       return true;

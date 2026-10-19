@@ -24,8 +24,7 @@ const GRADIENT_STRETCH = 1.4;
  * Type: the title, then one style for everything else (Inter 16 regular). Importance comes from
  * colour alone: Moon for what matters (the tips, the safety stop), Mist for the subtitle.
  *
- * Under the title, three tips in a carousel: lock the phone and leave Airese be, keep it charging,
- * and Night Notes (with a way to add them if there are none yet).
+ * Under the title, two tips in a carousel: lock the phone and leave Airese be, and keep it charging.
  *
  * Runs until you stop it when you wake: tap the button, then confirm, so a half-asleep tap never
  * ends the night. Stops by itself after 8 hours (MAX_RECORDING_MINUTES) if you forget.
@@ -39,8 +38,6 @@ export function RecordingScreen({
   startedAt,
   from,
   onStop,
-  notesTonight = '',
-  onOpenNotes,
   pausedAt,
 }: {
   startedAt: Date;
@@ -48,9 +45,6 @@ export function RecordingScreen({
   pausedAt?: Date;
   from?: RecordOrigin;
   onStop: () => void;
-  /** Tonight's Night Notes, summarised; empty when none yet. */
-  notesTonight?: string;
-  onOpenNotes?: () => void;
 }) {
   const insets = useInsets();
   const reduced = useReducedMotion();
@@ -200,7 +194,7 @@ export function RecordingScreen({
 
         {/* Tonight's tips: swipe or tap the dashes */}
         <Animated.View style={[{ paddingHorizontal: PAGE_SIDE, paddingTop: space.xl }, rise(12)]}>
-          <TipCarousel tips={tonightTips(notesTonight, onOpenNotes)} />
+          <TipCarousel tips={TONIGHT_TIPS} />
         </Animated.View>
 
         <View style={styles.ringArea} onLayout={(e: LayoutChangeEvent) => setRingRoom(e.nativeEvent.layout)}>
@@ -250,15 +244,10 @@ export function RecordingScreen({
 }
 
 /** What to know once recording has started. Copy: plain and calm (design-system/docs/BRAND.md). */
-function tonightTips(notesTonight: string, onOpenNotes?: () => void): CarouselTip[] {
-  return [
-    { id: 'lock', icon: 'lock', text: 'Keep Airese open. Just lock your phone.' },
-    { id: 'charge', icon: 'battery_charging_full', text: 'Keep your phone on charge.' },
-    notesTonight
-      ? { id: 'notes', icon: 'edit_note', text: 'Night Notes added for tonight.' }
-      : { id: 'notes', icon: 'edit_note', text: 'No Night Notes yet tonight.', action: onOpenNotes ? { label: 'Add', onPress: onOpenNotes } : undefined },
-  ];
-}
+const TONIGHT_TIPS: CarouselTip[] = [
+  { id: 'lock', icon: 'lock', text: 'Keep Airese open. Just lock your phone.' },
+  { id: 'charge', icon: 'battery_charging_full', text: 'Keep your phone on charge.' },
+];
 
 const styles = StyleSheet.create({
   root: { flex: 1, overflow: 'hidden' },

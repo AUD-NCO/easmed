@@ -20,15 +20,23 @@ type Props = {
   /** Layout only (e.g. alignSelf to hug the label). Stretches to its container by default. */
   style?: ViewStyle;
   accessibilityLabel?: string;
+  /**
+   * Can't be used yet. Primary turns Deep with a Mist label (still 7:1, so it reads) and is announced
+   * as dimmed, but a tap still calls onPress, so the screen can say why (e.g. show "Verify your email
+   * to continue." as an error). A button that silently does nothing leaves people stuck.
+   */
+  disabled?: boolean;
 };
 
 /** Pill button, 48 pt tall. Primary is filled with the accent (Breath) by default and has a Midnight label. */
-export function Button({ label, onPress, variant = 'primary', color = 'accent', icon, style, accessibilityLabel }: Props) {
+export function Button({ label, onPress, variant = 'primary', color = 'accent', icon, style, accessibilityLabel, disabled = false }: Props) {
   const primary = variant === 'primary';
+  const fill = disabled ? colors.surface : colors[color];
   const mini = variant === 'mini';
   return (
     <Pressable
       onPress={onPress}
+      accessibilityState={{ disabled }}
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel ?? label}
       hitSlop={mini ? 4 : undefined}
@@ -42,15 +50,15 @@ export function Button({ label, onPress, variant = 'primary', color = 'accent', 
           gap: space.sm,
           alignItems: 'center',
           justifyContent: 'center',
-          backgroundColor: primary ? colors[color] : mini ? colors.background : 'transparent',
+          backgroundColor: primary ? fill : mini ? colors.background : 'transparent',
           alignSelf: mini ? 'flex-start' : undefined,
           opacity: pressed ? 0.8 : 1,
         },
         style,
       ]}
     >
-      {primary && icon ? <Icon name={icon} size={20} color="onAccent" /> : null}
-      <AppText variant={mini ? 'buttonSmall' : 'button'} color={primary ? 'onAccent' : 'text'}>
+      {primary && icon ? <Icon name={icon} size={20} color={disabled ? 'textMuted' : 'onAccent'} /> : null}
+      <AppText variant={mini ? 'buttonSmall' : 'button'} color={disabled ? 'textMuted' : primary ? 'onAccent' : 'text'}>
         {label}
       </AppText>
     </Pressable>

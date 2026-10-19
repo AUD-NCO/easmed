@@ -4,10 +4,8 @@ import { StatusBar } from 'expo-status-bar';
 import { AmbientGradient, AppText, Avatar, Button, Icon, PAGE_SIDE, PAGE_TITLE_TOP, PageTitle, PermissionSheet, RecordDial, TAB_BAR_CLEARANCE, type DialRect } from '../components';
 import { initials, useProfile } from '../lib/profile';
 import { refreshPermissions, usePermissionStatus, type PermissionKind } from '../lib/permissionStatus';
-import { summarize, useNightNotes } from '../lib/nightNotes';
 import { checkCanRecord, demoLastNightStopped, demoStop, stopTime, type StartProblem } from '../lib/recordingIssues';
 import { useNights } from '../lib/recordings';
-import { recall, remember } from '../lib/session';
 import { homeMessage, type HomeMessage } from '../lib/tips';
 import { alpha, colors, motion, radius, space, useInsets } from '@ds/theme';
 
@@ -23,8 +21,8 @@ const DIAL_LABEL = 84; // room under the dial for "Tap to start recording" and t
  * Layers, back to front:
  *   1. A night-to-blue gradient with a slow, faint drift of light (ambient preset), so the screen feels alive.
  *   2. The banner (Breath): one message at a time, the most useful for right now, with its action
- *      under the text (lib/tips: microphone → notifications → charging → Night Notes).
- *      Night Notes live here too: it's the message once nothing more urgent is left.
+ *      under the text (lib/tips: microphone → notifications → charging). Keep it charging is the
+ *      message once nothing more urgent is left, with no action.
  *   3. The panel (Midnight) with the record dial.
  */
 /** Where the record button sits, in Home's own coordinates, so Recording can grow out of it. */
@@ -32,20 +30,17 @@ export type RecordOrigin = { x: number; y: number; r: number };
 
 export function HomeScreen({
   onStartRecording,
-  onOpenNotes,
   onOpenProfile,
   onOpenLastNight,
   onCantStart,
 }: {
   onStartRecording?: (from: RecordOrigin) => void;
-  onOpenNotes?: () => void;
   onOpenProfile?: () => void;
   /** Last night stopped early: "See what was saved" opens its report. */
   onOpenLastNight?: (state: string) => void;
   /** Recording can't start (no space, or the recorder failed): opens the problem screen. */
   onCantStart?: (problem: StartProblem) => void;
 }) {
-  const notes = useNightNotes();
   const rootRef = useRef<View>(null);
   const insets = useInsets();
   const profile = useProfile();
@@ -53,7 +48,6 @@ export function HomeScreen({
   const mic = usePermissionStatus('microphone');
   const notifications = usePermissionStatus('notifications');
   const micOff = mic !== 'granted';
-  const [chargingDismissed, setChargingDismissed] = useState(() => recall('chargingTipSeen', false));
   // Prototype: the demo nav's stopped night. Engineering: the latest night's own stop, until its report is opened.
   const latest = useNights()[0];
   const [stoppedState] = useState(demoLastNightStopped);
@@ -61,18 +55,11 @@ export function HomeScreen({
   const message = homeMessage({
     micOn: !micOff,
     notificationsOn: notifications === 'granted',
-    chargingDismissed,
-    notesTonight: summarize(notes.tonight),
     stoppedAt: stop && latest ? stopTime(latest, stop) : undefined,
   });
   const onMessageAction = () => {
     if (message.id === 'stopped') return stoppedState && onOpenLastNight?.(stoppedState);
     if (message.id === 'microphone' || message.id === 'notifications') return ask(message.id);
-    if (message.id === 'charging') {
-      remember('chargingTipSeen', true);
-      return setChargingDismissed(true);
-    }
-    onOpenNotes?.();
   };
 
   // Asking again in context (tip "Turn on", or the dial while the mic is off).
@@ -158,8 +145,8 @@ export function HomeScreen({
 }
 
 /**
- * The one message on Home: icon and text, then its action (a mini button) underneath.
- * When the message changes (a permission turned on, a tip dismissed) the new one fades in (fast).
+ * The one message on Home: icon and text, then its action (a mini button) underneath, if it has one.
+ * When the message changes (a permission turned on) the new one fades in (fast).
  * Breath with Midnight text (9.4:1); the action is a Midnight pill with a Moon label (15:1).
  */
 function Banner({ message, onAction }: { message: HomeMessage; onAction: () => void }) {
@@ -182,7 +169,7 @@ function Banner({ message, onAction }: { message: HomeMessage; onAction: () => v
           <AppText color="onAccent" accessibilityLiveRegion="polite">
             {message.text}
           </AppText>
-          <Button label={message.cta} variant="mini" onPress={onAction} style={{ marginTop: space.md }} />
+          {message.cta && <Button label={message.cta} variant="mini" onPress={onAction} style={{ marginTop: space.md }} />}
         </View>
       </Animated.View>
     </View>

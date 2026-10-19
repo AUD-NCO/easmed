@@ -71,7 +71,7 @@ export function BottomSheet({
 
   // Android back button closes the sheet.
   useEffect(() => {
-    if (!visible) return;
+    if (!visible || Platform.OS === 'web') return; // Android only: the web has no back button to catch
     const sub = BackHandler.addEventListener('hardwareBackPress', () => {
       onClose();
       return true;
