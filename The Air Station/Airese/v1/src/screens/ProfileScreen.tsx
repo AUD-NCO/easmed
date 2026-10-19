@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
-import { Linking, Pressable, StyleSheet, View } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { Linking, Platform, Pressable, StyleSheet, View } from 'react-native';
 import Constants from 'expo-constants';
 import { AppText, BottomSheet, Button, DetailPage, ExplainSheet, FormDivider, FormGroup, Icon, Logo, PAGE_SIDE, PermissionSheet, SettingRow, SettingSwitch, Toast } from '../components';
 import { SUPPORT } from '../lib/airStation';
 import { EXPLAIN } from '../lib/nightDetails';
 import { usePermissionStatus } from '../lib/permissionStatus';
-import { initials, phoneDisplay, setNotificationPref, useNotificationPrefs, useProfile } from '../lib/profile';
+import { ensureSampleProfile, initials, phoneDisplay, setNotificationPref, useNotificationPrefs, useProfile } from '../lib/profile';
 import { deleteAllRecordings, useNights } from '../lib/recordings';
 import { alpha, colors, space } from '@ds/theme';
 
@@ -48,6 +48,11 @@ const ABOUT: Record<About, { title: string; body: string }> = {
  *
  * No sign-in or sign-out yet (so no "account" to delete: erase is what's on the phone).
  */
+const MIC_OFF = {
+  title: 'Turn off the microphone',
+  body: 'This is done in your phone’s Settings, under Airese → Microphone. Airese can’t record your night without it.',
+};
+
 export function ProfileScreen({
   backLabel = 'Home',
   onBack,
@@ -61,12 +66,14 @@ export function ProfileScreen({
   onOpenCentres: () => void;
   onErased: () => void;
 }) {
+  useEffect(ensureSampleProfile, []); // prototype: the demo nav can open Profile before onboarding
   const profile = useProfile();
   const nights = useNights();
   const prefs = useNotificationPrefs();
   const notificationsOn = usePermissionStatus('notifications') === 'granted';
   const micOn = usePermissionStatus('microphone') === 'granted';
   const [micSheet, setMicSheet] = useState(false);
+  const [micOffSheet, setMicOffSheet] = useState(false); // switching the microphone off: it's done in Settings
   const [notificationsSheet, setNotificationsSheet] = useState(false);
   const [confirm, setConfirm] = useState<Confirm | null>(null);
   const [lastConfirm, setLastConfirm] = useState<Confirm>('recordings'); // keeps the copy while the sheet closes
@@ -129,12 +136,9 @@ export function ProfileScreen({
               <SettingRow icon="notifications" title="Bedtime reminder" detail="Notifications are off" action={{ label: 'Turn on', onPress: () => setNotificationsSheet(true) }} />
             )}
             <FormDivider />
-            <SettingRow
-              icon="mic"
-              title="Microphone"
-              detail={micOn ? 'On · needed to record your night' : 'Off · Airese can’t record without it'}
-              action={micOn ? undefined : { label: 'Turn on', onPress: () => setMicSheet(true) }}
-            />
+            {/* Microphone: the switch shows the permission. On asks for it; off says it's done in the phone's
+                Settings (an app can't take back its own permission), with a way there on a phone. */}
+            <SettingSwitch icon="mic" title="Microphone" value={micOn} onChange={(on) => (on ? setMicSheet(true) : setMicOffSheet(true))} />
           </FormGroup>
 
           {/* About */}
@@ -189,6 +193,12 @@ export function ProfileScreen({
         onNotNow={() => setNotificationsSheet(false)}
       />
       <ExplainSheet content={about ? ABOUT[about] : null} onClose={() => setAbout(null)} />
+      <ExplainSheet
+        content={micOffSheet ? MIC_OFF : null}
+        onClose={() => setMicOffSheet(false)}
+        action={Platform.OS === 'web' ? undefined : { label: 'Open Settings', onPress: () => (setMicOffSheet(false), Linking.openSettings().catch(() => {})) }}
+        dismissLabel={Platform.OS === 'web' ? undefined : 'Not now'}
+      />
 
       <BottomSheet visible={confirm !== null} onClose={() => setConfirm(null)} fit>
         <AppText variant="heading" color="text" accessibilityRole="header" style={styles.center}>

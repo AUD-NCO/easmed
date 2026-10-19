@@ -31,7 +31,7 @@ const check = (p: Profile, verified: boolean): Errors => {
   return {
     name: !first && !last ? 'Add your first and last name.' : !first ? 'Add your first name.' : last ? undefined : 'Add your last name.',
     phone: !p.phone ? 'Add your phone number.' : isValidPhone(p.phone, p.phoneCountry) ? undefined : 'Check your phone number.',
-    email: !p.email.trim() ? 'Add your email address.' : !isValidEmail(p.email) ? 'Check your email address.' : verified ? undefined : 'Verify your email to save.',
+    email: !p.email.trim() ? 'Add your email address.' : !isValidEmail(p.email) ? 'Check your email address.' : verified ? undefined : 'Verify your new email to save it.',
   };
 };
 
@@ -40,7 +40,7 @@ const check = (p: Profile, verified: boolean): Errors => {
  * AboutYouScreen), all required. Edits are a draft: Save checks them and keeps them; Back leaves
  * without changing anything. Fields are checked when you leave them, and all again on Save.
  *
- * Email: the saved, verified address shows Verified. A new one needs Verify (the same email code as
+ * Email: the saved address shows Verified (onboarding verified it). A new one needs Verify (the same email code as
  * onboarding, coming back here: lib/emailCode.ts) and Save is dimmed until then; tapping it anyway
  * says why. `returning`: reopened from the email link, so the draft starts on the address just verified.
  * Browser preview: Verify plays the mail app and browser inside the phone, as in onboarding.
@@ -55,7 +55,9 @@ export function EditDetailsScreen({ onBack, returning = false }: { onBack: () =>
   const [demo, setDemo] = useState<'mail' | 'browser' | null>(null);
   const emailRef = useRef<TextInput>(null);
 
-  const verified = !!draft.email.trim() && saved.verifiedEmail === draft.email.trim();
+  // The saved email was verified in onboarding (it can't be finished without), so only a new one needs it
+  const email = draft.email.trim();
+  const verified = !!email && (email === saved.email || email === saved.verifiedEmail);
 
   const update = (next: Partial<Profile>) => {
     const d = { ...draft, ...next };
@@ -127,7 +129,7 @@ export function EditDetailsScreen({ onBack, returning = false }: { onBack: () =>
               />
             </FormGroup>
 
-            <FormGroup title="Email" error={errors.email} footer={verified ? undefined : sent ? 'Code sent. Check your email.' : 'Verify your email to save.'}>
+            <FormGroup title="Email" error={errors.email} footer={verified ? undefined : sent ? 'Code sent. Check your email.' : 'Verify your new email to save it.'}>
               <FormInput
                 ref={emailRef}
                 placeholder="name@example.com"

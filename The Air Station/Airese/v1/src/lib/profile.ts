@@ -55,6 +55,27 @@ export function setProfile(next: Partial<Profile>) {
   listeners.forEach((l) => l());
 }
 
+/**
+ * Prototype only: onboarding can't be skipped, so a real profile is always complete. Opening Profile
+ * from the demo nav without going through onboarding fills in this sample person (email verified).
+ */
+const SAMPLE: Profile = {
+  ...EMPTY,
+  firstName: 'Alex',
+  lastName: 'Tan',
+  phone: '91234567',
+  email: 'alex.tan@example.com',
+  verifiedEmail: 'alex.tan@example.com',
+  gender: 'male',
+  birthYear: '1984',
+  heightCm: '175',
+  weightKg: '78',
+  country: 'Singapore',
+};
+export function ensureSampleProfile() {
+  if (!profile.email) setProfile(SAMPLE);
+}
+
 /** Delete account: back to an empty profile. */
 export const clearProfile = () => setProfile(EMPTY);
 
