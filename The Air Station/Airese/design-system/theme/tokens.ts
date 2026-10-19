@@ -59,7 +59,6 @@ export const colors = {
   tintSnoring: alpha(palette.ember, 0.14),
   tintBreathing: alpha(palette.iris, 0.14),
   tintSleep: alpha(palette.dew, 0.12),
-  tintWarm: alpha(palette.lamp, 0.10), // Lamp wash, for the meaning card
   tintAccent: alpha(palette.breath, 0.16), // Breath wash: icon badges on profile tiles, the selected gender tile
 } as const;
 

@@ -114,19 +114,6 @@ export const FormInput = forwardRef<TextInput, InputProps>(function FormInput({ 
   );
 });
 
-// Web only: browsers paint autofilled inputs their own blue. Keep the field's colours instead
-// (a Deep inset shadow over the autofill fill, Moon text). Native apps don't do this.
-if (Platform.OS === 'web' && typeof document !== 'undefined' && !document.getElementById('airese-autofill')) {
-  const css = document.createElement('style');
-  css.id = 'airese-autofill';
-  // The long transition stops the browser's fill ever showing; the inset shadow covers it where it does.
-  css.textContent = `input:-webkit-autofill, input:-webkit-autofill:hover, input:-webkit-autofill:focus, input:autofill {
-    -webkit-box-shadow: 0 0 0 1000px ${colors.surface} inset !important; box-shadow: 0 0 0 1000px ${colors.surface} inset !important;
-    -webkit-text-fill-color: ${colors.text} !important; caret-color: ${colors.accent};
-    transition: background-color 99999s ease-out 0s, color 99999s ease-out 0s; }`;
-  document.head.appendChild(css);
-}
-
 /** Hairline between rows (horizontal), or between inputs in a row group (vertical). */
 export function FormDivider({ vertical }: { vertical?: boolean }) {
   return <View style={vertical ? styles.dividerV : styles.dividerH} />;

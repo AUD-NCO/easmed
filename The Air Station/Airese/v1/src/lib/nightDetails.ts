@@ -286,36 +286,14 @@ export function summary(d: NightDetails): { headline: string; body: string } {
   }
 }
 
-/** What this means (PRD §11): direct only as repeated evidence builds up. */
-export function meaning(d: NightDetails): { title: string; body: string } | null {
-  switch (d.state) {
-    case 'steady':
-      return { title: 'Nothing unusual stood out', body: 'Your snoring and breathing were close to your recent pattern. Keep recording so Airese can learn what’s typical for you.' };
-    case 'unusual':
-      return { title: 'Something to keep an eye on', body: 'You snored more and your breathing was less steady last night. One night is hard to read on its own. We’ll see how the week looks.' };
-    case 'pattern':
-      return {
-        title: `${d.patternNights?.seen} of ${d.patternNights?.of} nights`,
-        body: `Your breathing paused often on ${d.patternNights?.seen} of the last ${d.patternNights?.of} nights. This is worth getting checked by a doctor.`,
-      };
-    default:
-      return null;
-  }
-}
 
 /** Plain explanations for L2 sheets. Exact definitions to come from Product, Engineering and Clinical. */
 export const EXPLAIN = {
-  clips: { title: 'Why these clips?', body: 'Airese picks the moments that best explain your night, not just the loudest ones: a loud stretch, a repeated one, and any time your breathing was interrupted.' },
   breathing: { title: 'Breathing pauses', body: 'Moments when your breathing sounded like it paused or became uneven, counted per hour of sleep. Airese counts them; it doesn’t diagnose anything.' },
-  usual: { title: 'What “usual” means', body: 'Airese compares this night with your own recent nights, not with other people. “About usual” means within a fifth of your recent average.' },
-  deciding: { title: 'How Airese decides what to say', body: 'One night is hard to read on its own. Airese only suggests talking to a doctor when the same thing shows up night after night.' },
   privacy: { title: 'Private by default', body: 'Your recordings stay on your phone. You choose if and when to share anything.' },
-  restScore: { title: 'Rest Score', body: 'A summary of how settled your night sounded: how long you slept, and how often snoring or waking broke it up.' },
-  soundScore: { title: 'Sound Score', body: 'Out of 100: half from how loud your snoring was, half from how much of the night it filled. Lower is quieter. It describes the sound, not your health.' },
   snoring: { title: 'Snoring', body: 'The total time Airese heard snoring, and how much of the recording that was.' },
   loudness: { title: 'Sound levels', body: 'How loud the snoring was, measured by your phone’s microphone. Phones differ, so compare nights rather than reading the numbers on their own.' },
   sleep: { title: 'Estimated sleep', body: 'Recording time minus the stretches where you sounded awake or restless. An estimate from sound alone.' },
-  efficiency: { title: 'Sleep efficiency', body: 'How much of the recording you spent asleep, as a percentage. An estimate from sound alone.' },
 };
 export type ExplainKey = keyof typeof EXPLAIN;
 
@@ -324,13 +302,6 @@ export const CLIP_LABEL: Record<ClipType, string> = { 'Loud snoring': 'Loud snor
 
 export const INTENSITY_LABEL: Record<Intensity, string> = { light: 'Light', moderate: 'Moderate', loud: 'Loud', veryLoud: 'Very loud' };
 
-/** "Mostly light to moderate" + louder periods, for the L1 loudness line. */
-export function loudnessLine(d: NightDetails) {
-  const loud = d.segments.filter((s) => s.intensity === 'loud' || s.intensity === 'veryLoud').length;
-  const quiet = d.intensityShare.light + d.intensityShare.moderate;
-  const mostly = quiet >= 60 ? 'Mostly light to moderate' : 'Often loud';
-  return loud ? `${mostly} · ${loud} louder ${loud === 1 ? 'period' : 'periods'}` : mostly;
-}
 
 /**
  * Prototype: what each sample night shows, for the Reports calendar and the report on show.
@@ -352,6 +323,18 @@ export function nightState(night: Night, override?: string): NightState {
   if (override === 'option-2') return 'pattern'; // the repeated-pattern night, laid out as Option 2 (NightScreen)
   if (override && (STATES as string[]).includes(override)) return override as NightState;
   return sampleState(night, sampleNights());
+}
+
+/** The night minus the awake stretches. */
+export function asleepStretches(d: NightDetails) {
+  const out: { start: number; end: number }[] = [];
+  let at = 0;
+  for (const w of d.awake) {
+    if (w.start > at) out.push({ start: at, end: w.start });
+    at = Math.max(at, w.end);
+  }
+  if (at < d.night.minutes) out.push({ start: at, end: d.night.minutes });
+  return out;
 }
 
 /** Compact duration for big numbers: "7h 36m", "36m". One size, no small units. */

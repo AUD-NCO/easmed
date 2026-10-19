@@ -22,12 +22,12 @@ import {
   ScoreSummary,
   ScoreTile,
   SnoringChart,
-  asleepStretches,
-  useClipPlayer,
 } from '../components';
 import { benchmarks, zoneOf, type Benchmark } from '../lib/benchmarks';
+import { useClipPlayer } from '../lib/clipPlayer';
 import {
   EXPLAIN,
+  asleepStretches,
   busiestWindow,
   CLIP_LABEL,
   SAMPLE_SECONDS,

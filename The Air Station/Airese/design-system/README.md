@@ -91,7 +91,6 @@ One colour per kind of data, the same everywhere: charts, data icons, legends, s
 | ![](swatches/ember.svg) | Snoring | `colors.dataSnoring` | `#FFAA5C` (Ember) | ![](swatches/tint-snoring.svg) `colors.tintSnoring` |
 | ![](swatches/iris.svg) | Breathing pauses | `colors.dataBreathing` | `#B9A3FF` (Iris) | ![](swatches/tint-breathing.svg) `colors.tintBreathing` |
 | ![](swatches/dew.svg) | Sleep and rest | `colors.dataSleep` | `#8EE3CF` (Dew) | ![](swatches/tint-sleep.svg) `colors.tintSleep` |
-| | Warm wash | `colors.tintWarm` | Lamp at 10% | ![](swatches/tint-warm.svg) for the "what it means" card |
 
 Breath stays out of charts: it's the UI colour, and too close to Iris for colour-blind readers. Earlier nights in charts use a neutral Moon tint (`alpha(colors.moon, 0.14–0.16)`).
 

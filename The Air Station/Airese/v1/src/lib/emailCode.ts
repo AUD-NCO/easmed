@@ -4,8 +4,8 @@
  *
  *   1. Verify → the server emails a 6-digit code (template: public/email-code.html).
  *   2. In their mail app the person taps the code (a link) or copies it.
- *   3. The link opens the Airese page in the phone's browser (public/verify-email.html, hosted at
- *      VERIFY_URL), with the code filled in. Verify there → "Email verified".
+ *   3. The link opens the Airese page in the phone's browser (public/verify-email.html, to be hosted
+ *      at https://theairstation.com/airese/verify), with the code filled in. Verify there → "Email verified".
  *   4. The page opens the return link (airese://details?verified=1 in onboarding,
  *      airese://profile-details?verified=1 from Profile): back to Your details, which shows Verified.
  *      Continue (onboarding) or Save (Profile) is dimmed until then.
@@ -23,9 +23,8 @@ import { setProfile } from './profile';
 /** Prototype only: the code that works. */
 export const DEMO_CODE = '482913';
 
-/** Where the page will live. Its prototype copy is published next to the preview. */
+/** The page's domain, shown in the browser's address bar. Its prototype copy is published next to the preview. */
 export const VERIFY_DOMAIN = 'theairstation.com';
-export const VERIFY_URL = `https://${VERIFY_DOMAIN}/airese/verify`;
 
 /** Which Your details the page sends the person back to: onboarding's, or Profile's. */
 export type CodeFrom = 'details' | 'profile-details';

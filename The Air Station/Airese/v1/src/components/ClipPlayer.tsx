@@ -3,7 +3,7 @@ import { Animated, Pressable, StyleSheet, View, type GestureResponderEvent, type
 import { CLIP_LABEL, type Clip, type ClipMark } from '../lib/nightDetails';
 import { alpha, colors, space } from '@ds/theme';
 import { AppText } from '@ds/components/AppText';
-import { clipColor, type ClipPlayerState as Player } from './AudioSnippet';
+import { clipColor, type ClipPlayerState as Player } from '../lib/clipPlayer';
 import { Icon } from '@ds/components/Icon';
 
 const BARS = 44;
