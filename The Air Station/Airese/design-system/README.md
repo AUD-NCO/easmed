@@ -2,7 +2,7 @@
 
 Everything used to build the Airese app: tokens, type, motion, icons, brand assets and every React Native component, with where each one is used.
 
-**Everything here is built in React Native** (Expo SDK 57, TypeScript). There is no separate Figma library or web component kit: the code is the source of truth. Voice, tone and visual rules are in [docs/BRAND.md](docs/BRAND.md); what the product does is in [docs/PRD.md](../v2/docs/PRD.md).
+**Everything here is built in React Native** (Expo SDK 57, TypeScript). There is no separate Figma library or web component kit: the code is the source of truth. Voice, tone and visual rules are in [docs/BRAND.md](docs/BRAND.md).
 
 | | |
 | --- | --- |

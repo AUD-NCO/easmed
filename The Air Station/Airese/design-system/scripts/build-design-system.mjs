@@ -373,9 +373,7 @@ const html = `<!doctype html>
     <div class="links">
       <a href="../v2/">Open the prototype</a>
       <a href="${REPO}/design-system/docs/BRAND.md">Brand brief</a>
-      <a href="${REPO}/v2/docs/PRD.md">Product requirements</a>
       <a href="https://github.com/AUD-NCO/easmed/tree/main/The%20Air%20Station/Airese/design-system">This page on GitHub</a>
-      <a href="${REPO}/design-system/theme/tokens.ts">tokens.ts</a>
     </div>
     <div class="rules">
       <div class="rule"><b>Tokens only</b>No hard-coded colours, sizes, timings or curves.</div>
