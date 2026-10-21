@@ -135,6 +135,11 @@ const BLURB = {
   "Avatar": "44 pt glassy circle with initials, or a person icon. Opens Profile. Exports titleControl, the look shared with the Reports calendar button.",
   "ToggleChip": "Pill that switches on and off. Reads as a checkbox.",
   "ChipGroup": "Wraps chips across lines.",
+  "InlineLink": "A link inside a sentence (Terms and Privacy beside a checkbox).",
+  "PromptBody": "PromptLayout's content inside a page that has its own header (a night with a recording problem).",
+  "CountrySheet": "Searchable country list for the phone number, Singapore and Malaysia first.",
+  "HeroBackground": "The mood gradient and glow behind the verdict, shared by InsightCard and VerdictCard.",
+  "MailDemo": "v1, browser preview only. Stands in for the phone's mail app, open on the code email.",
   "IconChoiceGrid": "Multi-select as a grid of round icons with labels, four to a row. Chosen: Breath ring and a check.",
   "IconStack": "A short row of overlapping round icons, fading out towards the end: what's chosen, at a glance.",
   "CheckInBanner": "A small bright banner that opens something: one line of text, what's chosen as fading icons, a chevron.",
@@ -185,17 +190,28 @@ const BLURB = {
 
 const GROUPS = [
   ['Foundations', [['AppText'], ['Icon'], ['Logo']]],
-  ['Page structure and templates', [['PageTitle'], ['DetailPage'], ['PromptLayout'], ['AmbientGradient'], ['TabBar'], ['Screen']]],
-  ['Buttons and controls', [['Button'], ['IconButton'], ['InfoButton'], ['Avatar'], ['ToggleChip', 'ToggleChip'], ['ChipGroup', 'ToggleChip'], ['IconChoiceGrid'], ['IconStack'], ['SettingSwitch', 'SettingRows'], ['SegmentedControl']]],
-  ['Forms and rows', [['FormGroup', 'Form'], ['FormTitle', 'Form'], ['FormInput', 'Form'], ['FormDivider', 'Form'], ['PhoneField'], ['Checkbox'], ['WheelPicker', 'Pickers'], ['RulerPicker', 'Pickers'], ['AboutYou'], ['SettingRow', 'SettingRows']]],
-  ['Cards', [['Card'], ['CheckInBanner'], ['VerdictCard'], ['InsightCard'], ['DataCard'], ['BigNumber', 'DataCard'], ['ScoreSummary'], ['ScoreTile']]],
-  ['Sheets and feedback', [['BottomSheet'], ['TopSheet'], ['ExplainSheet'], ['LargeSheet'], ['EmailCodeSheet'], ['PermissionSheet'], ['Toast'], ['SystemAlertHost']]],
+  ['Page structure and templates', [['PageTitle'], ['DetailPage'], ['PromptLayout'], ['PromptBody', 'PromptLayout'], ['AmbientGradient'], ['TabBar'], ['Screen']]],
+  ['Buttons and controls', [['Button'], ['IconButton'], ['InfoButton'], ['Avatar'], ['ToggleChip', 'ToggleChip'], ['ChipGroup', 'ToggleChip'], ['InlineLink', 'Checkbox'], ['IconChoiceGrid'], ['IconStack'], ['SettingSwitch', 'SettingRows'], ['SegmentedControl']]],
+  ['Forms and rows', [['FormGroup', 'Form'], ['FormTitle', 'Form'], ['FormInput', 'Form'], ['FormDivider', 'Form'], ['PhoneField'], ['CountrySheet', 'PhoneField'], ['Checkbox'], ['WheelPicker', 'Pickers'], ['RulerPicker', 'Pickers'], ['AboutYou'], ['SettingRow', 'SettingRows']]],
+  ['Cards', [['Card'], ['CheckInBanner'], ['VerdictCard'], ['InsightCard'], ['HeroBackground', 'InsightCard'], ['DataCard'], ['BigNumber', 'DataCard'], ['ScoreSummary'], ['ScoreTile']]],
+  ['Sheets and feedback', [['BottomSheet'], ['TopSheet'], ['ExplainSheet'], ['LargeSheet'], ['EmailCodeSheet'], ['MailDemo'], ['PermissionSheet'], ['Toast'], ['SystemAlertHost']]],
   ['Recording', [['RecordDial'], ['ListeningRing'], ['TipCarousel']]],
   ['Reports', [['MonthCalendar']]],
   ['Data visualisation', [['SnoringChart'], ['NightTimeline'], ['ScoreRing'], ['RampFill'], ['BenchmarkScale'], ['HourlyBars'], ['LoudnessBars'], ['RecentNightsChart'], ['ComparisonIndicator']]],
   ['Audio', [['ClipPlayer'], ['AudioSnippet']]],
   ['Recording Details parts', [['PrivacyFooter']]],
 ];
+// Every exported component shows: anything not placed in GROUPS lands in "Other" (place it properly)
+const listed = new Set(GROUPS.flatMap(([, items]) => items.map(([name]) => name)));
+const unlisted = Object.entries(sources)
+  .filter(([f]) => /(design-system|src)\/components\/[^/]+\.tsx$/.test(f))
+  .flatMap(([f, src]) => [...src.matchAll(/export function ([A-Z]\w+)/g)].map((m) => [m[1], basename(f, '.tsx')]))
+  .filter(([name], i, all) => !listed.has(name) && all.findIndex(([n]) => n === name) === i);
+if (unlisted.length) {
+  console.warn(`Components not in GROUPS (shown under Other): ${unlisted.map(([n]) => n).join(', ')}`);
+  GROUPS.push(['Other', unlisted]);
+}
+
 const components = GROUPS.map(([group, items]) => ({
   group,
   items: items.map(([name, file = name]) => {
@@ -315,15 +331,31 @@ const html = `<!doctype html>
   .muted { color:var(--mist); }
   .wrap { max-width:1120px; margin:0 auto; padding:0 16px; }
   header.top { padding:56px 0 40px; border-bottom:1px solid var(--line); }
+  header.top .wrap, footer .wrap { max-width:1400px; } /* lines up with the contents menu below */
   header.top .brand { display:flex; align-items:center; gap:20px; margin-bottom:28px; color:var(--moon); }
   header.top .brand svg { width:64px; height:auto; }
   header.top .lead { font-size:18px; max-width:720px; color:var(--mist); }
   .links { display:flex; flex-wrap:wrap; gap:8px 20px; margin-top:20px; font-size:14px; }
+  /* Wide screens: the contents on the left, built from the headings (script below). Narrow: the top bar. */
+  .layout { max-width:1400px; margin:0 auto; padding:0 16px; display:grid; grid-template-columns:240px minmax(0,1fr); gap:40px; }
+  .layout > main.wrap { max-width:none; margin:0; padding:0; min-width:0; }
+  aside.side { position:sticky; top:0; align-self:start; max-height:100vh; overflow-y:auto; padding:32px 12px 48px 0; border-right:1px solid var(--line); scrollbar-width:thin; }
+  aside.side ul { list-style:none; margin:0; padding:0; }
+  aside.side a { display:block; padding:6px 10px; border-radius:8px; color:var(--mist); text-decoration:none; font-size:14px; line-height:1.4; }
+  aside.side a:hover { color:var(--moon); }
+  aside.side a.on { color:var(--breath); background:rgba(157,180,255,.1); }
+  aside.side > ul > li { margin-bottom:6px; }
+  aside.side > ul > li > a { color:var(--moon); font-weight:600; }
+  aside.side li ul { margin:2px 0 6px 10px; padding-left:8px; border-left:1px solid var(--line); }
+  aside.side li ul a { font-size:13px; padding:4px 10px; }
+  @media (min-width:961px) { nav.toc { display:none; } }
+  @media (max-width:960px) { .layout { display:block; } aside.side { display:none; } }
   nav.toc { position:sticky; top:0; z-index:5; background:rgba(11,16,32,.92); backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px); border-bottom:1px solid var(--line); }
   nav.toc ul { list-style:none; margin:0; padding:0 16px; display:flex; gap:4px; overflow-x:auto; max-width:1120px; margin:0 auto; scrollbar-width:none; }
   nav.toc a { display:block; padding:12px 12px; min-height:44px; color:var(--mist); text-decoration:none; font-size:14px; white-space:nowrap; }
   nav.toc a:hover { color:var(--moon); }
   section { padding:64px 0 24px; border-bottom:1px solid var(--line); scroll-margin-top:48px; }
+  section h3 { scroll-margin-top:24px; }
   .rules { display:grid; gap:12px; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); margin-top:24px; }
   .rule { background:var(--deep); border-radius:16px; padding:16px 20px; font-size:14px; }
   .rule b { display:block; font-size:16px; margin-bottom:4px; }
@@ -375,14 +407,10 @@ const html = `<!doctype html>
   .images figcaption { font-size:14px; color:var(--mist); margin-top:8px; }
   .comp-group { margin-top:40px; }
   .comps { display:grid; gap:12px; grid-template-columns:repeat(auto-fill,minmax(320px,1fr)); }
-  details.comp { background:var(--deep); border-radius:16px; padding:0 20px; }
-  details.comp summary { cursor:pointer; list-style:none; padding:16px 0; min-height:44px; display:flex; justify-content:space-between; gap:12px; align-items:baseline; }
-  details.comp summary::-webkit-details-marker { display:none; }
-  details.comp summary b { font-size:16px; }
-  details.comp summary span { font-size:12px; color:var(--mist); text-align:right; }
-  details.comp[open] summary { border-bottom:1px solid var(--line); }
-  details.comp .blurb { font-size:14px; margin:12px 0; }
-  details.comp .meta { font-size:13px; color:var(--mist); padding-bottom:16px; }
+  .comp { background:var(--deep); border-radius:16px; padding:16px 20px; scroll-margin-top:24px; }
+  .comp h4 { font:600 16px/1.4 Montserrat, system-ui, sans-serif; margin:0; padding-bottom:12px; border-bottom:1px solid var(--line); }
+  .comp .blurb { font-size:14px; margin:12px 0; }
+  .comp .meta { font-size:13px; color:var(--mist); overflow-wrap:anywhere; }
   .tag { display:inline-block; font-size:12px; padding:2px 10px; border-radius:999px; background:rgba(244,182,95,.12); color:var(--lamp); margin-left:6px; }
   footer { padding:56px 0 72px; text-align:center; color:var(--mist); font-size:14px; }
   footer svg { width:48px; height:auto; color:var(--mist); display:block; margin:0 auto 16px; }
@@ -410,6 +438,8 @@ const html = `<!doctype html>
 
 <nav class="toc" aria-label="Sections"><ul>${nav.map(([id, label]) => `<li><a href="#${id}">${label}</a></li>`).join('')}</ul></nav>
 
+<div class="layout">
+<aside class="side" aria-label="Contents"><ul>${nav.map(([id, label]) => `<li><a href="#${id}">${label}</a></li>`).join('')}</ul></aside>
 <main class="wrap">
 
 <section id="colour">
@@ -557,14 +587,14 @@ ${STORE.map(([file, caption]) => `    <figure><img src="store/${file}" alt="App 
 
 <section id="components">
   <h2>Components</h2>
-  <p class="muted">${components.reduce((n, g) => n + g.items.length, 0)} components in <code>design-system/components/</code> (shared by v1 and v2) and each version’s <code>src/components/</code>. Open one for details and where it’s used.</p>
+  <p class="muted">${components.reduce((n, g) => n + g.items.length, 0)} components in <code>design-system/components/</code> (shared by v1 and v2) and each version’s <code>src/components/</code>, with where each is used.</p>
   ${components
     .map(
       (g) => `<div class="comp-group"><h3>${g.group}</h3><div class="comps">${g.items
         .map(
-          (c) => `<details class="comp"><summary><b>${c.name}${c.used.length ? '' : '<span class="tag">not used</span>'}</b><span>${c.used.length ? esc(c.used.slice(0, 3).join(', ')) + (c.used.length > 3 ? ` +${c.used.length - 3}` : '') : ''}</span></summary>
+          (c) => `<article class="comp" id="c-${c.name}" data-nav="${c.name}"><h4>${c.name}${c.used.length ? '' : '<span class="tag">not used</span>'}</h4>
           <p class="blurb">${esc(c.doc || '—')}</p>
-          <div class="meta">Used in: ${c.used.length ? esc(c.used.join(', ')) : 'nothing yet'}<br><a href="${REPO}/${c.path}">${c.path}</a></div></details>`,
+          <div class="meta">Used in: ${c.used.length ? esc(c.used.slice(0, 8).join(', ')) + (c.used.length > 8 ? ` and ${c.used.length - 8} more` : '') : 'nothing yet'}<br><a href="${REPO}/${c.path}">${c.path}</a></div></article>`,
         )
         .join('')}</div></div>`,
     )
@@ -604,6 +634,7 @@ ${STORE.map(([file, caption]) => `    <figure><img src="store/${file}" alt="App 
 </section>
 
 </main>
+</div>
 
 <footer>
   ${logo('airese-logo.svg')}
@@ -612,6 +643,59 @@ ${STORE.map(([file, caption]) => `    <figure><img src="store/${file}" alt="App 
 </footer>
 
 <script>
+  // Contents on the left: each section, its headings, and in Components each component. Highlights where you are.
+  (function () {
+    const side = document.querySelector('aside.side ul');
+    if (!side) return;
+    const slug = (t) => t.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+    const targets = [];
+    side.querySelectorAll(':scope > li').forEach((li) => {
+      const a = li.firstElementChild;
+      const section = document.querySelector(a.getAttribute('href'));
+      if (!section) return;
+      targets.push([section, a]);
+      const subs = [...section.querySelectorAll('h3')];
+      if (!subs.length) return;
+      const ul = document.createElement('ul');
+      subs.forEach((h) => {
+        h.id = h.id || section.id + '-' + slug(h.textContent);
+        const item = document.createElement('li');
+        item.innerHTML = '<a href="#' + h.id + '"></a>';
+        item.firstChild.textContent = h.textContent;
+        ul.appendChild(item);
+        targets.push([h, item.firstChild]);
+        // Components: each one under its group
+        const comps = h.nextElementSibling ? [...h.nextElementSibling.querySelectorAll('[data-nav]')] : [];
+        if (comps.length) {
+          const inner = document.createElement('ul');
+          comps.forEach((c) => {
+            const ci = document.createElement('li');
+            ci.innerHTML = '<a href="#' + c.id + '"></a>';
+            ci.firstChild.textContent = c.dataset.nav;
+            inner.appendChild(ci);
+            targets.push([c, ci.firstChild]);
+          });
+          item.appendChild(inner);
+        }
+      });
+      li.appendChild(ul);
+    });
+    let on = null;
+    const mark = () => {
+      let current = targets[0];
+      for (const t of targets) if (t[0].getBoundingClientRect().top < 120) current = t;
+      if (!current || current[1] === on) return;
+      on && on.classList.remove('on');
+      on = current[1];
+      on.classList.add('on');
+      const box = side.parentElement, r = on.getBoundingClientRect(), b = box.getBoundingClientRect();
+      if (r.top < b.top || r.bottom > b.bottom) on.scrollIntoView({ block: 'nearest' });
+    };
+    let queued = false;
+    addEventListener('scroll', () => { if (!queued) { queued = true; requestAnimationFrame(() => { queued = false; mark(); }); } }, { passive: true });
+    mark();
+  })();
+
   // Motion demos: move the dot with the real preset's duration and curve (skipped with Reduce Motion).
   const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
   document.querySelectorAll('.demo button').forEach((b) => b.addEventListener('click', () => {
