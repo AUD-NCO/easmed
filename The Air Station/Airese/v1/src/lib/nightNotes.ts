@@ -1,5 +1,6 @@
 import { useSyncExternalStore } from 'react';
 import type { IconName } from '@ds/components/Icon';
+import { sampleNights, type Night } from './recordings';
 import { recall, remember } from './session';
 
 /**
@@ -44,24 +45,37 @@ export const REMEDY_GROUPS: NoteGroup[] = [
 
 const ALL = [...BEFORE_SLEEP, ...REMEDY_GROUPS.flatMap((g) => g.options)];
 const BY_ID = new Map(ALL.map((x) => [x.id, x]));
-export const labelOf = (id: string) => BY_ID.get(id)?.label ?? id;
 export const isRemedy = (id: string) => REMEDY_GROUPS.some((g) => g.options.some((x) => x.id === id));
 
-/** In the order they appear on the screen, for summaries ("Alcohol · Blocked nose · Nasal strip"). */
+/** In the order they appear on the screen. */
 const ORDER = ALL.map((x) => x.id);
 export const ordered = (ids: string[]) => [...ids].sort((a, b) => ORDER.indexOf(a) - ORDER.indexOf(b));
-export const summarize = (ids: string[]) => ordered(ids).map(labelOf).join(' · ');
+/** The options for these ids, in screen order (unknown ids left out). */
+export const optionsOf = (ids: string[]): NoteOption[] => ordered(ids).flatMap((id) => BY_ID.get(id) ?? []);
 
 /**
  * Tonight: Before sleeping, added from Recording. Each night: its notes (Before sleeping and remedies,
- * added from its report), how the person rated it (1 to 5, straight after stopping), and whether
- * Night Notes were added from the report (the report nudges until they are).
+ * added from its report) and how the person rated it (1 to 5, straight after stopping).
  */
-export type NightEntry = { notes: string[]; rating?: number; added?: boolean };
+export type NightEntry = { notes: string[]; rating?: number };
 type State = { tonight: string[]; nights: Record<string, NightEntry> };
 const known = (ids: string[]) => ids.filter((id) => BY_ID.has(id));
+
+// Prototype: some sample nights come with notes: the two latest so "Same as last night" has something to fill
+function sampleEntries(): Record<string, NightEntry> {
+  const n = sampleNights();
+  return {
+    [n[0].id]: { notes: ['caffeine', 'ate-late'] },
+    [n[1].id]: { notes: ['alcohol', 'blocked-nose', 'side-sleeping', 'nasal-strip'] },
+    // A few more, so the calendar shows the habit (its dots)
+    [n[3].id]: { notes: ['worked-out', 'mouthpiece'] },
+    [n[4].id]: { notes: ['alcohol', 'wedge-pillow'] },
+    [n[7].id]: { notes: ['exhausted', 'nasal-spray', 'humidifier'] },
+  };
+}
+
 const saved = recall<Partial<State>>('nightNotes', {});
-let state: State = { tonight: known(saved.tonight ?? []), nights: saved.nights ?? {} };
+let state: State = { tonight: known(saved.tonight ?? []), nights: saved.nights ?? sampleEntries() };
 const listeners = new Set<() => void>();
 const set = (next: Partial<State>) => {
   state = { ...state, ...next };
@@ -95,8 +109,19 @@ export function finishNight(nightId: string) {
 /** Straight after stopping: how the night felt, 1 to 5. */
 export const rateNight = (nightId: string, rating: number) => setNight(nightId, { rating });
 
-/** From the night's report: its Night Notes. Stops the report's nudge. */
-export const saveNight = (nightId: string, ids: string[]) => setNight(nightId, { notes: ordered(ids), added: true });
+/** From the night's report: its Night Notes. */
+export const saveNight = (nightId: string, ids: string[]) => setNight(nightId, { notes: ordered(ids) });
+
+/**
+ * "Same as last night": the previous night's choices of one kind (Before sleeping, or remedies).
+ * Tonight's previous night is the latest recorded one; a night's is the one recorded before it.
+ */
+export function previousNotes(s: State, nights: Night[], remedies: boolean, nightId?: string): string[] {
+  const at = nightId ? nights.findIndex((n) => n.id === nightId) : -1; // nights run newest first
+  if (nightId && at < 0) return [];
+  const prev = nights[at + 1];
+  return prev ? nightEntry(s, prev.id).notes.filter((id) => isRemedy(id) === remedies) : [];
+}
 
 /** Erase everything. */
-export const resetNightNotes = () => set({ tonight: [], nights: {} });
+export const resetNightNotes = () => set({ tonight: [], nights: sampleEntries() }); // prototype: the sample nights' notes come back with the sample recordings

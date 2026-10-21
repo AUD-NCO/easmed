@@ -2,10 +2,11 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useNights } from '../lib/recordings';
 import { NightNotesScreen } from '../screens/NightNotesScreen';
 
-/** ?night=<id>: that night's Night Notes, from its report. Otherwise Before sleeping, from Recording. */
+/** ?night=<id>: that night's Night Notes, from its report (?night=latest: the demo nav's). Otherwise Before sleeping, from Recording. */
 export default function NightNotes() {
   const { night: id } = useLocalSearchParams<{ night?: string }>();
-  const night = useNights().find((n) => n.id === id);
+  const nights = useNights();
+  const night = id === 'latest' ? nights[0] : nights.find((n) => n.id === id);
   return (
     <NightNotesScreen
       night={night}

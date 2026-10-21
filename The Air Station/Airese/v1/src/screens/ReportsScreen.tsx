@@ -2,12 +2,12 @@ import React, { useMemo, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { AppText, BottomSheet, Button, Icon, MonthCalendar, titleControl, PAGE_SIDE, PermissionSheet, TAB_BAR_CLEARANCE, TopSheet } from '../components';
-import { nightEntry, rateNight, useNightNotes } from '../lib/nightNotes';
+import { isRemedy, nightEntry, optionsOf, rateNight, useNightNotes } from '../lib/nightNotes';
 import { nightState } from '../lib/nightDetails';
 import { usePermissionStatus } from '../lib/permissionStatus';
 import { setNotificationPref, useNotificationPrefs } from '../lib/profile';
 import { POOR_COPY, demoStop, stopCopy } from '../lib/recordingIssues';
-import { useAnalysing, useNights, type Night } from '../lib/recordings';
+import { markRatingAsked, shouldAskRating, useAnalysing, useNights, type Night } from '../lib/recordings';
 import { MISSED_NIGHTS_NUDGE, calendarNights, dayKey, recordedOfRecent } from '../lib/reports';
 import { colors, radius, space, useInsets } from '@ds/theme';
 import { NightScreen } from './NightScreen';
@@ -21,7 +21,7 @@ import { NightScreen } from './NightScreen';
  * A night with a recording problem keeps the usual header, with the problem in the middle (image, problem,
  * reason, how to solve): couldn't hear clearly → Record tonight; stopped early → See what was saved.
  * Straight after stopping: while the night is looked through, a sheet asks how the night was (1 to 5);
- * pick one or dismiss it. Each report nudges for that night's Night Notes until they're added.
+ * pick one or dismiss it. Every report has a banner for that night's Morning check-in (sleep remedies).
  * `demoState`: the demo menu's Recording Details states, applied to the latest night (prototype only).
  */
 export function ReportsScreen({ demoState, onRecordAgain, onOpenNotes }: { demoState?: string; onRecordAgain: () => void; onOpenNotes: (night: Night) => void }) {
@@ -34,15 +34,15 @@ export function ReportsScreen({ demoState, onRecordAgain, onOpenNotes }: { demoS
   // Straight after a recording: the latest night, "Looking through your night", then its report.
   const analysing = useAnalysing();
   if (analysing && latest && selected !== latest.id) setSelected(latest.id);
-  // How was your night? Asked once each time a recording is being looked through
-  const [rating, setRating] = useState(analysing);
-  const [wasAnalysing, setWasAnalysing] = useState(analysing);
-  if (analysing !== wasAnalysing) {
-    setWasAnalysing(analysing);
-    if (analysing) setRating(true);
-  }
-  const notes = useNightNotes();
+  // How was your night? Asked once per recording, while it's looked through
+  const [rating, setRating] = useState(shouldAskRating);
+  if (!rating && shouldAskRating()) setRating(true);
+  const closeRating = () => {
+    markRatingAsked();
+    setRating(false);
+  };
   const night = (selected && map.get(selected)?.night) || latest;
+  const notes = useNightNotes();
 
   if (!night) return <NoReports onRecordAgain={onRecordAgain} />;
 
@@ -87,16 +87,17 @@ export function ReportsScreen({ demoState, onRecordAgain, onOpenNotes }: { demoS
         onRecordAgain={onRecordAgain}
         trailing={calendarButton}
         option2={option2}
-        onAddNotes={state !== 'processing' && !problem && !nightEntry(notes, night.id).added ? () => onOpenNotes(night) : undefined}
+        onAddNotes={state !== 'processing' && !problem ? () => onOpenNotes(night) : undefined}
+        notesChosen={optionsOf(nightEntry(notes, night.id).notes.filter(isRemedy))}
       />
 
       <NightRating
         visible={rating}
         onRate={(n) => {
           if (latest) rateNight(latest.id, n);
-          setRating(false);
+          closeRating();
         }}
-        onClose={() => setRating(false)}
+        onClose={closeRating}
       />
 
       <TopSheet visible={calendar} onClose={() => setCalendar(false)}>
@@ -104,6 +105,7 @@ export function ReportsScreen({ demoState, onRecordAgain, onOpenNotes }: { demoS
           nights={map}
           selected={night.id}
           first={nights[nights.length - 1].date}
+          diary={new Set(Object.keys(notes.nights).filter((id) => notes.nights[id].notes.length > 0))}
           onPick={(n) => {
             setSelected(n.night.id);
             setCalendar(false);
@@ -153,33 +155,33 @@ function MissedNights() {
   );
 }
 
-/** Straight after stopping: how the night was, 1 (poor) to 5 (great). Pick one, or dismiss the sheet. */
+/** How the night was, 1 to 5: the moon filling up, with a word for each. */
+const RATINGS = [
+  { emoji: '🌑', name: 'Restless' },
+  { emoji: '🌒', name: 'Choppy' },
+  { emoji: '🌓', name: 'Okay' },
+  { emoji: '🌔', name: 'Rested' },
+  { emoji: '🌕', name: 'Dreamy' },
+];
+
+/** Straight after stopping: how the night was, 1 to 5. Pick one, or dismiss the sheet. */
 function NightRating({ visible, onRate, onClose }: { visible: boolean; onRate: (n: number) => void; onClose: () => void }) {
   return (
-    <BottomSheet visible={visible} onClose={onClose} fit>
-      <AppText variant="heading" accessibilityRole="header" style={{ textAlign: 'center' }}>
+    <BottomSheet visible={visible} onClose={onClose}>
+      <AppText variant="heading" accessibilityRole="header" style={{ textAlign: 'center', marginTop: space.lg }}>
         How was your night?
       </AppText>
       <View style={styles.rates}>
-        {[1, 2, 3, 4, 5].map((n) => (
-          <Pressable
-            key={n}
-            onPress={() => onRate(n)}
-            accessibilityRole="button"
-            accessibilityLabel={`${n} out of 5${n === 1 ? ', poor' : n === 5 ? ', great' : ''}`}
-            style={({ pressed }) => [styles.rate, pressed && { backgroundColor: colors.tintAccent }]}
-          >
-            <AppText variant="heading">{n}</AppText>
+        {RATINGS.map((r, i) => (
+          <Pressable key={r.name} onPress={() => onRate(i + 1)} accessibilityRole="button" accessibilityLabel={`${r.name}, ${i + 1} out of 5`} style={({ pressed }) => [styles.rate, pressed && { opacity: 0.7 }]}>
+            <View style={styles.rateDisc}>
+              <AppText style={styles.emoji}>{r.emoji}</AppText>
+            </View>
+            <AppText variant="small" color="textMuted" numberOfLines={1}>
+              {r.name}
+            </AppText>
           </Pressable>
         ))}
-      </View>
-      <View style={styles.rateEnds} importantForAccessibility="no-hide-descendants">
-        <AppText variant="small" color="textMuted">
-          Poor
-        </AppText>
-        <AppText variant="small" color="textMuted">
-          Great
-        </AppText>
       </View>
     </BottomSheet>
   );
@@ -208,7 +210,8 @@ const styles = StyleSheet.create({
   calendarGlyph: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
   nudge: { flexDirection: 'row', gap: space.md, marginTop: space.lg, padding: space.lg, borderRadius: radius.lg, backgroundColor: colors.tintAccent }, // Breath wash, so the Midnight mini button stands out
   empty: { paddingHorizontal: PAGE_SIDE },
-  rates: { flexDirection: 'row', justifyContent: 'space-between', gap: space.sm, marginTop: space.xl },
-  rate: { flex: 1, aspectRatio: 1, maxWidth: 56, borderRadius: 28, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.background },
-  rateEnds: { flexDirection: 'row', justifyContent: 'space-between', marginTop: space.sm },
+  rates: { flexDirection: 'row', justifyContent: 'space-between', gap: space.xs, marginTop: space.xxl, marginBottom: space.xl },
+  rate: { flex: 1, alignItems: 'center', gap: space.sm },
+  rateDisc: { width: 56, height: 56, borderRadius: 28, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.background },
+  emoji: { fontSize: 28, lineHeight: 34 },
 });

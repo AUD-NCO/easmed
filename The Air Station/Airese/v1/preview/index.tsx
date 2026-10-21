@@ -17,8 +17,8 @@ import { HomeScreen, type RecordOrigin } from '../src/screens/HomeScreen';
 import { RecordingScreen } from '../src/screens/RecordingScreen';
 import { ReportsScreen } from '../src/screens/ReportsScreen';
 import { NightNotesScreen } from '../src/screens/NightNotesScreen';
-import { finishNight, summarize, useNightNotes } from '../src/lib/nightNotes';
-import { startAnalysing, useNights, type Night } from '../src/lib/recordings';
+import { finishNight, optionsOf, useNightNotes } from '../src/lib/nightNotes';
+import { endAnalysing, startAnalysing, useNights, type Night } from '../src/lib/recordings';
 import { OnboardingScreen } from '../src/screens/OnboardingScreen';
 import { MicrophonePermissionScreen, NotificationsPermissionScreen } from '../src/screens/PermissionScreen';
 import { SplashScreen } from '../src/screens/SplashScreen';
@@ -40,6 +40,7 @@ function PreviewApp() {
   const [recording, setRecording] = useState<{ startedAt: Date; from?: RecordOrigin; pausedAt?: Date }>(() => ({ startedAt: new Date() }));
   const [reportState, setReportState] = useState<string | undefined>(); // demo menu: last night's report in a given state
   const [openProfile, setOpenProfile] = useState(false); // demo menu: Profile, over Home
+  const [openRemedies, setOpenRemedies] = useState(false); // demo menu: the latest night's remedies, over Reports
   const [recordingNotes, setRecordingNotes] = useState(false); // Before sleeping, opened from Recording's banner
   const nightNotes = useNightNotes();
   const latest = useNights()[0]; // the night just recorded shows as the latest sample night
@@ -52,12 +53,18 @@ function PreviewApp() {
   useEffect(() => {
     const onJump = (e: Event) => {
       let key = (e as CustomEvent<string>).detail;
+      endAnalysing(); // a jump leaves the report that was being looked through
       // The email step plays inside Your details
       setDetailsDemo(key === 'email-code' ? 'mail' : null);
       if (key === 'details') setProfile({ verifiedEmail: '' }); // starts unverified, like the app
       if (key === 'email-code') key = 'details';
       setReportState(undefined);
       setOpenProfile(key === 'profile');
+      // Night Notes pages: Before sleeping over Recording, remedies over the latest report
+      setRecordingNotes(key === 'notes-before');
+      setOpenRemedies(key === 'notes-remedies');
+      if (key === 'notes-before') key = 'recording';
+      if (key === 'notes-remedies') key = 'reports';
       // Recording problems (see src/lib/recordingIssues.ts)
       const cantStart: StartProblem | null = key === 'no-space' ? 'space' : key === 'start-failed' ? 'start' : null;
       setDemoStartProblem(cantStart);
@@ -128,6 +135,7 @@ function PreviewApp() {
             onTab={setTab}
             reportState={reportState}
             initialProfile={openProfile}
+            initialRemedies={openRemedies}
             onAccountDeleted={() => {
               setStep('splash');
               setRun((n) => n + 1);
@@ -154,7 +162,7 @@ function PreviewApp() {
               startedAt={recording.startedAt}
               pausedAt={recording.pausedAt}
               from={recording.from}
-              notesTonight={summarize(nightNotes.tonight)}
+              notesTonight={optionsOf(nightNotes.tonight)}
               onOpenNotes={() => setRecordingNotes(true)}
               onStop={() => {
                 // Stopping in the morning goes straight to the night, as in the app: looked through, then the report
@@ -186,6 +194,7 @@ function HomeTabs({
   onStartRecording,
   reportState,
   initialProfile,
+  initialRemedies,
   onAccountDeleted,
   onOpenLastNight,
   onCantStart,
@@ -197,9 +206,11 @@ function HomeTabs({
   onStartRecording: (from: RecordOrigin) => void;
   reportState?: string;
   initialProfile: boolean;
+  initialRemedies: boolean;
   onAccountDeleted: () => void;
 }) {
-  const [notes, setNotes] = useState<Night | null>(null); // a night's Night Notes, from its report
+  const latest = useNights()[0];
+  const [notes, setNotes] = useState<Night | null>(initialRemedies ? latest : null); // a night's Night Notes, from its report
   const [profile, setProfile] = useState<'profile' | 'details' | 'centres' | null>(initialProfile ? 'profile' : null);
   return (
     <View style={{ flex: 1 }}>

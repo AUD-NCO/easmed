@@ -73,15 +73,28 @@ let analysing = false;
 let analysingTimer: ReturnType<typeof setTimeout> | undefined;
 const analysingListeners = new Set<() => void>();
 
+let asked = true; // "How was your night?" asked for this recording (answered or dismissed)
+
 export function startAnalysing() {
   clearTimeout(analysingTimer);
   analysing = true;
+  asked = false;
   analysingListeners.forEach((l) => l());
-  analysingTimer = setTimeout(() => {
-    analysing = false;
-    analysingListeners.forEach((l) => l());
-  }, ANALYSING_MS);
+  analysingTimer = setTimeout(endAnalysing, ANALYSING_MS);
 }
+
+/** Analysis done. Prototype: also when the demo menu jumps elsewhere. */
+export function endAnalysing() {
+  clearTimeout(analysingTimer);
+  analysing = false;
+  analysingListeners.forEach((l) => l());
+}
+
+/** "How was your night?": asked once per recording, while it's looked through. */
+export const shouldAskRating = () => analysing && !asked;
+export const markRatingAsked = () => {
+  asked = true;
+};
 
 export function useAnalysing(): boolean {
   return useSyncExternalStore(

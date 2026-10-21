@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { router, useLocalSearchParams } from 'expo-router';
-import { finishNight, summarize, useNightNotes } from '../lib/nightNotes';
+import { finishNight, optionsOf, useNightNotes } from '../lib/nightNotes';
 import { startAnalysing, useNights } from '../lib/recordings';
 import { RecordingScreen } from '../screens/RecordingScreen';
 
@@ -21,7 +21,7 @@ export default function Recording() {
       startedAt={startedAt}
       pausedAt={pausedAt}
       from={from}
-      notesTonight={summarize(notes.tonight)}
+      notesTonight={optionsOf(notes.tonight)}
       onOpenNotes={() => router.push({ pathname: '/night-notes', params: { from: 'recording' } })}
       onStop={() => {
         if (latest) finishNight(latest.id);

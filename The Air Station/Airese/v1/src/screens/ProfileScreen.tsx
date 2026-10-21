@@ -20,7 +20,7 @@ const CONFIRM: Record<Confirm, { title: string; body: string; action: string }> 
   },
   erase: {
     title: 'Erase everything?',
-    body: 'Your details, recordings, Night Notes and settings are removed from this phone, and Airese starts again from the beginning. This can’t be undone.',
+    body: 'Your details, recordings, Sleep Diary and settings are removed from this phone, and Airese starts again from the beginning. This can’t be undone.',
     action: 'Erase everything',
   },
 };

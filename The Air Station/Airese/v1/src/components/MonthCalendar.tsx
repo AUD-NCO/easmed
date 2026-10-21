@@ -12,6 +12,7 @@ const WEEKDAYS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 const WEEKDAYS_LONG = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 const RING = 40;
 const CELL = 48;
+const DOT = 6;
 
 const startOfMonth = (d: Date) => new Date(d.getFullYear(), d.getMonth(), 1);
 const monthIndex = (d: Date) => d.getFullYear() * 12 + d.getMonth();
@@ -21,6 +22,7 @@ const monthIndex = (d: Date) => d.getFullYear() * 12 + d.getMonth();
  * tap the month name for a month-and-year grid to jump further. Weeks start on Sunday.
  * Each recorded night has a ring for its Sound Score (fuller is louder, through the loudness ramp);
  * a dashed ring where Airese couldn't hear clearly; no ring where nothing was recorded.
+ * A small Moon dot by the ring: the night's Sleep Diary was filled in.
  * Only recorded nights can be picked; days still to come are dimmed. Months run from the first
  * recording to this month. Today's date is in Breath.
  */
@@ -29,6 +31,7 @@ export function MonthCalendar({
   selected,
   onPick,
   first,
+  diary,
   today = new Date(),
 }: {
   nights: Map<string, CalendarNight>;
@@ -37,6 +40,8 @@ export function MonthCalendar({
   onPick: (n: CalendarNight) => void;
   /** The earliest month to allow (the first recording). */
   first: Date;
+  /** Nights (ids) with something in their Sleep Diary. */
+  diary?: Set<string>;
   today?: Date;
 }) {
   const sel = selected ? nights.get(selected)?.night.date : undefined;
@@ -81,7 +86,7 @@ export function MonthCalendar({
       </View>
 
       {view === 'days' ? (
-        <Days month={month} nights={nights} selected={selected} onPick={onPick} today={today} />
+        <Days month={month} nights={nights} selected={selected} onPick={onPick} today={today} diary={diary} />
       ) : (
         <View style={styles.months} accessibilityRole="radiogroup" accessibilityLabel={`Months of ${year}`}>
           {MONTHS.map((name, i) => {
@@ -113,7 +118,7 @@ export function MonthCalendar({
   );
 }
 
-function Days({ month, nights, selected, onPick, today }: { month: Date; nights: Map<string, CalendarNight>; selected?: string; onPick: (n: CalendarNight) => void; today: Date }) {
+function Days({ month, nights, selected, onPick, today, diary }: { month: Date; nights: Map<string, CalendarNight>; selected?: string; onPick: (n: CalendarNight) => void; today: Date; diary?: Set<string> }) {
   const lead = month.getDay(); // blank cells before the 1st (weeks start on Sunday)
   const count = new Date(month.getFullYear(), month.getMonth() + 1, 0).getDate();
   const cells: (number | null)[] = [...Array(lead).fill(null), ...Array.from({ length: count }, (_, i) => i + 1)];
@@ -137,10 +142,11 @@ function Days({ month, nights, selected, onPick, today }: { month: Date; nights:
           const n = nights.get(key);
           const on = key === selected;
           const isToday = key === todayKey;
+          const noted = !!n && !!diary?.has(n.night.id);
           const future = date > today && !isToday;
           const label = `${WEEKDAYS_LONG[date.getDay()]} ${day} ${MONTHS[month.getMonth()]}${
             n ? (n.score == null ? ', recorded, couldn’t hear clearly' : `, Sound Score ${n.score}`) : ', no recording'
-          }${isToday ? ', today' : ''}`;
+          }${noted ? ', Sleep Diary filled in' : ''}${isToday ? ', today' : ''}`;
           return (
             <Pressable
               key={key}
@@ -162,6 +168,7 @@ function Days({ month, nights, selected, onPick, today }: { month: Date; nights:
                   </View>
                 )
               ) : null}
+              {noted && <View style={styles.dot} />}
               <View style={[styles.dayInner, on && styles.dayOn]}>
                 <AppText color={on ? 'onAccent' : isToday ? 'accent' : n ? 'text' : 'textMuted'} style={future ? { opacity: 0.5 } : undefined}>
                   {day}
@@ -203,6 +210,8 @@ const styles = StyleSheet.create({
   ring: { position: 'absolute', width: RING, height: RING }, // centred by the cell (no offsets)
   dayInner: { width: RING - 8, height: RING - 8, borderRadius: (RING - 8) / 2, alignItems: 'center', justifyContent: 'center' },
   dayOn: { backgroundColor: colors.accent },
+  // Sleep Diary filled in: just outside the ring's top right
+  dot: { position: 'absolute', top: (CELL - RING) / 2 - 1, width: DOT, height: DOT, borderRadius: DOT / 2, backgroundColor: colors.moon, transform: [{ translateX: RING / 2 }] },
   months: { flexDirection: 'row', flexWrap: 'wrap', rowGap: space.sm },
   month: { width: '33.33%', minHeight: 48, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center' },
   monthOn: { backgroundColor: colors.accent },

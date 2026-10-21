@@ -12,6 +12,8 @@ import {
   ExplainSheet,
   HourlyBars,
   Icon,
+  CheckInBanner,
+  type IconName,
   LargeSheet,
   VERDICT_ACTION,
   VerdictCard,
@@ -84,6 +86,7 @@ export function NightScreen({
   tag,
   option2 = false,
   onAddNotes,
+  notesChosen = [],
 }: {
   night: Night;
   state: NightState;
@@ -108,8 +111,10 @@ export function NightScreen({
    * way, then the verdict with its one action. The rest of the page as usual.
    */
   option2?: boolean;
-  /** This night has no Night Notes yet: a small banner under the header opens them. */
+  /** A small banner under the header opens this night's Morning check-in. */
   onAddNotes?: () => void;
+  /** The remedies already in this night's Morning check-in; empty when none yet. */
+  notesChosen?: { icon: IconName; label: string }[];
 }) {
   const [state] = useState(initialState); // fixed for this page: a later change of the demo param doesn't swap it
   // Stopped early: the page is about what was saved
@@ -117,7 +122,6 @@ export function NightScreen({
   const night = stopped ? { ...wholeNight, minutes: stopped.savedMinutes } : wholeNight;
   const readable = !stopped || stopped.savedMinutes >= MIN_READABLE_MINUTES;
   const [report, setReport] = useState(false); // the Night report sheet
-  const [notesHidden, setNotesHidden] = useState(false); // the Night Notes banner, closed for this visit
   const [explain, setExplain] = useState<ExplainKey | 'care' | 'remedy' | null>(null);
   const [heroBottom, setHeroBottom] = useState(0); // where the verdict card ends: the footer waits until it's scrolled past
   const player = useClipPlayer();
@@ -256,7 +260,7 @@ export function NightScreen({
         <View style={styles.body}>
           {problem && <PromptBody art={problem.copy.art} title={problem.copy.title} body={problem.copy.reason} fix={problem.copy.fix} cta={problem.cta} onCta={problem.onCta} />}
           {state === 'processing' && <Processing />}
-          {onAddNotes && !notesHidden && <NotesNudge onPress={onAddNotes} onClose={() => setNotesHidden(true)} />}
+          {onAddNotes && <NotesNudge chosen={notesChosen} onPress={onAddNotes} />}
 
           {stopped && !problem && (
             <>
@@ -493,12 +497,13 @@ function Block({ label, children }: { label: string; children: React.ReactNode }
 }
 
 /**
- * A night's report with no Night Notes yet: a small bright banner under the header. Tap to add them;
- * × hides it for this visit, and it's back next time until they're added.
+ * Every night's report: a small bright banner under the header, always there. Tap to add or change
+ * the night's Morning check-in. One line, never taller: once filled in, the remedies show as a row
+ * of overlapping icons that fade out towards the end (a habit: notes tagged to each night, to see patterns over time).
  * Arrives just after the report: it opens up, pushing the cards down, as it fades in (fast).
  * Reduce Motion: it fades in where it sits.
  */
-function NotesNudge({ onPress, onClose }: { onPress: () => void; onClose: () => void }) {
+function NotesNudge({ chosen, onPress }: { chosen: { icon: IconName; label: string }[]; onPress: () => void }) {
   const reduced = useReducedMotion();
   const open = useRef(new Animated.Value(0)).current;
   const [height, setHeight] = useState(0);
@@ -509,16 +514,13 @@ function NotesNudge({ onPress, onClose }: { onPress: () => void; onClose: () => 
   }, [height, reduced, open]);
 
   const banner = (
-    <View style={[styles.nudge, !reduced && styles.nudgeMeasured]} onLayout={(e) => setHeight(e.nativeEvent.layout.height)}>
-      <Pressable onPress={onPress} accessibilityRole="button" style={({ pressed }) => [styles.nudgeMain, pressed && { opacity: 0.8 }]}>
-        <Icon name="edit_note" size={22} color="onAccent" />
-        <AppText color="onAccent" style={{ flex: 1 }}>
-          Add Night Notes to this night
-        </AppText>
-      </Pressable>
-      <Pressable onPress={onClose} accessibilityRole="button" accessibilityLabel="Not now" hitSlop={4} style={styles.nudgeClose}>
-        <Icon name="close" size={20} color="onAccent" />
-      </Pressable>
+    <View style={!reduced && styles.nudgeMeasured} onLayout={(e) => setHeight(e.nativeEvent.layout.height)}>
+      <CheckInBanner
+        text={chosen.length ? 'Morning check-in' : 'Add your Morning check-in'}
+        icons={chosen.map((c) => c.icon)}
+        label={chosen.length ? `Morning check-in: ${chosen.map((c) => c.label).join(', ')}` : undefined}
+        onPress={onPress}
+      />
     </View>
   );
   if (reduced) return <Animated.View style={{ opacity: open }}>{banner}</Animated.View>;
@@ -606,10 +608,7 @@ const styles = StyleSheet.create({
   word: { paddingHorizontal: space.md, minHeight: 28, justifyContent: 'center', borderRadius: radius.pill, borderWidth: 1.5 },
   refRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: space.sm },
 
-  nudge: { flexDirection: 'row', alignItems: 'center', borderRadius: radius.lg, backgroundColor: colors.accent },
   nudgeMeasured: { position: 'absolute', top: 0, left: 0, right: 0 }, // full height while its holder opens
-  nudgeMain: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: 48, paddingLeft: space.lg },
-  nudgeClose: { width: 48, height: 48, alignItems: 'center', justifyContent: 'center' },
   processing: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingBottom: space.xxl * 3 },
   progress: { width: 200, height: 4, borderRadius: 2, marginTop: space.xl, overflow: 'hidden', backgroundColor: alpha(colors.mist, 0.15) },
   glint: { width: 80, height: 4, borderRadius: 2, backgroundColor: colors.accent },

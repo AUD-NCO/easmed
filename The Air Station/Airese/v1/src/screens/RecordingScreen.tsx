@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Animated, StyleSheet, View, type LayoutChangeEvent } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
-import { AmbientGradient, AppText, BottomSheet, Button, ExplainSheet, Icon, InfoButton, ListeningRing, PAGE_SIDE } from '../components';
+import { AmbientGradient, AppText, BottomSheet, Button, CheckInBanner, ExplainSheet, Icon, InfoButton, ListeningRing, PAGE_SIDE, type IconName } from '../components';
 import { MAX_RECORDING_MINUTES, formatClock, fromMinutes, minutesSince } from '../lib/time';
 import { alpha, colors, gradients, motion, radius, space, useInsets, useReducedMotion } from '@ds/theme';
 import { pausedCopy } from '../lib/recordingIssues';
@@ -24,8 +24,8 @@ const GRADIENT_STRETCH = 1.4;
  * Type: the title, then one style for everything else (Inter 16 regular). Importance comes from
  * colour alone: Moon for what matters (the tips, the safety stop), Mist for the subtitle.
  *
- * Under the title, one bright banner: Night Notes for tonight (Before sleeping: alcohol, caffeine, a
- * late meal…), with its button. Once added, it lists them, with Edit.
+ * Under the title, a small bright banner (CheckInBanner) opens tonight's Bedtime check-in; once
+ * added, it shows their icons.
  *
  * Runs until you stop it when you wake: tap the button, then confirm, so a half-asleep tap never
  * ends the night. Stops by itself after 8 hours (MAX_RECORDING_MINUTES) if you forget.
@@ -39,7 +39,7 @@ export function RecordingScreen({
   startedAt,
   from,
   onStop,
-  notesTonight = '',
+  notesTonight = [],
   onOpenNotes,
   pausedAt,
 }: {
@@ -48,8 +48,8 @@ export function RecordingScreen({
   pausedAt?: Date;
   from?: RecordOrigin;
   onStop: () => void;
-  /** Tonight's Night Notes, summarised; empty when none yet. */
-  notesTonight?: string;
+  /** Tonight's Bedtime check-in; empty when none yet. */
+  notesTonight?: { icon: IconName; label: string }[];
   onOpenNotes?: () => void;
 }) {
   const insets = useInsets();
@@ -198,19 +198,16 @@ export function RecordingScreen({
           </View>
         </Animated.View>
 
-        {/* Tonight's Night Notes: Before sleeping */}
+        {/* Tonight's Bedtime check-in */}
         <Animated.View style={[{ paddingHorizontal: PAGE_SIDE, paddingTop: space.xl }, rise(12)]}>
-          <View style={styles.notes}>
-            <View style={styles.notesBadge}>
-              <Icon name="edit_note" size={24} color="onAccent" />
-            </View>
-            <View style={{ flex: 1, minWidth: 0 }}>
-              <AppText color="onAccent" accessibilityLiveRegion="polite">
-                {notesTonight ? `Night Notes: ${notesTonight}` : 'Had alcohol, caffeine or a late meal? Add it to tonight’s Night Notes.'}
-              </AppText>
-              {onOpenNotes && <Button label={notesTonight ? 'Edit Night Notes' : 'Add Night Notes'} variant="mini" onPress={onOpenNotes} style={{ marginTop: space.md }} />}
-            </View>
-          </View>
+          {onOpenNotes && (
+            <CheckInBanner
+              text={notesTonight.length ? 'Bedtime check-in' : 'Add your Bedtime check-in'}
+              icons={notesTonight.map((n) => n.icon)}
+              label={notesTonight.length ? `Bedtime check-in: ${notesTonight.map((n) => n.label).join(', ')}` : undefined}
+              onPress={onOpenNotes}
+            />
+          )}
         </Animated.View>
 
         <View style={styles.ringArea} onLayout={(e: LayoutChangeEvent) => setRingRoom(e.nativeEvent.layout)}>
@@ -262,9 +259,6 @@ export function RecordingScreen({
 const styles = StyleSheet.create({
   root: { flex: 1, overflow: 'hidden' },
   subtitle: { flexDirection: 'row', alignItems: 'center', gap: space.md, marginTop: space.xs },
-  // Night Notes: bright, like Home's banner (Breath, Midnight text 9.4:1; Midnight mini button)
-  notes: { flexDirection: 'row', alignItems: 'flex-start', gap: space.lg, padding: space.lg, borderRadius: radius.xl, backgroundColor: colors.accent },
-  notesBadge: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', backgroundColor: alpha(colors.midnight, 0.1) },
   ringArea: {
     flex: 1,
     alignItems: 'center',

@@ -24,5 +24,5 @@ export function homeMessage(s: Situation): HomeMessage {
   if (!s.micOn) return { id: 'microphone', icon: 'mic', text: 'Airese needs your microphone to record your night.', cta: 'Turn on microphone' };
   if (s.stoppedAt) return { id: 'stopped', icon: 'history', text: `Last night’s recording stopped at ${s.stoppedAt}. Everything up to then is saved.`, cta: 'See what was saved' };
   if (!s.notificationsOn) return { id: 'notifications', icon: 'notifications', text: 'Turn on notifications for a bedtime reminder.', cta: 'Turn on notifications' };
-  return { id: 'charging', icon: 'battery_charging_full', text: 'Keep your phone on charge while you record. A night of listening uses more battery.' };
+  return { id: 'charging', icon: 'battery_charging_full', text: 'Keep your phone on charge while you record.' };
 }
