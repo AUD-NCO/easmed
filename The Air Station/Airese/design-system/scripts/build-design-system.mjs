@@ -282,6 +282,7 @@ const nav = [
   ['motion', 'Motion'],
   ['icons', 'Icons'],
   ['brand', 'Brand assets'],
+  ['store', 'App Store'],
   ['components', 'Components'],
   ['patterns', 'Patterns'],
   ['a11y', 'Accessibility'],
@@ -542,13 +543,16 @@ const html = `<!doctype html>
     <figure><img src="img/stopped.png" alt="" loading="lazy"><figcaption>Stopped in the night</figcaption></figure>
     <figure><img src="img/app-closed.png" alt="" loading="lazy"><figcaption>Paused: another app closed Airese</figcaption></figure>
   </div>
-  <h3>App Store screenshots</h3>
+  <h3>Fonts</h3>
+  <p>Montserrat via <code>@expo-google-fonts/montserrat</code> and Inter via <code>@expo-google-fonts/inter</code>, 400 and 600 of each.</p>
+</section>
+
+<section id="store">
+  <h2>App Store screenshots</h2>
   <p class="muted">1320 × 2868 PNG, the 6.9" iPhone size the App Store asks for (it scales them for smaller iPhones). Headlines and supporting text are still placeholders. Files: <code>design-system/store/</code>.</p>
   <div class="images">
 ${STORE.map(([file, caption]) => `    <figure><img src="store/${file}" alt="App Store screenshot: ${esc(caption)}" loading="lazy"><figcaption>${esc(caption)} · <a href="store/${file}" download>Download</a></figcaption></figure>`).join('\n')}
   </div>
-  <h3>Fonts</h3>
-  <p>Montserrat via <code>@expo-google-fonts/montserrat</code> and Inter via <code>@expo-google-fonts/inter</code>, 400 and 600 of each.</p>
 </section>
 
 <section id="components">
