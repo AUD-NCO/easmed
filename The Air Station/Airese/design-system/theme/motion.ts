@@ -36,6 +36,8 @@ export const motion = {
   glint: { duration: 2400, rest: 7000, easing: Easing.bezier(0.37, 0, 0.63, 1) },
   /** Offset before a follow-on element, so things arrive in sequence, not all at once. */
   stagger: 350,
+  /** How long a passing message stays before it moves on (a confirmation, a rotating line). */
+  hold: 2500,
   /** The native driver isn't available on web (browser preview only). */
   useNativeDriver: Platform.OS !== 'web',
 } as const;

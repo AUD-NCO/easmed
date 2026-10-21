@@ -545,7 +545,6 @@ const PROCESSING_LINES = [
   'Comparing with your usual nights.',
   'Putting your report together.',
 ];
-const LINE_MS = 2500; // how long each line stays
 
 /** Straight after a recording: analysis still running. No empty cards (PRD §16). */
 function Processing() {
@@ -563,7 +562,7 @@ function Processing() {
         setLine((l) => (l + 1) % PROCESSING_LINES.length);
         Animated.timing(fade, { toValue: 1, duration: motion.fast.duration, easing: motion.fast.easeOut, useNativeDriver: motion.useNativeDriver }).start();
       });
-    }, LINE_MS);
+    }, motion.hold);
     return () => clearInterval(id);
   }, [fade]);
   return (

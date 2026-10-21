@@ -73,6 +73,7 @@ const ambient = Number(motionSrc.match(/ambient: \{ duration: (\d+)/)[1]);
 const attention = motionSrc.match(/attention: \{ duration: (\d+), rest: (\d+)/);
 const glint = motionSrc.match(/glint: \{ duration: (\d+), rest: (\d+)/);
 const stagger = Number(motionSrc.match(/stagger: (\d+)/)[1]);
+const hold = Number(motionSrc.match(/hold: (\d+)/)[1]);
 
 const iconSrc = read('design-system/components/Icon.tsx');
 const icons = [...iconSrc.matchAll(/^\s+(\w+): '([Mm][^']+)'/gm)].map(([, name, d]) => ({ name, d }));
@@ -85,7 +86,7 @@ const healthIcons = [...iconSrc.matchAll(/^\s+(\w+): \[(.+)\],$/gm)].map(([, nam
 // Components: first doc comment, exports, and the screens that render them.
 const files = [];
 const walk = (d) => readdirSync(join(root, d)).forEach((f) => (statSync(join(root, d, f)).isDirectory() ? walk(join(d, f)) : /\.tsx?$/.test(f) && files.push(join(d, f))));
-['design-system/components', `${APP}/src`, `${APP}/preview`].forEach(walk);
+['design-system/components', `${APP}/src`, `${APP}/preview`, 'v1/src'].forEach(walk);
 const sources = Object.fromEntries(files.map((f) => [f, read(f)]));
 const docOf = (src, name) => {
   // The doc comment right above the export, else the file's first one.
@@ -154,6 +155,8 @@ const BLURB = {
   "VerdictCard": "The night's verdict: headline, a sentence, one button by mood, and the week as a graph behind the words within a 7:1 contrast budget, drawn on load by a shine.",
   "DataCard": "Results card in two shapes, wide and square: label, visual or number, one line of insight.",
   "BigNumber": "The big number in a card. No small units.",
+  "ScoreSummary": "v1. One headline score as a full-width card: name, level and parts on the left, the ring on the right.",
+  "EmailCodeSheet": "v1. Email check: a short “Check your email” sheet, then six code boxes and Paste code.",
   "ScoreTile": "Headline score: a ring with the number or an icon, the name, a level word, and a trend line when there's one to show.",
   "BottomSheet": "Sheet over a dimmed screen. Tap outside or drag down to close.",
   "ExplainSheet": "Short explanation in a sheet, with an optional action.",
@@ -185,8 +188,8 @@ const GROUPS = [
   ['Page structure and templates', [['PageTitle'], ['DetailPage'], ['PromptLayout'], ['AmbientGradient'], ['TabBar'], ['Screen']]],
   ['Buttons and controls', [['Button'], ['IconButton'], ['InfoButton'], ['Avatar'], ['ToggleChip', 'ToggleChip'], ['ChipGroup', 'ToggleChip'], ['IconChoiceGrid'], ['IconStack'], ['SettingSwitch', 'SettingRows'], ['SegmentedControl']]],
   ['Forms and rows', [['FormGroup', 'Form'], ['FormTitle', 'Form'], ['FormInput', 'Form'], ['FormDivider', 'Form'], ['PhoneField'], ['Checkbox'], ['WheelPicker', 'Pickers'], ['RulerPicker', 'Pickers'], ['AboutYou'], ['SettingRow', 'SettingRows']]],
-  ['Cards', [['Card'], ['CheckInBanner'], ['VerdictCard'], ['InsightCard'], ['DataCard'], ['BigNumber', 'DataCard'], ['ScoreTile']]],
-  ['Sheets and feedback', [['BottomSheet'], ['TopSheet'], ['ExplainSheet'], ['LargeSheet'], ['PermissionSheet'], ['Toast'], ['SystemAlertHost']]],
+  ['Cards', [['Card'], ['CheckInBanner'], ['VerdictCard'], ['InsightCard'], ['DataCard'], ['BigNumber', 'DataCard'], ['ScoreSummary'], ['ScoreTile']]],
+  ['Sheets and feedback', [['BottomSheet'], ['TopSheet'], ['ExplainSheet'], ['LargeSheet'], ['EmailCodeSheet'], ['PermissionSheet'], ['Toast'], ['SystemAlertHost']]],
   ['Recording', [['RecordDial'], ['ListeningRing'], ['TipCarousel']]],
   ['Reports', [['MonthCalendar']]],
   ['Data visualisation', [['SnoringChart'], ['NightTimeline'], ['ScoreRing'], ['RampFill'], ['BenchmarkScale'], ['HourlyBars'], ['LoudnessBars'], ['RecentNightsChart'], ['ComparisonIndicator']]],
@@ -197,7 +200,8 @@ const components = GROUPS.map(([group, items]) => ({
   group,
   items: items.map(([name, file = name]) => {
     const shared = `design-system/components/${file}.tsx`;
-    const path = shared in sources ? shared : `${APP}/src/components/${file}.tsx`;
+    const own = `${APP}/src/components/${file}.tsx`;
+    const path = shared in sources ? shared : own in sources ? own : `v1/src/components/${file}.tsx`; // v1-only components last
     const src = sources[path] ?? '';
     return { name, path, doc: BLURB[name] ?? docOf(src, name), used: usedIn(name) };
   }),
@@ -216,6 +220,17 @@ const IMAGES = [
   'icon.png', 'android-icon-foreground.png', 'android-icon-background.png', 'android-icon-monochrome.png',
 ];
 for (const img of IMAGES) copyFileSync(join(root, APP, 'assets', img), join(out, 'img', basename(img)));
+
+// App Store screenshots (design-system/store/), offered for download on the page
+const STORE = [
+  ['1-recording.png', 'Recording, with the Bedtime check-in'],
+  ['2-home.png', 'Home: tap to start recording'],
+  ['3-report.png', 'A night’s report, with the Morning check-in'],
+  ['4-calendar.png', 'The calendar of nights'],
+  ['5-brand.png', 'Brand: Airese and The Air Station'],
+];
+mkdirSync(join(out, 'store'), { recursive: true });
+for (const [file] of STORE) copyFileSync(join(root, 'design-system/store', file), join(out, 'store', file));
 
 // Logos on a Midnight tile for the README (white logos vanish on GitHub's light theme).
 mkdirSync(join(root, 'design-system/img'), { recursive: true });
@@ -473,6 +488,7 @@ const html = `<!doctype html>
     <tr><td><code>motion.attention</code></td><td>${attention[1]} ms, then ${attention[2]} ms rest</td><td class="muted">Light that runs round the record ring</td></tr>
     <tr><td><code>motion.glint</code></td><td>${glint[1]} ms, then ${glint[2]} ms rest</td><td class="muted">A tiny shine that draws the verdict card's graph on load, then glides along it now and then</td></tr>
     <tr><td><code>motion.stagger</code></td><td>${stagger} ms</td><td class="muted">Delay between steps</td></tr>
+    <tr><td><code>motion.hold</code></td><td>${hold} ms</td><td class="muted">How long a passing message stays</td></tr>
   </tbody></table></div>
   <p class="muted" style="margin-top:16px">Reduce Motion: fades instead of slides, no loops, charts drawn at once.</p>
 </section>
@@ -526,6 +542,11 @@ const html = `<!doctype html>
     <figure><img src="img/stopped.png" alt="" loading="lazy"><figcaption>Stopped in the night</figcaption></figure>
     <figure><img src="img/app-closed.png" alt="" loading="lazy"><figcaption>Paused: another app closed Airese</figcaption></figure>
   </div>
+  <h3>App Store screenshots</h3>
+  <p class="muted">1320 × 2868 PNG, the 6.9" iPhone size the App Store asks for (it scales them for smaller iPhones). Headlines and supporting text are still placeholders. Files: <code>design-system/store/</code>.</p>
+  <div class="images">
+${STORE.map(([file, caption]) => `    <figure><img src="store/${file}" alt="App Store screenshot: ${esc(caption)}" loading="lazy"><figcaption>${esc(caption)} · <a href="store/${file}" download>Download</a></figcaption></figure>`).join('\n')}
+  </div>
   <h3>Fonts</h3>
   <p>Montserrat via <code>@expo-google-fonts/montserrat</code> and Inter via <code>@expo-google-fonts/inter</code>, 400 and 600 of each.</p>
 </section>
@@ -561,6 +582,7 @@ const html = `<!doctype html>
     <tr><td>One message</td><td>Home shows one banner message at a time, by priority, with its action under the text.</td></tr>
     <tr><td>Tabs</td><td>Every tab's page uses <code>PageTitle</code>'s row: same title, position and glassy control.</td></tr>
     <tr><td>Graphs behind text</td><td>Everything behind the words must leave body text at 7:1 or more; strengthen the graph only where there's no text.</td></tr>
+    <tr><td>Check-ins</td><td><code>CheckInBanner</code> opens icons to tap (<code>IconChoiceGrid</code>); once filled, the banner shows them as an <code>IconStack</code>. “Same as last night” in one tap.</td></tr>
     <tr><td>Brand</td><td>Logo in Mist with “Powered by The Air Station” on the splash and at the end of Profile and Our centres.</td></tr>
   </tbody></table></div>
 </section>

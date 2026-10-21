@@ -9,10 +9,8 @@ import { Icon } from '@ds/components/Icon';
 import { LargeSheet } from '@ds/components/LargeSheet';
 import { MailDemo } from './MailDemo';
 import { checkCode, CODE_MINUTES, DEMO_CODE, sendCode } from '../lib/emailCode';
-import { colors, alpha, radius, space } from '@ds/theme';
+import { colors, alpha, motion, radius, space } from '@ds/theme';
 
-/** How long "Email verified" stays before the sheet closes by itself. */
-const VERIFIED_HOLD = 2000;
 
 /**
  * Verify your email, after Verify in the email field (onboarding's and Profile's Your details).
@@ -56,7 +54,7 @@ export function EmailCodeSheet({ email, visible, startInMail = false, onVerified
 
   useEffect(() => {
     if (!verified) return;
-    const t = setTimeout(onClose, VERIFIED_HOLD);
+    const t = setTimeout(onClose, motion.hold);
     return () => clearTimeout(t);
   }, [verified]); // eslint-disable-line react-hooks/exhaustive-deps
 

@@ -219,6 +219,7 @@ The UI is flat: depth comes from colour (Midnight → Deep), not shadows.
 | `motion.attention` | 1800 ms, then 3000 ms rest | The light that runs once round the record ring to invite a tap; the urgent verdict card's breathing glow |
 | `motion.glint` | 2400 ms, then 7000 ms rest | A tiny shine that draws the verdict card's graph on load, then glides along the finished line now and then |
 | `motion.stagger` | 350 ms | Offset between steps, so things arrive in sequence, not all at once |
+| `motion.hold` | 2500 ms | How long a passing message stays before it moves on ("Email verified", the lines while a night is looked through) |
 | `motion.useNativeDriver` | `false` on web | The native driver isn't available in the browser |
 
 **Reduce Motion** (`useReducedMotion()`) is always respected:
@@ -252,7 +253,7 @@ The UI is flat: depth comes from colour (Midnight → Deep), not shadows.
 
 **To add an icon:** copy its path from `outlined/<name>.svg` in the official set into `PATHS` in [`Icon.tsx`](components/Icon.tsx), under the same name.
 
-**Not in Material Symbols:** use [Health Icons](https://healthicons.org) (outline, MIT), copied into `HEALTH` in `Icon.tsx`. They're drawn on their own 48 × 48 grid. In use: `nose`, `face_sleepy`, `face_tongue`, `mouth`, `head`, `inhaler` (Night Notes).
+**Not in Material Symbols:** use [Health Icons](https://healthicons.org) (outline, MIT), copied into `HEALTH` in `Icon.tsx`. They're drawn on their own 48 × 48 grid. In use: `nose`, `face_sleepy`, `face_tongue`, `mouth`, `head`, `inhaler` (v1 Sleep Diary).
 
 ---
 
@@ -275,6 +276,7 @@ The UI is flat: depth comes from colour (Midnight → Deep), not shadows.
 | iOS / App Store icon | [`assets/icon.png`](../v2/assets/icon.png) | 1024, square, no transparency (iOS rounds it). The white mark, 56% wide, on the splash gradient (Midnight → `#1C3470` → `#225ED8`) |
 | Android adaptive icon | [`android-icon-foreground.png`](../v2/assets/android-icon-foreground.png), [`-background.png`](../v2/assets/android-icon-background.png), [`-monochrome.png`](../v2/assets/android-icon-monochrome.png) | All 1024. Foreground: the mark on transparent, sized to match iOS inside the visible 72/108 area. Background: the gradient (fallback colour Midnight in `app.json`). Monochrome: the mark, for Android 13 themed icons |
 | Play Store listing | [`assets/store/play-store-512.png`](../v2/assets/store/play-store-512.png) | 512, the full icon. Uploaded in Play Console, not set in `app.json` |
+| App Store screenshots | [`store/`](store/) | 1320 × 2868 PNG (6.9" iPhone), five: Recording, Home, a night's report, the calendar, brand. Headlines still placeholders. Downloadable from the design system page |
 | Splash (native) | `app.json` → `expo-splash-screen` | Plain Midnight, no image, so it hands over to the animated splash screen (`SplashScreen.tsx`) without a flash |
 | Favicon (web preview) | [`assets/favicon.png`](../v2/assets/favicon.png) | The app icon at 48 |
 
@@ -336,7 +338,7 @@ All in [`src/components/`](components/), imported from `'../components'`. Groupe
 | [`InfoButton`](components/InfoButton.tsx) | The (i) that opens an explanation. | `onPress`, `label`, `size`, `color` | Onboarding, details, Recording, cards |
 | [`Avatar`](components/Avatar.tsx) | 44 pt glassy circle with initials (or a person icon); opens Profile. Exports `titleControl`, the look it shares with the Reports calendar button. | `initials`, `onPress` | Home |
 | [`ToggleChip`](components/ToggleChip.tsx) · `ChipGroup` | Multi-select pill (reads as a checkbox) and the wrapping row that holds them. | `label`, `selected`, `onToggle` | Night Notes |
-| [`IconChoiceGrid`](components/IconChoiceGrid.tsx) | Multi-select as a grid of round icons with labels, four to a row; chosen gets a Breath ring and a check. Reads as checkboxes. | `options` (`id`, `label`, `icon`), `selected`, `onToggle` | Night Notes (v1) |
+| [`IconChoiceGrid`](components/IconChoiceGrid.tsx) | Multi-select as a grid of round icons with labels, four to a row; chosen gets a Breath ring and a check. Reads as checkboxes. | `options` (`id`, `label`, `icon`), `selected`, `onToggle` | Sleep Diary (v1) |
 | [`IconStack`](components/IconStack.tsx) | A short row of overlapping round icons on Breath, fading out towards the end (five at most): what's chosen, without a list of words. Decorative. | `icons` | Sleep Diary banners (v1) |
 | [`CheckInBanner`](components/CheckInBanner.tsx) | Small bright banner (Breath) that opens something: one line of text, what's chosen as an `IconStack`, a chevron. The whole row is the button. | `text`, `icons`, `label`, `onPress` | Sleep Diary: Bedtime check-in (Recording), Morning check-in (report) |
 | [`SettingSwitch`](components/SettingRows.tsx) | A label (with an optional icon, to line up with `SettingRow`) and a native switch (Breath track, white thumb). Greyed out when disabled. | `icon`, `title`, `value`, `enabled`, `onChange` | Profile (Bedtime reminder) |
@@ -365,6 +367,7 @@ All in [`src/components/`](components/), imported from `'../components'`. Groupe
 | [`VerdictCard`](components/VerdictCard.tsx) | The night's verdict: headline, a sentence, one button by mood, and the week as a graph behind the words (see Verdict moods). Drawn on load by a shine. | `mood`, `title`, `body`, `values`, `action` | Reports |
 | [`InsightCard`](components/InsightCard.tsx) · `HeroBackground` | A plain-language takeaway. Tones: `plain`, `hero`, `warm` (Lamp wash, "what it means"). `HeroBackground` is the mood gradient and glow, shared with `VerdictCard`. | `title`, `body`, `lead`, `icon`, `iconColor`, `tone`, `onInfo` | Reports |
 | [`DataCard`](components/DataCard.tsx) · `BigNumber` | The Recording Details card: label with the data's icon, a visual or big number, one line of insight, "›" for more. Shapes: `wide`, `square`. | `shape`, `icon`, `tone`, `label`, `title`, `insight`, `onPress` | Reports |
+| [`ScoreSummary`](../v1/src/components/ScoreSummary.tsx) | **v1.** One headline score as a full-width card: name, level as a big word, and the parts it's made of (or one line of facts) on the left, the ring on the right. | `tone`, `fraction`, `value` or `icon`, `name`, `level`, `parts`, `facts` | Reports, Option 2 |
 | [`ScoreTile`](components/ScoreTile.tsx) | Headline score, half width: a big ring with the number (or icon) inside, the name, a level word on a tint, and a trend line when there's one (left out on part of a night). | `tone`, `fraction`, `value` or `icon`, `name`, `level`, `detail` | Reports (Sound Score, Breathing pauses) |
 
 ### Sheets and feedback
@@ -376,6 +379,8 @@ All in [`src/components/`](components/), imported from `'../components'`. Groupe
 | [`ExplainSheet`](components/ExplainSheet.tsx) | Small explanation: title, a few sentences, optional action, "Got it". | `content`, `onClose`, `action` | Reports, Recording, details, Profile (About) |
 | [`LargeSheet`](components/LargeSheet.tsx) | Near full-height sheet for "more" on a card, with a title, × and drag-down. | `visible`, `title`, `onClose` | Reports (score, snoring, breathing, sleep, clips, recent nights, night report) |
 | [`PermissionSheet`](../v2/src/components/PermissionSheet.tsx) | A second chance at a permission; picks "why it matters" or "open Settings" from where the permission stands. | `kind`, `visible`, `onAllowed`, `onNotNow` | Home, Reports, Profile, permission screens |
+| [`EmailCodeSheet`](../v1/src/components/EmailCodeSheet.tsx) | **v1.** Email check in two steps: a short "Check your email" sheet (where the code went), then a large sheet with six code boxes and Paste code; the right code shows "Email verified" and closes after `motion.hold`. | `email`, `visible`, `startInMail`, `onVerified`, `onClose` | Your details (onboarding and Profile) |
+| [`MailDemo`](../v1/src/components/MailDemo.tsx) | **v1, browser preview only.** Stands in for the phone's mail app, open on the code email (`public/email-code.html`); Copy OTP copies the code and returns. Light, in a mail app's colours on purpose. | `onCopied`, `onBack` | `EmailCodeSheet` |
 | [`Toast`](components/Toast.tsx) | A short confirmation pill with a check; fades in and out; announced once to screen readers. | `message`, `onDone` | Profile (after deleting recordings) |
 | [`SystemAlertHost`](components/SystemAlertHost.tsx) | **Browser preview only.** Stand-in for the iOS permission alert (iOS styling on purpose). Renders nothing on device. | — | Root layout, preview |
 
@@ -391,7 +396,7 @@ All in [`src/components/`](components/), imported from `'../components'`. Groupe
 
 | Component | What it is | Key props | Used in |
 | --- | --- | --- | --- |
-| [`MonthCalendar`](../v2/src/components/MonthCalendar.tsx) | A month of nights, weeks from Sunday. Each recorded night has a Sound Score ring (dashed if Airese couldn't hear clearly; none if nothing was recorded). ‹ › for months; tap the title for a month-and-year grid. Only recorded nights can be picked. | `nights`, `selected`, `onPick`, `first` | Reports (in a `TopSheet`) |
+| [`MonthCalendar`](../v2/src/components/MonthCalendar.tsx) | A month of nights, weeks from Sunday. Each recorded night has a Sound Score ring (dashed if Airese couldn't hear clearly; none if nothing was recorded). ‹ › for months; tap the title for a month-and-year grid. Only recorded nights can be picked. v1: a small Moon dot by the ring where the night's Sleep Diary was filled in. | `nights`, `selected`, `onPick`, `first`, `diary` | Reports (in a `TopSheet`) |
 
 ### Data visualisation
 
@@ -453,6 +458,7 @@ All in [`src/components/`](components/), imported from `'../components'`. Groupe
 | **Charts** | A sentence above every chart. Single series has no legend; two or more get a legend with shapes. Each has a text alternative. Grows in once with the slow preset. |
 | **Graphs behind text** | Everything behind the words (gradient, glow, fill, line, shine) must leave body text at 7:1 or more; strengthen a graph only where there's no text. |
 | **Numbers** | One big number, no small units. Levels are words (Low, Moderate, High; Rarely, Sometimes, Often), never colour alone. |
+| **Check-ins (v1 Sleep Diary)** | A `CheckInBanner` opens a page of icons to tap (`IconChoiceGrid`); once filled in, the banner shows them as an `IconStack`, never a list of words. "Same as last night" fills in the previous night's choices in one tap. Bedtime check-in on Recording; Morning check-in on every night's report. |
 | **Brand presence** | Quiet: the logo with "Powered by The Air Station" on the splash and at the end of Profile and Our centres. |
 
 ---

@@ -175,7 +175,7 @@ function NightRating({ visible, onRate, onClose }: { visible: boolean; onRate: (
         {RATINGS.map((r, i) => (
           <Pressable key={r.name} onPress={() => onRate(i + 1)} accessibilityRole="button" accessibilityLabel={`${r.name}, ${i + 1} out of 5`} style={({ pressed }) => [styles.rate, pressed && { opacity: 0.7 }]}>
             <View style={styles.rateDisc}>
-              <AppText style={styles.emoji}>{r.emoji}</AppText>
+              <AppText variant="headline">{r.emoji}</AppText>
             </View>
             <AppText variant="small" color="textMuted" numberOfLines={1}>
               {r.name}
@@ -213,5 +213,4 @@ const styles = StyleSheet.create({
   rates: { flexDirection: 'row', justifyContent: 'space-between', gap: space.xs, marginTop: space.xxl, marginBottom: space.xl },
   rate: { flex: 1, alignItems: 'center', gap: space.sm },
   rateDisc: { width: 56, height: 56, borderRadius: 28, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.background },
-  emoji: { fontSize: 28, lineHeight: 34 },
 });
