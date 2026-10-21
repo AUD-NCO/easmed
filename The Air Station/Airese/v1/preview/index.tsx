@@ -37,7 +37,7 @@ function PreviewApp() {
   const [recording, setRecording] = useState<{ startedAt: Date; from?: RecordOrigin; pausedAt?: Date }>(() => ({ startedAt: new Date() }));
   const [reportState, setReportState] = useState<string | undefined>(); // demo menu: last night's report in a given state
   const [openProfile, setOpenProfile] = useState(false); // demo menu: Profile, over Home
-  const [detailsDemo, setDetailsDemo] = useState<'mail' | 'browser' | null>(null); // demo nav: the email steps
+  const [detailsDemo, setDetailsDemo] = useState<'mail' | null>(null); // demo nav: the email step
   const [legal, setLegal] = useState<LegalDoc | null>(null); // Terms / Privacy, over the details screen
   const [problem, setProblem] = useState<StartProblem>('space'); // recording can't start: which problem
   const [run, setRun] = useState(0); // remounts the screen when the demo menu picks it again
@@ -46,10 +46,10 @@ function PreviewApp() {
   useEffect(() => {
     const onJump = (e: Event) => {
       let key = (e as CustomEvent<string>).detail;
-      // The email steps play inside Your details
-      setDetailsDemo(key === 'email-code' ? 'mail' : key === 'verify-email' ? 'browser' : null);
+      // The email step plays inside Your details
+      setDetailsDemo(key === 'email-code' ? 'mail' : null);
       if (key === 'details') setProfile({ verifiedEmail: '' }); // starts unverified, like the app
-      if (key === 'email-code' || key === 'verify-email') key = 'details';
+      if (key === 'email-code') key = 'details';
       setReportState(undefined);
       setOpenProfile(key === 'profile');
       // Recording problems (see src/lib/recordingIssues.ts)

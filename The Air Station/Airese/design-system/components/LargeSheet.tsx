@@ -91,7 +91,7 @@ export function LargeSheet({ visible, title, onClose, children }: { visible: boo
             </Pressable>
           </View>
         </View>
-        <ScrollView contentContainerStyle={{ paddingHorizontal: space.gutter, paddingBottom: insets.bottom + space.xxl }} showsVerticalScrollIndicator={false}>
+        <ScrollView contentContainerStyle={{ flexGrow: 1, paddingHorizontal: space.gutter, paddingBottom: insets.bottom + space.xxl }} showsVerticalScrollIndicator={false}>
           {children}
         </ScrollView>
       </Animated.View>

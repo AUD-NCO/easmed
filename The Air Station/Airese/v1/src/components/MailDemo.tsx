@@ -5,33 +5,43 @@ import { AppText } from '@ds/components/AppText';
 import { Icon } from '@ds/components/Icon';
 import { DEMO_CODE } from '../lib/emailCode';
 import { setFrameBars } from '../lib/previewFrame';
-import { radius, space, useInsets } from '@ds/theme';
+import { space, useInsets } from '@ds/theme';
 
 /**
  * Browser preview only: stands in for the phone's mail app, open on the Airese code email
  * (public/email-code.html, the template developers use). Laid out like a mail app's message view,
- * titled "Mail", no mail provider's branding. Tapping the code (a link in the email) or "Copy code"
- * goes on to the Airese page in the browser (BrowserDemo).
+ * titled "Mail", no mail provider's branding. Copy OTP (a link in the email) copies the code and goes
+ * straight back to the app, where the person pastes it.
  *
  * It's another app, so it's light, in a mail app's whites and greys, not Airese colours.
  */
 const MAIL = { bg: '#FFFFFF', text: '#1F1F1F', muted: '#444746', chip: '#E9EEF6', line: '#C4C7C5' };
 
-export function MailDemo({ onOpenCode, onBack }: { onOpenCode: () => void; onBack: () => void }) {
+export function MailDemo({ onCopied, onBack }: { onCopied: () => void; onBack: () => void }) {
   const insets = useInsets();
   useEffect(() => (setFrameBars('dark'), () => setFrameBars('light')), []);
 
-  const copy = () => {
-    navigator.clipboard?.writeText(DEMO_CODE).catch(() => {});
-    onOpenCode();
-  };
+  // Copy OTP is a link in the email: catch the tap, copy the code and go back to the app.
+  // The shared preview (a file) can't reach inside the email; its copy of the email copies and tells us.
+  useEffect(() => {
+    const onMessage = (e: MessageEvent) => e.data?.source === 'airese-mail' && e.data.action === 'copied' && onCopied();
+    window.addEventListener('message', onMessage);
+    return () => window.removeEventListener('message', onMessage);
+  }, [onCopied]);
 
-  // The email's code is a link: catch the tap inside the email and go to the browser instead
   const onLoad = (e: { currentTarget: HTMLIFrameElement }) => {
-    e.currentTarget.contentDocument?.addEventListener('click', (ev) => {
+    const frame = e.currentTarget.contentWindow;
+    let doc: Document | undefined;
+    try {
+      doc = frame?.document;
+    } catch {
+      return; // other origin: the message above handles it
+    }
+    doc?.addEventListener('click', (ev) => {
       if ((ev.target as Element | null)?.closest('a')) {
         ev.preventDefault();
-        onOpenCode();
+        frame?.navigator.clipboard?.writeText(DEMO_CODE).catch(() => {});
+        onCopied();
       }
     });
   };
@@ -77,12 +87,6 @@ export function MailDemo({ onOpenCode, onBack }: { onOpenCode: () => void; onBac
         </View>
       </View>
 
-      <Pressable onPress={copy} accessibilityRole="button" accessibilityLabel={`Copy code ${DEMO_CODE.split('').join(' ')}`} style={({ pressed }) => [styles.copy, pressed && { opacity: 0.8 }]}>
-        <AppText variant="small" style={{ color: MAIL.text }}>
-          Copy code
-        </AppText>
-      </Pressable>
-
       <View style={styles.body}>
         {React.createElement('iframe', { src: 'email-code.html', title: 'Email: your Airese code', onLoad, style: { flex: 1, width: '100%', height: '100%', border: 0 } })}
       </View>
@@ -98,6 +102,5 @@ const styles = StyleSheet.create({
   inbox: { paddingHorizontal: space.sm, paddingVertical: 2, borderRadius: 6, backgroundColor: MAIL.chip },
   sender: { flexDirection: 'row', alignItems: 'center', gap: space.md, paddingHorizontal: space.gutter, paddingTop: space.lg },
   avatar: { width: 40, height: 40, borderRadius: 20 },
-  copy: { alignSelf: 'flex-start', minHeight: 44, justifyContent: 'center', marginTop: space.md, marginLeft: space.gutter, paddingHorizontal: space.lg, borderRadius: radius.pill, borderWidth: 1, borderColor: MAIL.line },
   body: { flex: 1, marginTop: space.md, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: MAIL.line },
 });

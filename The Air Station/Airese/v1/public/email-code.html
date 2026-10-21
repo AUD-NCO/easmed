@@ -1,13 +1,13 @@
 <!doctype html>
 <!--
-  Airese · Email: your code. Sent when someone taps Verify in the email field on Your details (onboarding).
-  The code is confirmed on the Airese page (public/verify-email.html).
+  Airese · Email: your code. Sent when someone taps Verify in the email field on Your details
+  (onboarding, and Profile when the email changes). The person copies the code and pastes it in the app.
 
   Template for the email service. Replace the sample values:
-    {{code}}        482913 (in the subject, the preheader, the code box and the link)
-    {{verify_url}}  https://theairstation.com/airese/verify?email={{email}}&code={{code}}
-  The code box is a link to the Airese page with the code filled in; it confirms the email there and
-  sends the person back to the app. Mail apps that offer "Copy code" work too.
+    {{code}}      482913 (in the subject, the preheader, the code box and the link)
+    {{app_link}}  https://theairstation.com/airese/code?code={{code}}, a universal link that opens the
+                  app on Your details. Copy OTP is a link to it: an email can't copy by itself, so the
+                  app reads the code from the link and fills it in. Mail apps that offer "Copy code" work too.
   Subject: {{code}} is your Airese code
   (The code goes first in the subject so it shows in the notification, and iOS offers it as AutoFill.)
 
@@ -25,7 +25,7 @@
 </head>
 <body style="margin:0;padding:0;background:#FFFFFF;">
   <!-- Preheader: the line shown after the subject in the inbox -->
-  <div style="display:none;max-height:0;overflow:hidden;opacity:0;">Tap the code to confirm your email for Airese.</div>
+  <div style="display:none;max-height:0;overflow:hidden;opacity:0;">Copy the code and paste it in Airese to confirm your email.</div>
 
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#FFFFFF;">
     <tr>
@@ -43,7 +43,7 @@
           </tr>
           <tr>
             <td style="padding-top:8px;font-family:Inter,'Segoe UI',Helvetica,Arial,sans-serif;font-size:16px;line-height:24px;color:#4A5266;">
-              Tap the code to confirm your email.
+              Copy the code and paste it in Airese to confirm your email.
             </td>
           </tr>
           <tr>
@@ -51,7 +51,18 @@
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
                 <tr>
                   <td align="center" style="background:#F1F3F8;border-radius:16px;">
-                    <a href="https://theairstation.com/airese/verify?code=482913" style="display:block;padding:24px 16px;font-family:Montserrat,'Segoe UI',Helvetica,Arial,sans-serif;font-size:40px;line-height:48px;font-weight:600;letter-spacing:10px;color:#0B1020;text-decoration:none;">482913</a>
+                    <div style="padding:24px 16px;font-family:Montserrat,'Segoe UI',Helvetica,Arial,sans-serif;font-size:40px;line-height:48px;font-weight:600;letter-spacing:10px;color:#0B1020;">482913</div>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding-top:16px;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                  <td align="center" style="background:#0B1020;border-radius:999px;">
+                    <a href="https://theairstation.com/airese/code?code=482913" style="display:block;padding:14px 24px;font-family:Inter,'Segoe UI',Helvetica,Arial,sans-serif;font-size:16px;line-height:24px;font-weight:600;color:#FFFFFF;text-decoration:none;">Copy OTP</a>
                   </td>
                 </tr>
               </table>

@@ -110,9 +110,8 @@
         ['onboarding', 'Walkthrough', '/onboarding', 'Three pages. Swipe or tap the dashes; Continue on the last page.'],
         ['microphone', 'Microphone access', '/permissions/microphone', 'Asks for the mic, saying why first. Skip or Don’t Allow opens a second-chance sheet.'],
         ['notifications', 'Notifications', '/permissions/notifications', 'Asks for notifications. Same pattern as the microphone screen.'],
-        ['details', 'Your details', '/details', 'Name, phone, email and agreeing to Terms and Privacy, all required. Verify (in the email field) sends a code; Continue is off until the email is verified.'],
-        ['email-code', 'Email · your code', '/details?state=mail', 'The phone’s mail app, open on the Airese email. Tap the code or Copy code. Template for developers: public/email-code.html.'],
-        ['verify-email', 'Verify email', '/details?state=browser', 'The Airese page at theairstation.com/airese, in the phone’s browser, with the code filled in. Verify goes back to Your details, now verified.'],
+        ['details', 'Your details', '/details', 'Name, phone, email and agreeing to Terms and Privacy, all required. Verify (in the email field) sends a code and opens the Verify your email sheet; Continue is off until the email is verified.'],
+        ['email-code', 'Email · your code', '/details?state=mail', 'The phone’s mail app, open on the Airese email. Copy OTP copies the code and goes back to the Verify your email sheet, where Paste code verifies it. Template for developers: public/email-code.html.'],
         ['about-you', 'About you', '/about-you', 'Gender, age, height, weight and where you live, all required. (i) says why. Begin your journey goes Home.'] ] },
       { group: 'App', items: [
         ['home', 'Home', '/home', 'Tap the dial to record. The banner shows the one most useful message.'],

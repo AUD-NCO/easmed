@@ -1,16 +1,15 @@
-import React, { useRef, useState } from 'react';
-import { KeyboardAvoidingView, Platform, StyleSheet, View, type TextInput } from 'react-native';
+import React, { useState } from 'react';
+import { KeyboardAvoidingView, Platform, StyleSheet, View } from 'react-native';
 import {
   AboutYou,
   AppText,
-  BrowserDemo,
   Button,
   DetailPage,
+  EmailCodeSheet,
   FormDivider,
   FormGroup,
   FormInput,
   Icon,
-  MailDemo,
   PAGE_SIDE,
   PhoneField,
   ExplainSheet,
@@ -20,7 +19,7 @@ import {
   missingAboutMessage,
   type AboutKey,
 } from '../components';
-import { codeSentTo, markVerified, sendCode } from '../lib/emailCode';
+import { markVerified, sendCode } from '../lib/emailCode';
 import { isValidEmail, isValidPhone, setProfile, useProfile, type Profile } from '../lib/profile';
 import { space } from '@ds/theme';
 
@@ -40,20 +39,17 @@ const check = (p: Profile, verified: boolean): Errors => {
  * AboutYouScreen), all required. Edits are a draft: Save checks them and keeps them; Back leaves
  * without changing anything. Fields are checked when you leave them, and all again on Save.
  *
- * Email: the saved address shows Verified (onboarding verified it). A new one needs Verify (the same email code as
- * onboarding, coming back here: lib/emailCode.ts) and Save is dimmed until then; tapping it anyway
- * says why. `returning`: reopened from the email link, so the draft starts on the address just verified.
- * Browser preview: Verify plays the mail app and browser inside the phone, as in onboarding.
+ * Email: the saved address shows Verified (onboarding verified it). A new one needs Verify (the same
+ * Verify your email sheet as onboarding: lib/emailCode.ts) and Save is dimmed until then; tapping it
+ * anyway says why.
  */
-export function EditDetailsScreen({ onBack, returning = false }: { onBack: () => void; returning?: boolean }) {
+export function EditDetailsScreen({ onBack }: { onBack: () => void }) {
   const saved = useProfile();
-  const [draft, setDraft] = useState<Profile>(() => (returning && codeSentTo() ? { ...saved, email: codeSentTo() } : saved));
+  const [draft, setDraft] = useState<Profile>(saved);
   const [errors, setErrors] = useState<Errors>({});
   const [missing, setMissing] = useState<AboutKey[]>([]);
   const [phoneWhy, setPhoneWhy] = useState(false);
-  const [sent, setSent] = useState(false); // phone: the code is on its way
-  const [demo, setDemo] = useState<'mail' | 'browser' | null>(null);
-  const emailRef = useRef<TextInput>(null);
+  const [codeSheet, setCodeSheet] = useState(false);
 
   // The saved email was verified in onboarding (it can't be finished without), so only a new one needs it
   const email = draft.email.trim();
@@ -74,8 +70,7 @@ export function EditDetailsScreen({ onBack, returning = false }: { onBack: () =>
     setErrors((e) => ({ ...e, email: error }));
     if (error) return;
     await sendCode(email);
-    if (Platform.OS === 'web') setDemo('mail');
-    else setSent(true);
+    setCodeSheet(true);
   };
 
   const save = (leave: (then: () => void) => void) => {
@@ -129,13 +124,12 @@ export function EditDetailsScreen({ onBack, returning = false }: { onBack: () =>
               />
             </FormGroup>
 
-            <FormGroup title="Email" error={errors.email} footer={verified ? undefined : sent ? 'Code sent. Check your email.' : 'Verify your new email to save it.'}>
+            <FormGroup title="Email" error={errors.email} footer={verified ? undefined : 'Verify your new email to save it.'}>
               <FormInput
-                ref={emailRef}
                 placeholder="name@example.com"
                 accessibilityLabel="Email address"
                 value={draft.email}
-                onChangeText={(email) => (update({ email }), setSent(false))}
+                onChangeText={(email) => update({ email })}
                 keyboardType="email-address"
                 autoCapitalize="none"
                 autoCorrect={false}
@@ -149,7 +143,7 @@ export function EditDetailsScreen({ onBack, returning = false }: { onBack: () =>
                       <AppText variant="small">Verified</AppText>
                     </View>
                   ) : (
-                    <Button label={sent ? 'Resend' : 'Verify'} variant="mini" onPress={verify} style={{ alignSelf: 'center' }} accessibilityLabel={sent ? 'Resend the code' : 'Verify email'} />
+                    <Button label="Verify" variant="mini" onPress={verify} style={{ alignSelf: 'center' }} accessibilityLabel="Verify email" />
                   )
                 }
               />
@@ -161,23 +155,7 @@ export function EditDetailsScreen({ onBack, returning = false }: { onBack: () =>
         </KeyboardAvoidingView>
       </DetailPage>
 
-      {/* Browser preview only: the mail app, then the browser, inside the phone */}
-      {demo === 'mail' && (
-        <View style={StyleSheet.absoluteFill}>
-          <MailDemo onOpenCode={() => setDemo('browser')} onBack={() => setDemo(null)} />
-        </View>
-      )}
-      {demo === 'browser' && (
-        <View style={StyleSheet.absoluteFill}>
-          <BrowserDemo
-            email={draft.email.trim()}
-            from="profile-details"
-            onVerified={() => (markVerified(), setDemo(null))}
-            onChangeEmail={() => (setDemo(null), emailRef.current?.focus())}
-            onBack={() => setDemo('mail')}
-          />
-        </View>
-      )}
+      <EmailCodeSheet email={email} visible={codeSheet} onVerified={() => markVerified(email)} onClose={() => setCodeSheet(false)} />
     </>
   );
 }

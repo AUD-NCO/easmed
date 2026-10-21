@@ -2,45 +2,33 @@
  * Email check, from the Verify button in the email field of Your details (onboarding, and Profile when
  * the email changes):
  *
- *   1. Verify → the server emails a 6-digit code (template: public/email-code.html).
- *   2. In their mail app the person taps the code (a link) or copies it.
- *   3. The link opens the Airese page in the phone's browser (public/verify-email.html, to be hosted
- *      at https://theairstation.com/airese/verify), with the code filled in. Verify there → "Email verified".
- *   4. The page opens the return link (airese://details?verified=1 in onboarding,
- *      airese://profile-details?verified=1 from Profile): back to Your details, which shows Verified.
- *      Continue (onboarding) or Save (Profile) is dimmed until then.
+ *   1. Verify → the server emails a 6-digit code (template: public/email-code.html), and the
+ *      Verify your email sheet opens (components/EmailCodeSheet): where the code went, how long it works.
+ *   2. In their mail app the person taps Copy OTP: the code is copied and the app opens again
+ *      (the button's link, {{app_link}} in the template), still on the sheet.
+ *   3. Paste code. The right code → "Email verified", the sheet closes by itself and the email field
+ *      shows Verified. Continue (onboarding) or Save (Profile) is dimmed until then.
  *
- * Browser preview: steps 2 and 3 are drawn inside the phone (components/MailDemo, BrowserDemo) and
- * the page reports back with postMessage({ source: 'airese-verify', result: 'verified' }).
+ * Prototype: step 2 is drawn inside the phone (components/MailDemo), from "Demo: open the email" on the sheet.
  *
  * Engineering: the server sends the email, keeps the code for 10 minutes, allows 5 tries and checks
- * it; on the way back the app asks the server rather than trusting ?verified=1.
+ * it. A plain email can't copy to the clipboard by itself, so in the real app the link also carries
+ * the code and the app fills it in.
  */
 
-import { recall, remember } from './session';
 import { setProfile } from './profile';
 
 /** Prototype only: the code that works. */
 export const DEMO_CODE = '482913';
 
-/** The page's domain, shown in the browser's address bar. Its prototype copy is published next to the preview. */
-export const VERIFY_DOMAIN = 'theairstation.com';
+/** How long a code works. */
+export const CODE_MINUTES = 10;
 
-/** Which Your details the page sends the person back to: onboarding's, or Profile's. */
-export type CodeFrom = 'details' | 'profile-details';
-export const returnLink = (from: CodeFrom) => `airese://${from}?verified=1`;
+/** Step 1. Prototype: nothing is sent. */
+export async function sendCode(_email: string): Promise<void> {}
 
-/** Step 1. Remembers which address the code went to. Prototype: nothing is sent. */
-export async function sendCode(email: string): Promise<void> {
-  remember('codeSentTo', email);
-}
+/** Step 3. Prototype: only DEMO_CODE works. */
+export const checkCode = async (code: string): Promise<boolean> => code === DEMO_CODE;
 
-/** The address the last code went to (Profile reopens on it after the email link). */
-export const codeSentTo = () => recall('codeSentTo', '');
-
-/** Step 4: the code was right. That address is now the verified one (Profile.verifiedEmail). */
-export const markVerified = () => setProfile({ verifiedEmail: codeSentTo() });
-
-/** Browser preview: the page's prototype copy, with the email to show and the code already filled in. */
-export const demoPageUrl = (email: string, from: CodeFrom) =>
-  `verify-email.html?email=${encodeURIComponent(email)}&code=${DEMO_CODE}&redirect=${encodeURIComponent(returnLink(from))}`;
+/** Step 3: the code was right. That address is now the verified one (Profile.verifiedEmail). */
+export const markVerified = (email: string) => setProfile({ verifiedEmail: email });

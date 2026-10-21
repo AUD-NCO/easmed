@@ -7,7 +7,7 @@
  * The shared design system page is built separately: npm run design-system, from Airese/.
  */
 import { execSync } from 'node:child_process';
-import { copyFileSync, existsSync, readFileSync, readdirSync, writeFileSync, mkdirSync, rmSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync, writeFileSync, mkdirSync, rmSync } from 'node:fs';
 import { basename, extname, join, relative } from 'node:path';
 
 const root = decodeURIComponent(new URL('..', import.meta.url).pathname);
@@ -56,7 +56,24 @@ const html = readFileSync(join(root, 'public/iphone.html'), 'utf8')
 
 mkdirSync(out, { recursive: true });
 writeFileSync(join(out, 'index.html'), html);
-// Pages the app opens or links to, published next to it: the email-code page and the email template
-for (const page of ['verify-email.html', 'email-code.html']) copyFileSync(join(root, 'public', page), join(out, page));
+// The email template, published next to the app (the mail app in the preview shows it). Opened as a
+// file, the app can't reach inside the email, so this copy copies the code itself on Copy OTP and
+// tells the app (components/MailDemo). The template stays script-free for email clients.
+const copyOtp = `<script>
+document.addEventListener('click', function (e) {
+  var link = e.target.closest('a');
+  if (!link) return;
+  e.preventDefault();
+  var code = new URL(link.href).searchParams.get('code') || '';
+  var box = document.createElement('textarea');
+  box.value = code;
+  document.body.appendChild(box);
+  box.select();
+  document.execCommand('copy');
+  box.remove();
+  parent.postMessage({ source: 'airese-mail', action: 'copied', code: code }, '*');
+});
+</script>`;
+writeFileSync(join(out, 'email-code.html'), readFileSync(join(root, 'public', 'email-code.html'), 'utf8').replace('</body>', () => `${copyOtp}\n</body>`));
 rmSync(tmp, { recursive: true, force: true });
 console.log(`\nPreview written to Airese/preview-dist/${version}/index.html (${(html.length / 1024).toFixed(0)} KB)`);

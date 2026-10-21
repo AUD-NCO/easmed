@@ -1,7 +1,7 @@
 import React, { useRef, useState } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View, type TextInput } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
-import { AppText, BrowserDemo, Button, Checkbox, FormDivider, FormGroup, FormInput, Icon, InlineLink, MailDemo, PhoneField, ExplainSheet, InfoButton, PHONE_WHY } from '../components';
+import { AppText, Button, Checkbox, EmailCodeSheet, FormDivider, FormGroup, FormInput, Icon, InlineLink, PhoneField, ExplainSheet, InfoButton, PHONE_WHY } from '../components';
 import { markVerified, sendCode } from '../lib/emailCode';
 import { isValidEmail, isValidPhone, setProfile, useProfile, type Profile } from '../lib/profile';
 import type { LegalDoc } from './LegalScreen';
@@ -16,22 +16,20 @@ type Errors = { name?: string; phone?: string; email?: string; terms?: string };
  * All required: first and last name, phone (so the sleep care team can call when asked), a verified
  * email and agreeing to the terms. Native grouped form (iOS Settings style, see components/Form).
  *
- * Email: Verify, inside the field, emails a 6-digit code; the person confirms it on the Airese page
- * and comes back here, where the field shows Verified (flow: lib/emailCode.ts). Continue stays
- * dimmed until then, with the reason under the field; tapping it anyway turns that reason into an
- * error. Changing the email undoes Verified.
- * Browser preview: Verify plays the rest inside the phone: the mail app (MailDemo), then the browser
- * (BrowserDemo). `demo` opens straight onto one of them (demo nav).
+ * Email: Verify, inside the field, emails a 6-digit code and opens the Verify your email sheet
+ * (EmailCodeSheet); the person pastes the code there and the field shows Verified (flow:
+ * lib/emailCode.ts). Continue stays dimmed until then, with the reason under the field; tapping it
+ * anyway turns that reason into an error. Changing the email undoes Verified.
+ * `demo`: opens straight onto the sheet's mail app (demo nav).
  */
-export function DetailsScreen({ onDone, onOpenLegal, demo: initialDemo = null }: { onDone?: () => void; onOpenLegal: (doc: LegalDoc) => void; demo?: 'mail' | 'browser' | null }) {
+export function DetailsScreen({ onDone, onOpenLegal, demo: initialDemo = null }: { onDone?: () => void; onOpenLegal: (doc: LegalDoc) => void; demo?: 'mail' | null }) {
   const insets = useInsets();
   const saved = useProfile();
   const [draft, setDraft] = useState<Profile>(saved);
   const [agreed, setAgreed] = useState(false);
   const [errors, setErrors] = useState<Errors>({});
   const [phoneWhy, setPhoneWhy] = useState(false);
-  const [sent, setSent] = useState(false); // phone: the code is on its way
-  const [demo, setDemo] = useState(initialDemo);
+  const [codeSheet, setCodeSheet] = useState(initialDemo === 'mail');
   const scroll = useRef<ScrollView>(null);
 
   const lastRef = useRef<TextInput>(null);
@@ -63,8 +61,7 @@ export function DetailsScreen({ onDone, onOpenLegal, demo: initialDemo = null }:
     const email = draft.email.trim();
     setProfile({ ...draft, firstName: draft.firstName.trim(), lastName: draft.lastName.trim(), email });
     await sendCode(email);
-    if (Platform.OS === 'web') setDemo('mail');
-    else setSent(true);
+    setCodeSheet(true);
   };
 
   const submit = () => {
@@ -129,13 +126,13 @@ export function DetailsScreen({ onDone, onOpenLegal, demo: initialDemo = null }:
               />
             </FormGroup>
 
-            <FormGroup title="Email" error={errors.email} footer={verified ? undefined : sent ? 'Code sent. Check your email.' : 'Verify your email to continue.'}>
+            <FormGroup title="Email" error={errors.email} footer={verified ? undefined : 'Verify your email to continue.'}>
               <FormInput
                 ref={emailRef}
                 placeholder="name@example.com"
                 accessibilityLabel="Email address"
                 value={draft.email}
-                onChangeText={(email) => (update({ email }), clear('email'), setSent(false))}
+                onChangeText={(email) => (update({ email }), clear('email'))}
                 onBlur={() => setErrors((e) => ({ ...e, email: checks.email() }))}
                 keyboardType="email-address"
                 autoCapitalize="none"
@@ -150,12 +147,11 @@ export function DetailsScreen({ onDone, onOpenLegal, demo: initialDemo = null }:
                       <AppText variant="small">Verified</AppText>
                     </View>
                   ) : (
-                    <Button label={sent ? 'Resend' : 'Verify'} variant="mini" onPress={verify} style={{ alignSelf: 'center' }} accessibilityLabel={sent ? 'Resend the code' : 'Verify email'} />
+                    <Button label="Verify" variant="mini" onPress={verify} style={{ alignSelf: 'center' }} accessibilityLabel="Verify email" />
                   )
                 }
               />
             </FormGroup>
-
           </View>
         </ScrollView>
 
@@ -175,23 +171,13 @@ export function DetailsScreen({ onDone, onOpenLegal, demo: initialDemo = null }:
 
       <ExplainSheet content={phoneWhy ? PHONE_WHY : null} onClose={() => setPhoneWhy(false)} />
 
-      {/* Browser preview only: the mail app, then the browser, inside the phone */}
-      {demo === 'mail' && (
-        <View style={StyleSheet.absoluteFill}>
-          <MailDemo onOpenCode={() => setDemo('browser')} onBack={() => setDemo(null)} />
-        </View>
-      )}
-      {demo === 'browser' && (
-        <View style={StyleSheet.absoluteFill}>
-          <BrowserDemo
-            email={draft.email.trim() || saved.email}
-            from="details"
-            onVerified={() => (markVerified(), setDemo(null))}
-            onChangeEmail={() => (setDemo(null), emailRef.current?.focus())}
-            onBack={() => setDemo('mail')}
-          />
-        </View>
-      )}
+      <EmailCodeSheet
+        email={draft.email.trim() || saved.email}
+        visible={codeSheet}
+        startInMail={initialDemo === 'mail'}
+        onVerified={() => markVerified(draft.email.trim() || saved.email)}
+        onClose={() => setCodeSheet(false)}
+      />
     </View>
   );
 }
