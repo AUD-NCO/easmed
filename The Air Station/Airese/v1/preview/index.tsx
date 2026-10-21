@@ -16,6 +16,9 @@ import { LegalScreen, type LegalDoc } from '../src/screens/LegalScreen';
 import { HomeScreen, type RecordOrigin } from '../src/screens/HomeScreen';
 import { RecordingScreen } from '../src/screens/RecordingScreen';
 import { ReportsScreen } from '../src/screens/ReportsScreen';
+import { NightNotesScreen } from '../src/screens/NightNotesScreen';
+import { finishNight, summarize, useNightNotes } from '../src/lib/nightNotes';
+import { startAnalysing, useNights, type Night } from '../src/lib/recordings';
 import { OnboardingScreen } from '../src/screens/OnboardingScreen';
 import { MicrophonePermissionScreen, NotificationsPermissionScreen } from '../src/screens/PermissionScreen';
 import { SplashScreen } from '../src/screens/SplashScreen';
@@ -37,6 +40,9 @@ function PreviewApp() {
   const [recording, setRecording] = useState<{ startedAt: Date; from?: RecordOrigin; pausedAt?: Date }>(() => ({ startedAt: new Date() }));
   const [reportState, setReportState] = useState<string | undefined>(); // demo menu: last night's report in a given state
   const [openProfile, setOpenProfile] = useState(false); // demo menu: Profile, over Home
+  const [recordingNotes, setRecordingNotes] = useState(false); // Before sleeping, opened from Recording's banner
+  const nightNotes = useNightNotes();
+  const latest = useNights()[0]; // the night just recorded shows as the latest sample night
   const [detailsDemo, setDetailsDemo] = useState<'mail' | null>(null); // demo nav: the email step
   const [legal, setLegal] = useState<LegalDoc | null>(null); // Terms / Privacy, over the details screen
   const [problem, setProblem] = useState<StartProblem>('space'); // recording can't start: which problem
@@ -148,14 +154,23 @@ function PreviewApp() {
               startedAt={recording.startedAt}
               pausedAt={recording.pausedAt}
               from={recording.from}
+              notesTonight={summarize(nightNotes.tonight)}
+              onOpenNotes={() => setRecordingNotes(true)}
               onStop={() => {
-                // Stopping in the morning goes straight to the night, as in the app
+                // Stopping in the morning goes straight to the night, as in the app: looked through, then the report
+                if (latest) finishNight(latest.id);
+                startAnalysing();
                 setStep('home');
                 setTab('reports');
-                setReportState('processing');
+                setReportState(undefined);
                 setRun((n) => n + 1);
               }}
             />
+          </View>
+        )}
+        {step === 'recording' && recordingNotes && (
+          <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}>
+            <NightNotesScreen onClose={() => setRecordingNotes(false)} slideIn backLabel="Recording" />
           </View>
         )}
         <SystemAlertHost />
@@ -184,15 +199,17 @@ function HomeTabs({
   initialProfile: boolean;
   onAccountDeleted: () => void;
 }) {
+  const [notes, setNotes] = useState<Night | null>(null); // a night's Night Notes, from its report
   const [profile, setProfile] = useState<'profile' | 'details' | 'centres' | null>(initialProfile ? 'profile' : null);
   return (
     <View style={{ flex: 1 }}>
       {tab === 'home' ? (
         <HomeScreen onStartRecording={onStartRecording} onOpenProfile={() => setProfile('profile')} onOpenLastNight={onOpenLastNight} onCantStart={onCantStart} />
       ) : (
-        <ReportsScreen key={reportState ?? 'default'} demoState={reportState} onRecordAgain={() => onTab('home')} />
+        <ReportsScreen key={reportState ?? 'default'} demoState={reportState} onRecordAgain={() => onTab('home')} onOpenNotes={setNotes} />
       )}
       <TabBar items={HOME_TABS} selected={tab} onSelect={onTab} />
+      {notes && <NightNotesScreen key={notes.id} night={notes} backLabel="Back" onClose={() => setNotes(null)} slideIn />}
       {/* Profile, and its pages over it */}
       {profile && (
         <ProfileScreen

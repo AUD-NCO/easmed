@@ -252,6 +252,8 @@ The UI is flat: depth comes from colour (Midnight → Deep), not shadows.
 
 **To add an icon:** copy its path from `outlined/<name>.svg` in the official set into `PATHS` in [`Icon.tsx`](components/Icon.tsx), under the same name.
 
+**Not in Material Symbols:** use [Health Icons](https://healthicons.org) (outline, MIT), copied into `HEALTH` in `Icon.tsx`. They're drawn on their own 48 × 48 grid. In use: `nose`, `face_sleepy`, `face_tongue`, `mouth`, `head`, `inhaler` (Night Notes).
+
 ---
 
 ## 6. Brand assets
@@ -311,7 +313,7 @@ All in [`src/components/`](components/), imported from `'../components'`. Groupe
 | Component | What it is | Key props | Used in |
 | --- | --- | --- | --- |
 | [`AppText`](components/AppText.tsx) | The only text component. Applies a type variant and a colour token; scales to 200%. | `variant`, `color` | Everywhere |
-| [`Icon`](components/Icon.tsx) | A Material Symbol as SVG. | `name`, `size`, `color` | Everywhere |
+| [`Icon`](components/Icon.tsx) | A Material Symbol as SVG (a Health Icon where Material has none). | `name`, `size`, `color` | Everywhere |
 | [`Logo`](components/Logo.tsx) | The stacked Airese logo as SVG. | `width`, `color` | Splash, Profile, Our centres |
 
 ### Page structure and templates
@@ -334,6 +336,7 @@ All in [`src/components/`](components/), imported from `'../components'`. Groupe
 | [`InfoButton`](components/InfoButton.tsx) | The (i) that opens an explanation. | `onPress`, `label`, `size`, `color` | Onboarding, details, Recording, cards |
 | [`Avatar`](components/Avatar.tsx) | 44 pt glassy circle with initials (or a person icon); opens Profile. Exports `titleControl`, the look it shares with the Reports calendar button. | `initials`, `onPress` | Home |
 | [`ToggleChip`](components/ToggleChip.tsx) · `ChipGroup` | Multi-select pill (reads as a checkbox) and the wrapping row that holds them. | `label`, `selected`, `onToggle` | Night Notes |
+| [`IconChoiceGrid`](components/IconChoiceGrid.tsx) | Multi-select as a grid of round icons with labels, four to a row; chosen gets a Breath ring and a check. Reads as checkboxes. | `options` (`id`, `label`, `icon`), `selected`, `onToggle` | Night Notes (v1) |
 | [`SettingSwitch`](components/SettingRows.tsx) | A label (with an optional icon, to line up with `SettingRow`) and a native switch (Breath track, white thumb). Greyed out when disabled. | `icon`, `title`, `value`, `enabled`, `onChange` | Profile (Bedtime reminder) |
 | [`SegmentedControl`](components/SegmentedControl.tsx) | iOS-style segmented control with a sliding Breath thumb. Radio group for screen readers. | `segments`, `selected`, `onSelect`, `label` | Height and weight sheets (units) |
 

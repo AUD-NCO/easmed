@@ -76,6 +76,11 @@ const stagger = Number(motionSrc.match(/stagger: (\d+)/)[1]);
 
 const iconSrc = read('design-system/components/Icon.tsx');
 const icons = [...iconSrc.matchAll(/^\s+(\w+): '([Mm][^']+)'/gm)].map(([, name, d]) => ({ name, d }));
+// Health Icons (48 × 48 grid, one or more paths each) for what Material doesn't have
+const healthIcons = [...iconSrc.matchAll(/^\s+(\w+): \[(.+)\],$/gm)].map(([, name, body]) => ({
+  name,
+  paths: [...body.matchAll(/(\{ d: )?'([^']+)'(, evenodd: true \})?/g)].map(([, , d, evenodd]) => ({ d, evenodd: !!evenodd })),
+}));
 
 // Components: first doc comment, exports, and the screens that render them.
 const files = [];
@@ -115,7 +120,7 @@ const usedIn = (name) =>
 // One line per component for the page (plain, short). Code doc comments stay for developers.
 const BLURB = {
   "AppText": "The only text component. Applies a type style and colour; scales to 200%.",
-  "Icon": "A Material Symbol by name, size and colour token.",
+  "Icon": "A Material Symbol by name, size and colour token; a Health Icon where Material has none.",
   "Logo": "The stacked Airese logo.",
   "PageTitle": "Large title for a tab's page, the same on every tab, with a control on the right (Home: avatar; Reports: calendar).",
   "PromptLayout": "Full-screen prompt: a 200 pt graphic, then headline, reason, an optional how-to-fix line with a Lamp lightbulb, one button. Skip or × top right. PromptBody is the same content inside a page with its own header.",
@@ -129,6 +134,7 @@ const BLURB = {
   "Avatar": "44 pt glassy circle with initials, or a person icon. Opens Profile. Exports titleControl, the look shared with the Reports calendar button.",
   "ToggleChip": "Pill that switches on and off. Reads as a checkbox.",
   "ChipGroup": "Wraps chips across lines.",
+  "IconChoiceGrid": "Multi-select as a grid of round icons with labels, four to a row. Chosen: Breath ring and a check.",
   "SettingSwitch": "A label (with an optional icon) and a switch. Greyed out when disabled.",
   "SegmentedControl": "iOS-style segmented control with a sliding Breath thumb.",
   "FormGroup": "Grouped form card with a title and footer. Outlines on focus and on error. onSheet for use inside a sheet.",
@@ -175,7 +181,7 @@ const BLURB = {
 const GROUPS = [
   ['Foundations', [['AppText'], ['Icon'], ['Logo']]],
   ['Page structure and templates', [['PageTitle'], ['DetailPage'], ['PromptLayout'], ['AmbientGradient'], ['TabBar'], ['Screen']]],
-  ['Buttons and controls', [['Button'], ['IconButton'], ['InfoButton'], ['Avatar'], ['ToggleChip', 'ToggleChip'], ['ChipGroup', 'ToggleChip'], ['SettingSwitch', 'SettingRows'], ['SegmentedControl']]],
+  ['Buttons and controls', [['Button'], ['IconButton'], ['InfoButton'], ['Avatar'], ['ToggleChip', 'ToggleChip'], ['ChipGroup', 'ToggleChip'], ['IconChoiceGrid'], ['SettingSwitch', 'SettingRows'], ['SegmentedControl']]],
   ['Forms and rows', [['FormGroup', 'Form'], ['FormTitle', 'Form'], ['FormInput', 'Form'], ['FormDivider', 'Form'], ['PhoneField'], ['Checkbox'], ['WheelPicker', 'Pickers'], ['RulerPicker', 'Pickers'], ['AboutYou'], ['SettingRow', 'SettingRows']]],
   ['Cards', [['Card'], ['VerdictCard'], ['InsightCard'], ['DataCard'], ['BigNumber', 'DataCard'], ['ScoreTile']]],
   ['Sheets and feedback', [['BottomSheet'], ['TopSheet'], ['ExplainSheet'], ['LargeSheet'], ['PermissionSheet'], ['Toast'], ['SystemAlertHost']]],
@@ -471,8 +477,8 @@ const html = `<!doctype html>
 
 <section id="icons">
   <h2>Icons</h2>
-  <p class="muted">Material Symbols, Outlined, weight 400, via <code>Icon</code>. <code>_fill</code> is the selected state. ${icons.length} in use. Tab bar: SF Symbols on iOS, Material on Android.</p>
-  <div class="icons">${icons.map((i) => `<div class="icon"><svg viewBox="0 -960 960 960" aria-hidden="true"><path d="${i.d}"/></svg><code>${i.name}</code></div>`).join('')}</div>
+  <p class="muted">Material Symbols, Outlined, weight 400, via <code>Icon</code>. <code>_fill</code> is the selected state. ${icons.length + healthIcons.length} in use; the last ${healthIcons.length} are Health Icons (healthicons.org), for what Material doesn't have. Tab bar: SF Symbols on iOS, Material on Android.</p>
+  <div class="icons">${icons.map((i) => `<div class="icon"><svg viewBox="0 -960 960 960" aria-hidden="true"><path d="${i.d}"/></svg><code>${i.name}</code></div>`).join('')}${healthIcons.map((i) => `<div class="icon"><svg viewBox="0 0 48 48" aria-hidden="true">${i.paths.map((x) => `<path d="${x.d}"${x.evenodd ? ' fill-rule="evenodd" clip-rule="evenodd"' : ''}/>`).join('')}</svg><code>${i.name}</code></div>`).join('')}</div>
 </section>
 
 <section id="brand">

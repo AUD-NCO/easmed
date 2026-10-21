@@ -68,7 +68,7 @@ function current(): Night[] {
  * Every other visit shows the report directly. Prototype: a fixed wait.
  * Engineering: true while the night's analysis is still running.
  */
-const ANALYSING_MS = 6000;
+const ANALYSING_MS = 10000; // room for a few of the "Looking through your night" lines
 let analysing = false;
 let analysingTimer: ReturnType<typeof setTimeout> | undefined;
 const analysingListeners = new Set<() => void>();

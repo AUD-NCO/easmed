@@ -20,7 +20,7 @@ const CONFIRM: Record<Confirm, { title: string; body: string; action: string }> 
   },
   erase: {
     title: 'Erase everything?',
-    body: 'Your details, recordings and settings are removed from this phone, and Airese starts again from the beginning. This can’t be undone.',
+    body: 'Your details, recordings, Night Notes and settings are removed from this phone, and Airese starts again from the beginning. This can’t be undone.',
     action: 'Erase everything',
   },
 };
@@ -160,7 +160,7 @@ export function ProfileScreen({
               onPress={() => ask('recordings')}
             />
             <FormDivider />
-            <SettingRow icon="delete" title="Erase everything and start again" detail="Details, recordings and settings" onPress={() => ask('erase')} />
+            <SettingRow icon="delete" title="Erase everything and start again" detail="Details, recordings, notes and settings" onPress={() => ask('erase')} />
           </FormGroup>
 
           {/* Brand: quiet, at the end */}

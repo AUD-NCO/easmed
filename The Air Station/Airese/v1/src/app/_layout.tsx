@@ -29,6 +29,8 @@ export default function RootLayout() {
       <Stack screenOptions={{ headerShown: false, animation: 'fade' }}>
         {/* The splash's fall-away is the transition, so onboarding appears instantly */}
         <Stack.Screen name="onboarding" options={{ animation: 'none' }} />
+        {/* Night Notes: a push (on web the page slides itself in over Home) */}
+        <Stack.Screen name="night-notes" options={PUSH} />
         {/* Profile (from the avatar), and its pages one level deeper: the same push */}
         <Stack.Screen name="profile" options={PUSH} />
         <Stack.Screen name="profile-details" options={PUSH} />

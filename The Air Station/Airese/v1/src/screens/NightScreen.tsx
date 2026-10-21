@@ -47,7 +47,7 @@ import {
 import { MIN_READABLE_MINUTES, stopTime, type ProblemCopy, type Stop } from '../lib/recordingIssues';
 import { formatNightDate, formatRecorded, formatSpan, type Night } from '../lib/recordings';
 import { formatDuration } from '../lib/time';
-import { alpha, colors, dataInk, motion, radius, space, type } from '@ds/theme';
+import { alpha, colors, dataInk, motion, radius, space, type, useReducedMotion } from '@ds/theme';
 
 
 /**
@@ -83,6 +83,7 @@ export function NightScreen({
   onRecordAgain,
   tag,
   option2 = false,
+  onAddNotes,
 }: {
   night: Night;
   state: NightState;
@@ -107,6 +108,8 @@ export function NightScreen({
    * way, then the verdict with its one action. The rest of the page as usual.
    */
   option2?: boolean;
+  /** This night has no Night Notes yet: a small banner under the header opens them. */
+  onAddNotes?: () => void;
 }) {
   const [state] = useState(initialState); // fixed for this page: a later change of the demo param doesn't swap it
   // Stopped early: the page is about what was saved
@@ -114,6 +117,7 @@ export function NightScreen({
   const night = stopped ? { ...wholeNight, minutes: stopped.savedMinutes } : wholeNight;
   const readable = !stopped || stopped.savedMinutes >= MIN_READABLE_MINUTES;
   const [report, setReport] = useState(false); // the Night report sheet
+  const [notesHidden, setNotesHidden] = useState(false); // the Night Notes banner, closed for this visit
   const [explain, setExplain] = useState<ExplainKey | 'care' | 'remedy' | null>(null);
   const [heroBottom, setHeroBottom] = useState(0); // where the verdict card ends: the footer waits until it's scrolled past
   const player = useClipPlayer();
@@ -252,6 +256,7 @@ export function NightScreen({
         <View style={styles.body}>
           {problem && <PromptBody art={problem.copy.art} title={problem.copy.title} body={problem.copy.reason} fix={problem.copy.fix} cta={problem.cta} onCta={problem.onCta} />}
           {state === 'processing' && <Processing />}
+          {onAddNotes && !notesHidden && <NotesNudge onPress={onAddNotes} onClose={() => setNotesHidden(true)} />}
 
           {stopped && !problem && (
             <>
@@ -487,22 +492,88 @@ function Block({ label, children }: { label: string; children: React.ReactNode }
   );
 }
 
+/**
+ * A night's report with no Night Notes yet: a small bright banner under the header. Tap to add them;
+ * × hides it for this visit, and it's back next time until they're added.
+ * Arrives just after the report: it opens up, pushing the cards down, as it fades in (fast).
+ * Reduce Motion: it fades in where it sits.
+ */
+function NotesNudge({ onPress, onClose }: { onPress: () => void; onClose: () => void }) {
+  const reduced = useReducedMotion();
+  const open = useRef(new Animated.Value(0)).current;
+  const [height, setHeight] = useState(0);
+  useEffect(() => {
+    if (!height && !reduced) return; // measure first
+    // Height can't run on the native driver
+    Animated.timing(open, { toValue: 1, duration: motion.fast.duration, delay: motion.stagger, easing: motion.fast.easeOut, useNativeDriver: false }).start();
+  }, [height, reduced, open]);
+
+  const banner = (
+    <View style={[styles.nudge, !reduced && styles.nudgeMeasured]} onLayout={(e) => setHeight(e.nativeEvent.layout.height)}>
+      <Pressable onPress={onPress} accessibilityRole="button" style={({ pressed }) => [styles.nudgeMain, pressed && { opacity: 0.8 }]}>
+        <Icon name="edit_note" size={22} color="onAccent" />
+        <AppText color="onAccent" style={{ flex: 1 }}>
+          Add Night Notes to this night
+        </AppText>
+      </Pressable>
+      <Pressable onPress={onClose} accessibilityRole="button" accessibilityLabel="Not now" hitSlop={4} style={styles.nudgeClose}>
+        <Icon name="close" size={20} color="onAccent" />
+      </Pressable>
+    </View>
+  );
+  if (reduced) return <Animated.View style={{ opacity: open }}>{banner}</Animated.View>;
+  return (
+    <Animated.View
+      style={{
+        height: open.interpolate({ inputRange: [0, 1], outputRange: [0, height] }),
+        marginBottom: open.interpolate({ inputRange: [0, 1], outputRange: [-space.lg, 0] }), // cancels the page's gap while closed
+        opacity: open,
+        overflow: 'hidden',
+      }}
+    >
+      {banner}
+    </Animated.View>
+  );
+}
+
+/** While the night is looked through: what's happening, a line at a time. */
+const PROCESSING_LINES = [
+  'Finding snoring and breathing pauses.',
+  'Picking the moments worth hearing.',
+  'Comparing with your usual nights.',
+  'Putting your report together.',
+];
+const LINE_MS = 2500; // how long each line stays
+
 /** Straight after a recording: analysis still running. No empty cards (PRD §16). */
 function Processing() {
   const t = useRef(new Animated.Value(0)).current;
+  const fade = useRef(new Animated.Value(1)).current;
+  const [line, setLine] = useState(0);
   useEffect(() => {
     const loop = Animated.loop(Animated.timing(t, { toValue: 1, duration: motion.slow.duration * 1.5, easing: motion.slow.easeInOut, useNativeDriver: motion.useNativeDriver }));
     loop.start();
     return () => loop.stop();
   }, [t]);
+  useEffect(() => {
+    const id = setInterval(() => {
+      Animated.timing(fade, { toValue: 0, duration: motion.fast.duration, easing: motion.fast.easeIn, useNativeDriver: motion.useNativeDriver }).start(() => {
+        setLine((l) => (l + 1) % PROCESSING_LINES.length);
+        Animated.timing(fade, { toValue: 1, duration: motion.fast.duration, easing: motion.fast.easeOut, useNativeDriver: motion.useNativeDriver }).start();
+      });
+    }, LINE_MS);
+    return () => clearInterval(id);
+  }, [fade]);
   return (
     <View style={styles.processing} accessibilityLiveRegion="polite">
       <AppText variant="heading" color="text" style={{ textAlign: 'center' }}>
         Looking through your night
       </AppText>
-      <AppText color="textMuted" style={{ textAlign: 'center', marginTop: space.sm }}>
-        Finding the moments worth showing you.
-      </AppText>
+      <Animated.View style={{ opacity: fade }}>
+        <AppText color="textMuted" style={{ textAlign: 'center', marginTop: space.sm }}>
+          {PROCESSING_LINES[line]}
+        </AppText>
+      </Animated.View>
       <View style={styles.progress}>
         <Animated.View style={[styles.glint, { transform: [{ translateX: t.interpolate({ inputRange: [0, 1], outputRange: [-80, 200] }) }] }]} />
       </View>
@@ -535,6 +606,10 @@ const styles = StyleSheet.create({
   word: { paddingHorizontal: space.md, minHeight: 28, justifyContent: 'center', borderRadius: radius.pill, borderWidth: 1.5 },
   refRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: space.sm },
 
+  nudge: { flexDirection: 'row', alignItems: 'center', borderRadius: radius.lg, backgroundColor: colors.accent },
+  nudgeMeasured: { position: 'absolute', top: 0, left: 0, right: 0 }, // full height while its holder opens
+  nudgeMain: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: 48, paddingLeft: space.lg },
+  nudgeClose: { width: 48, height: 48, alignItems: 'center', justifyContent: 'center' },
   processing: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingBottom: space.xxl * 3 },
   progress: { width: 200, height: 4, borderRadius: 2, marginTop: space.xl, overflow: 'hidden', backgroundColor: alpha(colors.mist, 0.15) },
   glint: { width: 80, height: 4, borderRadius: 2, backgroundColor: colors.accent },

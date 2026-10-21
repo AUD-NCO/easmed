@@ -11,5 +11,11 @@ import { ReportsScreen } from '../../screens/ReportsScreen';
 export default function Reports() {
   const { state } = useLocalSearchParams<{ state?: string }>();
   useState(() => state === 'processing' && startAnalysing());
-  return <ReportsScreen demoState={state === 'processing' ? undefined : state} onRecordAgain={() => router.navigate('/home')} />;
+  return (
+    <ReportsScreen
+      demoState={state === 'processing' ? undefined : state}
+      onRecordAgain={() => router.navigate('/home')}
+      onOpenNotes={(night) => router.push({ pathname: '/night-notes', params: { night: night.id } })}
+    />
+  );
 }
