@@ -1,0 +1,452 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Airese Decisions</title>
+<style>
+  /* Internal alignment: open decisions blocking build. Opened from the left pane of iphone.html ("For the team").
+     Questions branch on earlier answers. Context sits in (i) tooltips. Submit appends the answers, with the person's
+     name and the time, to docs/DECISIONS-LOG.md (dev server: scripts/decisions-log.js). A refresh starts again. */
+  :root { --page: #FFFFFF; --ink: #1A1A1A; --muted: #555B66; --edge: #D3D6DE; --soft: #F4F5F8; --link: #1F3A93; --tip: #1A1A1A; --tip-ink: #FFFFFF; --bad: #A12A1C; --good: #1C6B3F; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --page: #0A0D16; --ink: #F2F3F5; --muted: #B3BDD3; --edge: #2A3244; --soft: #141A28; --link: #9DB4FF; --tip: #EEF1F7; --tip-ink: #0B1020; --bad: #FFA49B; --good: #8EE3CF; } }
+  :root[data-theme="dark"] { --page: #0A0D16; --ink: #F2F3F5; --muted: #B3BDD3; --edge: #2A3244; --soft: #141A28; --link: #9DB4FF; --tip: #EEF1F7; --tip-ink: #0B1020; --bad: #FFA49B; --good: #8EE3CF; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--page); color: var(--ink); font: 16px/1.5 system-ui, -apple-system, sans-serif; color-scheme: light dark; }
+  .wrap { max-width: 760px; margin: 0 auto; padding: 24px 16px 96px; }
+  .where { margin: 0 0 4px; font-size: 14px; color: var(--muted); }
+  h1 { margin: 0 0 8px; font-size: 22px; line-height: 1.3; }
+  p { margin: 0 0 12px; }
+  .note { color: var(--muted); }
+  fieldset { margin: 16px 0 0; padding: 0; border: 0; }
+  legend { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+  .row { display: flex; align-items: center; gap: 4px; border-bottom: 1px solid var(--edge); }
+  .opt { flex: 1; display: flex; gap: 10px; align-items: flex-start; padding: 10px 0; cursor: pointer; }
+  .opt input { width: 20px; height: 20px; margin: 2px 0 0; flex: none; }
+  table { width: 100%; margin-top: 16px; border-collapse: collapse; }
+  th, td { padding: 8px; border-bottom: 1px solid var(--edge); text-align: left; vertical-align: middle; }
+  th { font-size: 14px; color: var(--muted); font-weight: 600; }
+  td.c, th.c { width: 84px; text-align: center; }
+  td.c input { width: 20px; height: 20px; }
+  label.text { display: block; margin-top: 24px; font-weight: 600; }
+  label.text small { font-weight: 400; color: var(--muted); }
+  textarea, input[type="text"] { display: block; width: 100%; margin-top: 6px; padding: 10px; font: inherit; color: var(--ink); background: var(--page); border: 1px solid var(--edge); border-radius: 6px; }
+  textarea { min-height: 72px; resize: vertical; }
+  input[type="text"] { max-width: 360px; min-height: 44px; }
+  .error { color: var(--bad); margin-top: 6px; }
+
+  /* (i) tooltips: hover, keyboard focus, or tap to open; Esc or a tap elsewhere closes */
+  .tipwrap { position: relative; display: inline-block; vertical-align: middle; }
+  .tip { width: 32px; height: 32px; min-height: 0; padding: 0; border: 0; background: none; color: var(--muted); cursor: pointer; display: inline-flex; align-items: center; justify-content: center; }
+  .tip::before { content: 'i'; width: 18px; height: 18px; border: 1.5px solid currentColor; border-radius: 50%; font: italic 600 12px/15px Georgia, serif; text-align: center; }
+  .tip:hover, .tip:focus-visible, .tipwrap.open .tip { color: var(--link); }
+  .tiptext { display: none; position: absolute; z-index: 5; top: 100%; left: -8px; width: min(360px, 80vw); padding: 10px 12px; border-radius: 6px; background: var(--tip); color: var(--tip-ink); font-size: 14px; font-weight: 400; line-height: 1.45; text-align: left; box-shadow: 0 6px 20px rgba(0,0,0,.25); }
+  .tipwrap.right .tiptext { left: auto; right: -8px; }
+  .tipwrap:hover .tiptext, .tip:focus-visible + .tiptext, .tipwrap.open .tiptext { display: block; }
+  .tiptext p { margin: 0 0 6px; } .tiptext p:last-child { margin: 0; }
+  .tiptext ul { margin: 2px 0 6px; padding-left: 18px; }
+  .tiptext table { margin: 6px 0; font-size: 13px; } .tiptext th, .tiptext td { padding: 3px 6px 3px 0; border-color: rgba(127,127,127,.4); color: inherit; }
+
+  .bar { position: fixed; left: 0; right: 0; bottom: 0; background: var(--page); border-top: 1px solid var(--edge); }
+  .bar .in { max-width: 760px; margin: 0 auto; padding: 10px 16px; display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+  button { min-height: 44px; padding: 0 18px; font: inherit; cursor: pointer; }
+  .sum h2 { margin: 28px 0 0; font-size: 18px; }
+  .sum dt { margin-top: 14px; font-weight: 600; }
+  .sum dd { margin: 2px 0 0; white-space: pre-line; }
+  .sum dd.empty { color: var(--muted); font-style: italic; }
+  .sum dd.comment { color: var(--muted); }
+  .rule { margin-top: 14px; padding: 10px 12px; background: var(--soft); border-radius: 6px; }
+  a.change { margin-left: 8px; font-size: 14px; font-weight: 400; color: var(--link); }
+  .actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 24px; }
+  #status { margin-top: 12px; }
+  #status.ok { color: var(--good); } #status.bad { color: var(--bad); }
+  @media (max-width: 560px) { td.c, th.c { width: 64px; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <p class="where" id="where" aria-live="polite"></p>
+  <main id="main" tabindex="-1"></main>
+</div>
+<div class="bar"><div class="in">
+  <button id="back" type="button">Back</button>
+  <button id="next" type="button">Next</button>
+</div></div>
+
+<script>
+var LOG_URL = '/__decisions'; // dev server (scripts/decisions-log.js)
+
+var PARTS = ['Report', 'Types of night', 'Accounts', 'Review'];
+
+function list(items) { return '<ul>' + items.map(function (x) { return '<li>' + x + '</li>'; }).join('') + '</ul>'; }
+function forAgainst(pros, cons) { return '<p>For:</p>' + list(pros) + '<p>Against:</p>' + list(cons); }
+
+// The Reports page as built in the v1 prototype (PRD 5.8): key, name, what it shows (tooltip).
+var WIDGETS = [
+  ['sound', 'Sound Score', 'A number from 0 to 100 that sums up how loud the snoring was and how long it went on.'],
+  ['pauses', 'Breathing pauses', 'Shown as a word: Rarely, Sometimes or Often. We haven’t yet measured how accurate pause detection is.'],
+  ['verdict', 'Verdict card', 'Tells people whether the night was Ordinary, Unusual or part of a Repeated pattern, and what to do next. If it’s left out, the app doesn’t need rules for types of night, and those questions are skipped.'],
+  ['soundChart', 'Night in sound, with clips', 'A chart of how loud the night was, with short recordings people can play back.'],
+  ['snoring', 'Snoring time', 'How long the person snored in total, broken down by hour.'],
+  ['sleep', 'Sleep estimate', 'How long the person slept. It’s worked out from sound alone, so it’s rough.'],
+  ['recent', 'Recent nights', 'The last 7 nights, compared with the person’s usual.'],
+  ['means', 'What it means', 'A short explanation of the night, and when it’s worth seeing a doctor.'],
+  ['care', 'Book a call', 'Lets people ask The Air Station to call them back. Only shown on a Repeated pattern.'],
+  ['calendar', 'Calendar', 'Lets people go back to any night they recorded.'],
+  ['rating', 'Night rating', 'After stopping, we ask people to rate their night from 1 to 5.'],
+  ['checkin', 'Morning check-in', 'What the person tried last night (such as a nasal strip) and what they did before bed.'],
+  ['report', 'Night report for a doctor', 'Every measurement and how we got it. People can’t share it yet.'],
+  ['loudness', 'Loudness in decibels', 'How loud the snoring was on average and at its loudest. Different phones give different readings.'],
+  ['rest', 'Rest Score', 'A number from 0 to 100 for how settled the night sounded.'],
+  ['coughs', 'Coughs and movements', 'How many times we heard a cough or someone moving. Not yet validated.'],
+];
+
+var a = { comments: {} }; // answers live only in this page: a refresh starts again, empty
+var at = 0;
+
+function inReport(key) { return !!(a.widgets && a.widgets[key] && a.widgets[key].length); }
+function verdictIn() { return inReport('verdict'); }
+function flag() { return a.types === 'two' ? 'Worth getting checked' : 'Unusual'; }
+function usesOwn() { return a.basis === 'own' || a.basis === 'both'; }
+function usesFixed() { return a.basis === 'fixed' || a.basis === 'both'; }
+function hasAccount() { return !!a.account && a.account !== 'none'; }
+
+// One question per page. title, tip and options may be functions of the answers so far.
+// Options: [value, label, tooltip]. when(): show this page only if it returns true.
+var STEPS = [
+  { id: 'start', part: -1, kind: 'start' },
+
+  { id: 'widgets', part: 0, kind: 'widgets',
+    title: 'Which of these should be on the report, and when?',
+    tip: '<p>Phase 1 is the launch. Phase 2 is the release after that.</p><p>Tick the phase each item should be in. If it shouldn’t be in the app at all, leave both boxes empty.</p><p>Every number we show at launch has to be one Clinical and Engineering can stand behind.</p>' },
+  { id: 'pausesNumber', part: 0, kind: 'single', when: function () { return inReport('pauses'); },
+    title: 'Should the report show the exact number of breathing pauses per hour, such as 15.6?',
+    tip: '<p>Doctors use 5 and 15 pauses an hour as the cut-offs for mild and moderate sleep apnoea. If we show the number, people will read it as a diagnosis.</p><p>Today the report shows a word (Rarely, Sometimes or Often), and the number is one tap down.</p>',
+    options: [
+      ['never', 'No. Only show a word, such as “Often”'],
+      ['detail', 'Yes, but only when they tap through to the details', 'This is what the prototype does.'],
+      ['main', 'Yes, on the main report'],
+      ['later', 'Not until we’ve proven that pause detection is accurate'] ] },
+
+  { id: 'types', part: 1, kind: 'single', when: verdictIn,
+    title: 'How many types of night should the app use?',
+    tip: '<p>Every morning, the app puts the night into a type. Each type has its own headline and next step. In the prototype:</p>' +
+      '<table><tr><th>Type</th><th>Headline</th><th>Next step</th></tr><tr><td>Ordinary</td><td>A steadier night</td><td>Keep tracking</td></tr>' +
+      '<tr><td>Unusual</td><td>More snoring than usual</td><td>Try a remedy</td></tr><tr><td>Repeated pattern</td><td>Time to get this checked</td><td>Book a call</td></tr></table>' +
+      '<p>There are no rules for this yet; the sample nights were labelled by hand. The next questions set the rules.</p>',
+    options: [
+      ['two', 'Two: Ordinary, and Worth getting checked', 'Simplest. A night is either fine or worth a call.'],
+      ['three', 'Three: Ordinary, Unusual and Repeated pattern', 'This is what the prototype does. A single bad night suggests a remedy; only a pattern suggests a call.'],
+      ['more', 'More than three'] ] },
+  { id: 'extraTypes', part: 1, kind: 'multi', when: function () { return verdictIn() && a.types === 'more'; },
+    title: 'Which types of night should we add to Ordinary, Unusual and Repeated pattern?',
+    tip: 'We’ll agree the rules for any types you add in a follow-up.',
+    options: [
+      ['early', 'Too early to tell', 'For the first few nights, when there’s nothing to compare with yet.'],
+      ['improving', 'Getting better', 'The night was clearly better than usual.'],
+      ['now', 'Worth checking now', 'A single night that’s bad enough to suggest a doctor straight away, without waiting for a pattern.'],
+      ['quiet', 'Quiet night', 'There was almost no snoring.'],
+      ['context', 'There’s a reason', 'The person said they drank alcohol, were unwell, or slept somewhere else.'] ] },
+  { id: 'basis', part: 1, kind: 'single', when: verdictIn,
+    title: 'When the app judges a night, what should it compare it with?',
+    options: [
+      ['own', 'The person’s own usual nights', '<p>This is what the prototype does.</p>' + forAgainst(['Shows change over time, such as a remedy working', 'Fair to everyone, whatever their starting point'], ['Someone who always snores heavily could keep getting “Ordinary”', 'Needs a few nights before it means anything'])],
+      ['fixed', 'Fixed ranges that are the same for everyone', forAgainst(['Works from the first night', 'Matches how doctors read results'], ['Reads more like a diagnosis', 'Doesn’t show whether things are getting better or worse'])],
+      ['both', 'Both', forAgainst(['Fixed ranges catch nights that are worrying for anyone', 'The person’s usual shows change'], ['More rules to test and explain'])] ] },
+  { id: 'signals', part: 1, kind: 'multi', when: verdictIn,
+    title: 'Which measurements should the app use to judge a night?',
+    tip: 'The fewer we use, the easier the rules are to test and to explain.',
+    options: [
+      ['pauses', 'Breathing pauses per hour'],
+      ['sound', 'Sound Score'],
+      ['snoreTime', 'How long they snored'],
+      ['loudness', 'How loud the snoring was', 'Different phones give different readings.'],
+      ['longest', 'The longest breathing pause'],
+      ['sleep', 'How long they slept', 'Only a rough estimate from sound.'] ] },
+  { id: 'minNights', part: 1, kind: 'single', when: function () { return verdictIn() && usesOwn(); },
+    title: 'How many nights should someone record before the app compares a night with their usual?',
+    tip: function () { return 'Until then, each night is shown on its own, and none is called ' + flag() + (usesFixed() ? ' by comparison. The fixed ranges still apply from the first night.' : '.'); },
+    options: [
+      ['1', '1 night'],
+      ['3', '3 nights', 'The prototype’s plan treats 3 nights as enough for a first comparison.'],
+      ['5', '5 nights'],
+      ['7', '7 nights'],
+      ['unsure', 'Not sure'] ] },
+  { id: 'flagOwn', part: 1, kind: 'single', when: function () { return verdictIn() && usesOwn(); },
+    title: function () { return 'How much worse than usual should a night be for the app to call it ' + flag() + '?'; },
+    tip: 'This applies to each measurement you picked. For example, if someone usually has 4 breathing pauses an hour, 20% worse is about 5, 50% worse is 6, and twice as bad is 8.',
+    options: [
+      ['20', '20% worse than usual', 'The prototype already uses this to say “More than usual” on its cards.'],
+      ['50', '50% worse than usual'],
+      ['100', 'Twice as bad as usual'],
+      ['unsure', 'Not sure'] ] },
+  { id: 'flagFixed', part: 1, kind: 'multi', when: function () { return verdictIn() && usesFixed(); },
+    title: function () { return 'Which of these should make a night ' + flag() + ' for anyone, whatever their usual?'; },
+    tip: 'Tick all that should apply. A night that crosses any ticked line is flagged. Only lines for the measurements you picked are shown.',
+    options: function () {
+      // [value, label, tooltip, the measurement it needs]
+      var all = [
+        ['pauses5', '5 or more breathing pauses an hour', 'The cut-off doctors use for mild sleep apnoea.', 'pauses'],
+        ['pauses15', '15 or more breathing pauses an hour', 'The cut-off doctors use for moderate sleep apnoea.', 'pauses'],
+        ['sound60', 'A Sound Score of 60 or more', 'The prototype calls this “High”.', 'sound'],
+        ['snore25', 'Snoring for more than a quarter of the night', '', 'snoreTime'],
+        ['longest30', 'A breathing pause longer than 30 seconds', '', 'longest'],
+        ['sleep6', 'Less than 6 hours of sleep', '', 'sleep'] ];
+      var picked = all.filter(function (o) { return (a.signals || []).indexOf(o[3]) > -1; });
+      return picked.length ? picked : all;
+    } },
+  { id: 'pattern', part: 1, kind: 'single', when: function () { return verdictIn() && a.types !== 'two'; },
+    title: 'When should the app say there’s a Repeated pattern?',
+    tip: 'It counts Unusual nights. This is the only time the app suggests booking a call with the sleep care team.',
+    options: [
+      ['3of7', 'Unusual on 3 of the last 7 nights'],
+      ['4of7', 'Unusual on 4 of the last 7 nights'],
+      ['5of7', 'Unusual on 5 of the last 7 nights', 'The prototype’s wording uses this example: “5 of the last 7 nights”.'],
+      ['3row', 'Unusual 3 nights in a row', 'Easy to explain, but misses on-and-off patterns.'],
+      ['unsure', 'Not sure'] ] },
+  { id: 'firstNight', part: 1, kind: 'single', when: function () { return verdictIn() && a.basis === 'own'; },
+    title: 'If someone’s very first night shows 30 breathing pauses an hour, what should the app do?',
+    tip: 'The app only compares with the person’s own usual, so a first night has nothing to compare with, however worrying it is.',
+    options: [
+      ['wait', 'Nothing different. Wait until there’s a pattern'],
+      ['gentle', 'Tell them it’s worth mentioning to a doctor'],
+      ['call', 'Offer to book a call straight away'],
+      ['unsure', 'Not sure'] ] },
+
+  { id: 'reach', part: 2, kind: 'single',
+    title: 'How important is it that we can contact every user?',
+    tip: 'This is the main business reason for accounts. The more important it is, the earlier we need people’s details. But every question we ask before people see the app working makes some of them give up.',
+    options: [
+      ['essential', 'Essential'],
+      ['important', 'Important, but not if it means more people give up at sign-up'],
+      ['nice', 'Nice to have. The people who ask for help are enough'],
+      ['not', 'Not important'] ] },
+  { id: 'account', part: 2, kind: 'single',
+    title: 'Should people create an account, and if so, when?',
+    tip: '<p>At the moment, the prototype asks people to verify their email with a code, but it doesn’t create an account. There’s nothing to sign in to, and nothing is stored anywhere except the phone. If someone gets a new phone, they lose all their nights.</p><p>Engineering can’t build this halfway state properly, so we need to choose one approach.</p>',
+    options: [
+      ['none', 'No account. Everything stays on the phone', forAgainst(['Quickest to build', 'Nobody gives up at a sign-up screen', 'Simplest for privacy'], ['If they lose their phone, they lose their history', 'We can only contact people who ask for a call', 'We can’t follow up by email'])],
+      ['first', 'They create an account before their first recording', forAgainst(['We can contact every user', 'Their history moves with them to a new phone', 'We get their consent once, at the start'], ['Some people will leave before they’ve seen what the app does', 'The most work to build: sign-in, servers and PDPA compliance'])],
+      ['after', 'They create an account after they see their first report', forAgainst(['They’ve already seen what the app does before we ask', 'People who sign up are more interested, so they’re better leads'], ['Some people will never sign up', 'We have to move their earlier nights into the new account'])],
+      ['optional', 'An account is optional. We only ask when they book a call, share a report or want a backup', forAgainst(['The least friction', 'Each time we ask, there’s a clear reason'], ['We can contact the fewest people', 'We still have to move earlier nights into the account'])] ] },
+  { id: 'signIn', part: 2, kind: 'multi', when: hasAccount,
+    title: 'How should people sign in?',
+    tip: 'Tick all we should offer. Each one is more to build and support. If we offer Google, Apple usually requires us to offer Sign in with Apple as well.',
+    options: [
+      ['emailCode', 'Email, with a one-time code', 'No password to remember. The prototype already sends a code like this.'],
+      ['apple', 'Sign in with Apple'],
+      ['google', 'Sign in with Google'],
+      ['sms', 'Phone number, with a code by text message', 'Each text message costs us money.'],
+      ['password', 'Email and password', 'Familiar, but people forget passwords.'] ] },
+  { id: 'storage', part: 2, kind: 'single', when: hasAccount,
+    title: 'Where should people’s recorded nights be stored?',
+    tip: 'Without an account, nights can only be kept on the phone, so this is only asked when there is one.',
+    options: [
+      ['phone', 'Only on the phone', 'This is what the prototype does. The account holds their details, not their nights.'],
+      ['backup', 'On the phone, with an encrypted backup in their account', 'Their nights survive a new phone.'],
+      ['cloud', 'Online, where the care team can see them if the person allows it', 'Best for care. The biggest privacy and compliance job.'] ] },
+  { id: 'capture', part: 2, kind: 'multi',
+    title: 'What should we ask people for before their first recording?',
+    tip: 'Every extra question makes some people give up before they record. Anything we don’t ask now, we can ask later, when it’s needed. At the moment the prototype requires name, phone, verified email, age, sex, height, weight, where they live and the terms.',
+    options: function () {
+      return [
+        ['name', 'Name'],
+        ['phone', 'Phone number', 'So the care team can call them back.'],
+        hasAccount() ? ['email', 'Email address, verified', 'Needed to create the account at this point.'] : ['email', 'Email address', 'For follow-up only. There’s no account to verify it for.'],
+        ['age', 'Age'],
+        ['sex', 'Sex or gender'],
+        ['bmi', 'Height and weight', 'Useful to a doctor reading the report.'],
+        ['place', 'Where they live', 'To suggest the nearest centre.'],
+        ['terms', 'Agreement to the terms and privacy policy', 'Legally required before recording.'],
+        ['contact', 'Permission for the care team to contact them'],
+        ['marketing', 'Permission to send marketing emails'] ];
+    } },
+
+  { id: 'review', part: 3, kind: 'review' },
+];
+
+function val(x) { return typeof x === 'function' ? x() : x; }
+function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+function shown(s) { return !s.when || s.when(); }
+function visible() { return STEPS.filter(shown); }
+function questions() { return visible().filter(function (s) { return s.title; }); }
+function byId(id) { return STEPS.filter(function (s) { return s.id === id; })[0]; }
+function opts(s) { return val(s.options) || []; }
+
+var tipN = 0;
+// html: our own copy (may hold markup); plain strings are escaped by the caller
+function tip(html, right) {
+  if (!html) return '';
+  var id = 'tip' + ++tipN;
+  return '<span class="tipwrap' + (right ? ' right' : '') + '"><button type="button" class="tip" aria-label="More information" aria-describedby="' + id + '" aria-expanded="false"></button>' +
+    '<span class="tiptext" role="tooltip" id="' + id + '">' + html + '</span></span>';
+}
+function head(s) { return '<h1 id="q">' + esc(val(s.title)) + ' ' + tip(val(s.tip)) + '</h1>'; }
+function comment(s) {
+  return '<label class="text" for="comment">Comment <small>(optional)</small><textarea id="comment" placeholder="Anything the team should know about this answer">' + esc(a.comments[s.id]) + '</textarea></label>';
+}
+function option(type, s, o, checked) {
+  var note = o[2] ? (o[2].charAt(0) === '<' ? o[2] : esc(o[2])) : '';
+  return '<div class="row"><label class="opt"><input type="' + type + '" name="' + s.id + '" value="' + o[0] + '"' + (checked ? ' checked' : '') + ' /><span>' + esc(o[1]) + '</span></label>' + tip(note, true) + '</div>';
+}
+
+var VIEWS = {
+  start: function () {
+    return '<h1>Decisions we need before we can build the app</h1>' +
+      '<p>Engineering and Product are blocked until we agree on what goes on the morning report, how the app judges each night, and whether people need an account.</p>' +
+      '<p class="note">Questions change with your answers. Tap <span class="tipwrap"><span class="tip" aria-hidden="true"></span></span> for background. Nothing is logged until you commit your answers at the end. If you refresh, you’ll start again.</p>';
+  },
+  single: function (s) {
+    return head(s) + '<fieldset><legend>' + esc(val(s.title)) + '</legend>' + opts(s).map(function (o) { return option('radio', s, o, a[s.id] === o[0]); }).join('') + '</fieldset>' + comment(s);
+  },
+  multi: function (s) {
+    var v = a[s.id] || [];
+    return head(s) + '<fieldset><legend>' + esc(val(s.title)) + '</legend>' + opts(s).map(function (o) { return option('checkbox', s, o, v.indexOf(o[0]) > -1); }).join('') + '</fieldset>' + comment(s);
+  },
+  widgets: function (s) {
+    var w = a.widgets || {};
+    return head(s) + '<table><thead><tr><th>Item</th><th class="c">Phase 1</th><th class="c">Phase 2</th></tr></thead><tbody>' +
+      WIDGETS.map(function (x) {
+        var v = w[x[0]] || [];
+        var box = function (p) { return '<td class="c"><input type="checkbox" name="w:' + x[0] + '" value="' + p + '" aria-label="' + esc(x[1]) + ', Phase ' + p + '"' + (v.indexOf(p) > -1 ? ' checked' : '') + ' /></td>'; };
+        return '<tr><td>' + esc(x[1]) + ' ' + tip(esc(x[2])) + '</td>' + box('1') + box('2') + '</tr>';
+      }).join('') + '</tbody></table>' + comment(s);
+  },
+  review: function () {
+    var html = '<h1>Check your answers</h1><p class="note">If you were only exploring, dismiss them. If you’re sure, add your name and commit them. They’re logged with your name and today’s date and time.</p><div class="sum">';
+    [0, 1, 2].forEach(function (p) {
+      html += '<h2>' + PARTS[p] + '</h2>';
+      if (p === 1 && !verdictIn()) { html += '<p class="note">Skipped, because the Verdict card isn’t on the report.</p>'; return; }
+      html += '<dl>';
+      questions().filter(function (s) { return s.part === p; }).forEach(function (s) {
+        var t = answerText(s), c = a.comments[s.id];
+        html += '<dt>' + esc(val(s.title)) + '<a href="#" class="change" data-go="' + s.id + '">Change</a></dt><dd' + (t ? '' : ' class="empty"') + '>' + esc(t || 'Not answered') + '</dd>' +
+          (c ? '<dd class="comment">Comment: ' + esc(c) + '</dd>' : '');
+      });
+      html += '</dl>';
+      if (p === 1) html += '<div class="rule"><b>The rule, in plain words</b><br>' + ruleText().map(esc).join('<br>') + '</div>';
+    });
+    return html + '</div><label class="text" for="name">Your name<input type="text" id="name" autocomplete="name" value="' + esc(a.name) + '" /></label><p class="error" id="nameError" hidden>Add your name to commit your decisions.</p>' +
+      '<div class="actions"><button type="button" id="reset">Dismiss and start again. I was just exploring</button><button type="button" id="submit">I’m sure. Commit my decisions</button></div>' +
+      '<p id="status" aria-live="polite"></p><p><button type="button" id="download" hidden>Download as Markdown</button></p>';
+  },
+};
+
+function label(s, v) { var o = opts(s).filter(function (x) { return x[0] === v; })[0]; return o ? o[1] : v; }
+function widgetLines() {
+  var w = a.widgets || {};
+  var pick = function (fn) { return WIDGETS.filter(function (x) { return fn(w[x[0]] || []); }).map(function (x) { return x[1]; }).join(', ') || 'none'; };
+  return ['Phase 1: ' + pick(function (v) { return v.indexOf('1') > -1; }), 'Phase 2: ' + pick(function (v) { return v.indexOf('2') > -1; }), 'Left out: ' + pick(function (v) { return !v.length; })];
+}
+function answerText(s) {
+  if (s.kind === 'widgets') return a.widgets ? widgetLines().join('\n') : '';
+  var v = a[s.id];
+  if (Array.isArray(v)) return v.map(function (x) { return label(s, x); }).join('\n');
+  return v ? label(s, v) : '';
+}
+// Types of night, as the rule Engineering will build
+function ruleText() {
+  var f = flag(), lines = [];
+  var signals = (a.signals || []).map(function (x) { return label(byId('signals'), x).toLowerCase(); }).join(', ') || 'the chosen measurements';
+  if (usesOwn() && a.flagOwn) lines.push(f + ': ' + label(byId('flagOwn'), a.flagOwn).toLowerCase() + ' on ' + signals + (a.minNights && a.minNights !== 'unsure' ? ', once there are ' + a.minNights + ' night' + (a.minNights === '1' ? '' : 's') + ' to compare with' : '') + '.');
+  if (usesFixed() && (a.flagFixed || []).length) lines.push(f + ' for anyone: ' + a.flagFixed.map(function (x) { return label(byId('flagFixed'), x).toLowerCase(); }).join(', or ') + '.');
+  if (a.types !== 'two' && a.pattern) lines.push('Repeated pattern: ' + label(byId('pattern'), a.pattern).toLowerCase() + '.');
+  lines.push('Ordinary: every other night.');
+  if (a.basis === 'own' && a.firstNight) lines.push('A worrying first night: ' + label(byId('firstNight'), a.firstNight).toLowerCase() + '.');
+  return lines;
+}
+
+function markdown() {
+  var out = [];
+  [0, 1, 2].forEach(function (p) {
+    out.push('### ' + PARTS[p], '');
+    if (p === 1 && !verdictIn()) { out.push('Skipped: the Verdict card isn’t on the report.', ''); return; }
+    questions().filter(function (s) { return s.part === p; }).forEach(function (s) {
+      out.push('**' + val(s.title) + '**', '');
+      var t = answerText(s);
+      out.push(t ? t.split('\n').map(function (l) { return '- ' + l; }).join('\n') : '- _Not answered_');
+      if (a.comments[s.id]) out.push('', a.comments[s.id].split('\n').map(function (l) { return '> ' + l; }).join('\n'));
+      out.push('');
+    });
+    if (p === 1) out.push('**The rule, in plain words**', '', ruleText().map(function (l) { return '- ' + l; }).join('\n'), '');
+  });
+  return out.join('\n');
+}
+function status(msg, kind) { var el = document.getElementById('status'); el.textContent = msg; el.className = kind || ''; }
+
+function render() {
+  tipN = 0;
+  var s = STEPS[at], vis = visible(), qs = questions(), qi = qs.indexOf(s);
+  document.getElementById('where').textContent = s.part > -1 ? PARTS[s.part] + (qi > -1 ? ' · Question ' + (qi + 1) + ' of ' + qs.length : '') : '';
+  var main = document.getElementById('main');
+  main.innerHTML = VIEWS[s.kind](s);
+  document.getElementById('back').disabled = at === 0;
+  var next = document.getElementById('next'), after = vis[vis.indexOf(s) + 1];
+  next.hidden = s.kind === 'review';
+  next.textContent = at === 0 ? 'Start' : after && after.kind === 'review' ? 'Review' : 'Next';
+  window.scrollTo(0, 0);
+  main.focus();
+}
+function move(d) {
+  var i = at;
+  do { i += d; } while (i >= 0 && i < STEPS.length && !shown(STEPS[i]));
+  if (i >= 0 && i < STEPS.length) { at = i; render(); }
+}
+function closeTips(except) {
+  Array.prototype.forEach.call(document.querySelectorAll('.tipwrap.open'), function (t) { if (t !== except) { t.classList.remove('open'); t.firstChild.setAttribute('aria-expanded', 'false'); } });
+}
+
+document.addEventListener('change', function (e) {
+  var el = e.target, s = STEPS[at];
+  if (!el.name) return;
+  if (el.name.indexOf('w:') === 0) {
+    a.widgets = a.widgets || {};
+    a.widgets[el.name.slice(2)] = Array.prototype.map.call(document.querySelectorAll('input[name="' + el.name + '"]:checked'), function (x) { return x.value; });
+  } else if (el.type === 'radio') a[s.id] = el.value;
+  else a[s.id] = Array.prototype.map.call(document.querySelectorAll('input[name="' + s.id + '"]:checked'), function (x) { return x.value; });
+});
+document.addEventListener('input', function (e) {
+  if (e.target.id === 'name') { a.name = e.target.value.trim(); document.getElementById('nameError').hidden = true; }
+  if (e.target.id === 'comment') a.comments[STEPS[at].id] = e.target.value.trim();
+});
+document.addEventListener('keydown', function (e) {
+  if (e.key === 'Escape') closeTips();
+});
+document.addEventListener('click', function (e) {
+  var t = e.target.closest('button.tip');
+  if (t) { var w = t.parentNode, open = !w.classList.contains('open'); closeTips(w); w.classList.toggle('open', open); t.setAttribute('aria-expanded', String(open)); return; }
+  closeTips();
+  var el = e.target.closest('button, a.change');
+  if (!el) return;
+  if (el.dataset.go) { e.preventDefault(); at = STEPS.indexOf(byId(el.dataset.go)); return render(); }
+  if (el.id === 'next') return move(1);
+  if (el.id === 'back') return move(-1);
+  if (el.id === 'submit') {
+    if (!a.name) { document.getElementById('nameError').hidden = false; document.getElementById('name').focus(); return; }
+    el.disabled = true;
+    status('Committing…');
+    fetch(LOG_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: a.name, markdown: markdown() }) })
+      .then(function (r) { if (!r.ok) throw new Error(); return r.json(); })
+      .then(function (r) {
+        if (r.logged) status('Committed. Logged in ' + r.file + ' at ' + r.when + '.', 'ok');
+        else status('Not logged: answers from Kedar aren’t added to the log.', 'ok');
+      })
+      .catch(function () {
+        el.disabled = false;
+        document.getElementById('download').hidden = false;
+        status('Couldn’t reach the log. It only works when the app runs on the local server. Download your answers and send them to the team instead.', 'bad');
+      });
+  }
+  if (el.id === 'download') {
+    var link = document.createElement('a');
+    link.href = URL.createObjectURL(new Blob(['## ' + a.name + ' · ' + new Date().toLocaleString() + '\n\n' + markdown()], { type: 'text/markdown' }));
+    link.download = 'airese-decisions-' + a.name.toLowerCase().replace(/[^a-z0-9]+/g, '-') + '.md';
+    link.click();
+  }
+  if (el.id === 'reset') { a = { comments: {} }; at = 0; render(); }
+});
+
+render();
+</script>
+</body>
+</html>

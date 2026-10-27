@@ -30,6 +30,10 @@
   .nav button:focus-visible { outline: 2px solid #9DB4FF; outline-offset: -2px; }
 
   .pane { flex: 1; min-width: 0; height: 100%; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+  /* A full page from the nav (not a screen in the phone), e.g. the stakeholder decisions wizard */
+  #page { display: none; flex: 1; min-width: 0; height: 100%; border: 0; background: var(--page); }
+  body.paged .pane { display: none; }
+  body.paged #page { display: block; }
   .stage { display: flex; flex-direction: column; align-items: center; gap: 18px; transform-origin: center center; }
   /* Under-phone note for the screen on show: what it does, and its route */
   .meta { width: 426px; min-height: 58px; text-align: center; }
@@ -86,6 +90,7 @@
   </div>
 </div>
 </main>
+<iframe id="page" title="Page"></iframe>
 <script>
   // Fits the phone to the window. On a real phone the frame drops away.
   (function () {
@@ -102,9 +107,11 @@
 
   // Demo: jump to a screen. On localhost the phone loads that route; in the shared preview
   // (no router) the app listens for 'airese:jump'. Either way the nav follows the app.
-  // To add a screen: one line here (key, label, route).
+  // To add a screen: one line here (key, label, route). A 'page' item (6th entry) opens full width instead of in the phone.
   (function () {
     var SCREENS = [
+      { group: 'For the team', items: [
+        ['decisions', 'Decisions to make', 'decisions.html', 'Open decisions blocking build: report contents, night classification, accounts.', 'New', 'page'] ] },
       { group: 'Getting started', items: [
         ['splash', 'Splash', '/', 'App launch. The logo arrives, then falls away into the walkthrough.'],
         ['onboarding', 'Walkthrough', '/onboarding', 'Three pages. Swipe or tap the dashes; Continue on the last page.'],
@@ -138,14 +145,15 @@
     ];
     var nav = document.getElementById('nav');
     var frame = document.getElementById('app');
-    var ROUTES = {}, NOTES = {}, buttons = {}, current = 'splash';
+    var ROUTES = {}, NOTES = {}, PAGES = {}, buttons = {}, current = 'splash';
+    var page = document.getElementById('page');
     var meta = document.getElementById('meta');
 
     SCREENS.forEach(function (section) {
       var h = document.createElement('h2'); h.textContent = section.group; nav.appendChild(h);
       var ul = document.createElement('ul'); nav.appendChild(ul);
       section.items.forEach(function (item) {
-        ROUTES[item[0]] = item[2]; NOTES[item[0]] = item[3];
+        ROUTES[item[0]] = item[2]; NOTES[item[0]] = item[3]; if (item[5] === 'page') PAGES[item[0]] = true;
         var li = document.createElement('li'), btn = document.createElement('button');
         btn.type = 'button'; btn.textContent = item[1];
         if (item[4]) { var tag = document.createElement('span'); tag.className = 'tag'; tag.textContent = item[4]; btn.appendChild(tag); }
@@ -163,6 +171,8 @@
     }
     function go(key) {
       mark(key);
+      document.body.classList.toggle('paged', !!PAGES[key]);
+      if (PAGES[key]) { if (!page.getAttribute('src')) page.src = ROUTES[key]; return; } // relative, so it works on localhost and in the shared preview
       document.querySelector('.statusbar').style.color = ''; // white bars again, until a light screen asks
       document.querySelector('.home').style.background = '';
       if (frame) frame.src = ROUTES[key] + (ROUTES[key].indexOf('?') > -1 ? '&' : '?') + 'frame=iphone';
@@ -170,7 +180,7 @@
     }
     mark(current);
 
-    window.addEventListener('airese:screen', function (e) { mark(e.detail); });
+    window.addEventListener('airese:screen', function (e) { if (!PAGES[current]) mark(e.detail); });
     // Light screens standing in for other apps (mail, browser) ask for dark bars (src/lib/previewFrame.ts)
     window.addEventListener('airese:bars', function (e) {
       var dark = e.detail === 'dark';
@@ -178,6 +188,7 @@
       document.querySelector('.home').style.background = dark ? '#000' : '';
     });
     if (frame) setInterval(function () {
+      if (PAGES[current]) return; // the phone sits behind a page; don't let it take the nav back
       try {
         var loc = frame.contentWindow.location, m = loc.search.match(/state=([a-z0-9-]+)/), path = loc.pathname + (m ? '?state=' + m[1] : '');
         for (var key in ROUTES) if (ROUTES[key] === path && current !== key) mark(key);
