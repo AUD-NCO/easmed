@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { Linking, Platform, Pressable, StyleSheet, View } from 'react-native';
 import Constants from 'expo-constants';
-import { AppText, BottomSheet, Button, DetailPage, ExplainSheet, FormDivider, FormGroup, Icon, Logo, PAGE_SIDE, PermissionSheet, SettingRow, SettingSwitch, Toast } from '../components';
+import { AppText, BottomSheet, Button, CautionSheet, DetailPage, ExplainSheet, FormDivider, FormGroup, Icon, Logo, PAGE_SIDE, PermissionSheet, SettingRow, SettingSwitch, Toast, type Caution } from '../components';
+import { deleteAccount, logOut, useAccount } from '../lib/account';
 import { SUPPORT } from '../lib/airStation';
 import { EXPLAIN } from '../lib/nightDetails';
 import { usePermissionStatus } from '../lib/permissionStatus';
@@ -9,19 +10,33 @@ import { ensureSampleProfile, initials, phoneDisplay, setNotificationPref, useNo
 import { deleteAllRecordings, useNights } from '../lib/recordings';
 import { alpha, colors, space } from '@ds/theme';
 
-type Confirm = 'recordings' | 'erase';
+export type ProfileSheet = 'delete-recordings' | 'delete-account' | 'log-out';
+type Confirm = Exclude<ProfileSheet, 'log-out'>;
 type About = 'how' | 'privacy' | 'terms';
 
-const CONFIRM: Record<Confirm, { title: string; body: string; action: string }> = {
-  recordings: {
-    title: 'Delete all recordings?',
-    body: 'Every night’s recording and results are removed from this phone. Your details and settings stay. This can’t be undone.',
-    action: 'Delete all recordings',
+// Before deleting: what goes, and a few short reasons to keep it (CautionSheet)
+const CAUTION: Record<Confirm, Caution> = {
+  'delete-recordings': {
+    title: 'Delete all recordings',
+    lead: 'Every recording, report and Sleep Diary note will be deleted for good.',
+    points: [
+      { icon: 'group', title: 'A doctor can use them', body: 'Weeks of nights tell a sleep expert more than one.' },
+      { icon: 'trending_up', title: 'Patterns need past nights', body: 'Airese compares each night with your usual. You’d start from zero.' },
+      { icon: 'lock', title: 'They’re safe where they are', body: 'Private to you. Shared only if you choose.' },
+    ],
+    keep: 'Keep my recordings',
+    confirm: 'Delete all recordings',
   },
-  erase: {
-    title: 'Erase everything?',
-    body: 'Your details, recordings, Sleep Diary and settings are removed from this phone, and Airese starts again from the beginning. This can’t be undone.',
-    action: 'Erase everything',
+  'delete-account': {
+    title: 'Delete account',
+    lead: 'Your account, details, recordings, reports and notes will be deleted for good.',
+    points: [
+      { icon: 'group', title: 'A doctor can use your reports', body: 'Weeks of nights tell a sleep expert more than one.' },
+      { icon: 'logout', title: 'Taking a break?', body: 'Log out instead. Everything’s here when you’re back.' },
+      { icon: 'lock', title: 'Nothing is kept', body: 'Every copy is deleted, on your phone and ours.' },
+    ],
+    keep: 'Keep my account',
+    confirm: 'Delete account',
   },
 };
 
@@ -43,10 +58,10 @@ const ABOUT: Record<About, { title: string; body: string }> = {
  *   sleep care   Talk to a sleep care team (call) · Our centres ›   (same words as Recording Details)
  *   settings     Bedtime reminder (a switch; "Turn on" while notifications are off) · Microphone ("Turn on" while it's off)
  *   about        How Airese works · Privacy policy · Terms of use
- *   your data    Delete all recordings · Erase everything and start again (each confirms; a toast after)
+ *   account      Log out (your email under it; asks first)
+ *   your data    Delete all recordings · Delete account (each a full sheet first: what goes, why keep it)
  *   brand        the Airese logo, "Powered by The Air Station", where your data lives, the version: quiet, at the end
  *
- * No sign-in or sign-out yet (so no "account" to delete: erase is what's on the phone).
  */
 const MIC_OFF = {
   title: 'Turn off the microphone',
@@ -58,13 +73,19 @@ export function ProfileScreen({
   onBack,
   onOpenDetails,
   onOpenCentres,
-  onErased,
+  onLoggedOut,
+  onAccountDeleted,
+  demoSheet,
 }: {
   backLabel?: string;
   onBack: () => void;
   onOpenDetails: () => void;
   onOpenCentres: () => void;
-  onErased: () => void;
+  onLoggedOut: () => void;
+  /** After Delete account: the account and everything on the phone are gone; start again. */
+  onAccountDeleted: () => void;
+  /** Demo nav: open on one of the sheets. */
+  demoSheet?: ProfileSheet;
 }) {
   useEffect(ensureSampleProfile, []); // prototype: the demo nav can open Profile before onboarding
   const profile = useProfile();
@@ -75,8 +96,10 @@ export function ProfileScreen({
   const [micSheet, setMicSheet] = useState(false);
   const [micOffSheet, setMicOffSheet] = useState(false); // switching the microphone off: it's done in Settings
   const [notificationsSheet, setNotificationsSheet] = useState(false);
-  const [confirm, setConfirm] = useState<Confirm | null>(null);
-  const [lastConfirm, setLastConfirm] = useState<Confirm>('recordings'); // keeps the copy while the sheet closes
+  const account = useAccount();
+  const [confirm, setConfirm] = useState<Confirm | null>(demoSheet && demoSheet !== 'log-out' ? demoSheet : null);
+  const [lastConfirm, setLastConfirm] = useState<Confirm>(demoSheet === 'delete-account' ? 'delete-account' : 'delete-recordings'); // keeps the copy while the sheet closes
+  const [logOutSheet, setLogOutSheet] = useState(demoSheet === 'log-out');
   const [about, setAbout] = useState<About | null>(null);
   const [toast, setToast] = useState<string | null>(null);
   const name = `${profile.firstName} ${profile.lastName}`.trim();
@@ -89,10 +112,13 @@ export function ProfileScreen({
   };
   const confirmed = () => {
     setConfirm(null);
-    if (lastConfirm === 'recordings') {
+    if (lastConfirm === 'delete-recordings') {
       deleteAllRecordings();
       setToast('All recordings deleted');
-    } else onErased();
+    } else {
+      deleteAccount();
+      onAccountDeleted();
+    }
   };
 
   return (
@@ -150,6 +176,11 @@ export function ProfileScreen({
             <SettingRow icon="description" title="Terms of use" chevron onPress={() => setAbout('terms')} />
           </FormGroup>
 
+          {/* Account */}
+          <FormGroup title="Account">
+            <SettingRow icon="logout" title="Log out" detail={account.account?.email || profile.email || undefined} onPress={() => setLogOutSheet(true)} />
+          </FormGroup>
+
           {/* Your data: last, on its own */}
           <FormGroup title="Your data">
             <SettingRow
@@ -157,10 +188,10 @@ export function ProfileScreen({
               title="Delete all recordings"
               detail={nights.length ? `${nights.length} nights on this phone` : 'No recordings on this phone'}
               disabled={!nights.length}
-              onPress={() => ask('recordings')}
+              onPress={() => ask('delete-recordings')}
             />
             <FormDivider />
-            <SettingRow icon="delete" title="Erase everything and start again" detail="Details, recordings, notes and settings" onPress={() => ask('erase')} />
+            <SettingRow icon="delete" title="Delete account" detail="Your account and everything in it" onPress={() => ask('delete-account')} />
           </FormGroup>
 
           {/* Brand: quiet, at the end */}
@@ -197,15 +228,26 @@ export function ProfileScreen({
         dismissLabel={Platform.OS === 'web' ? undefined : 'Not now'}
       />
 
-      <BottomSheet visible={confirm !== null} onClose={() => setConfirm(null)} fit>
+      <CautionSheet content={CAUTION[lastConfirm]} visible={confirm !== null} onKeep={() => setConfirm(null)} onConfirm={confirmed} />
+
+      {/* Log out: a quick check, nothing is lost */}
+      <BottomSheet visible={logOutSheet} onClose={() => setLogOutSheet(false)} fit>
         <AppText variant="heading" color="text" accessibilityRole="header" style={styles.center}>
-          {CONFIRM[lastConfirm].title}
+          Log out?
         </AppText>
         <AppText color="textMuted" style={[styles.center, { marginTop: space.sm }]}>
-          {CONFIRM[lastConfirm].body}
+          Your recordings stay safe. Log in with your email and password to carry on.
         </AppText>
-        <Button label={CONFIRM[lastConfirm].action} onPress={confirmed} style={{ marginTop: space.xl }} />
-        <Button label="Cancel" variant="quiet" onPress={() => setConfirm(null)} style={{ marginTop: space.sm }} />
+        <Button
+          label="Log out"
+          onPress={() => {
+            setLogOutSheet(false);
+            logOut();
+            onLoggedOut();
+          }}
+          style={{ marginTop: space.xl }}
+        />
+        <Button label="Cancel" variant="quiet" onPress={() => setLogOutSheet(false)} style={{ marginTop: space.sm }} />
       </BottomSheet>
 
       <Toast message={toast} onDone={() => setToast(null)} />

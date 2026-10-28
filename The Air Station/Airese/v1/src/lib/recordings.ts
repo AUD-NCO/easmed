@@ -47,6 +47,9 @@ export function deleteAllRecordings() {
   listeners.forEach((l) => l());
 }
 
+/** True once Profile → Delete all recordings has run: Reports says so, rather than "No reports yet". */
+export const recordingsDeleted = () => deleted;
+
 /** Delete account starts over: the sample nights come back for the next demo run. */
 export function restoreSampleRecordings() {
   deleted = false;

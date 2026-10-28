@@ -1,7 +1,8 @@
 import React, { useRef, useState } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View, type TextInput } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
-import { AppText, Button, Checkbox, EmailCodeSheet, FormDivider, FormGroup, FormInput, Icon, InlineLink, PhoneField, ExplainSheet, InfoButton, PHONE_WHY } from '../components';
+import { AppText, Button, Checkbox, EmailCodeSheet, FormDivider, FormGroup, FormInput, Icon, InlineLink, PasswordField, PhoneField, ExplainSheet, InfoButton, PHONE_WHY } from '../components';
+import { createAccount, passwordProblem } from '../lib/account';
 import { markVerified, sendCode } from '../lib/emailCode';
 import { isValidEmail, isValidPhone, setProfile, useProfile, type Profile } from '../lib/profile';
 import type { LegalDoc } from './LegalScreen';
@@ -9,17 +10,18 @@ import { colors, space, useInsets } from '@ds/theme';
 
 const SIDE = space.gutter; // standard screen edge
 
-type Errors = { name?: string; phone?: string; email?: string; terms?: string };
+type Errors = { name?: string; phone?: string; email?: string; password?: string; terms?: string };
 
 /**
  * Onboarding, first of two steps: Your details → About you.
  * All required: first and last name, phone (so the sleep care team can call when asked), a verified
- * email and agreeing to the terms. Native grouped form (iOS Settings style, see components/Form).
+ * email, a password and agreeing to the terms. The verified email and the password make the account
+ * (lib/account.ts): Continue creates it. Native grouped form (iOS Settings style, see components/Form).
  *
  * Email: Verify, inside the field, emails a 6-digit code and opens the Verify your email sheet
  * (EmailCodeSheet); the person pastes the code there and the field shows Verified (flow:
- * lib/emailCode.ts). Continue stays dimmed until then, with the reason under the field; tapping it
- * anyway turns that reason into an error. Changing the email undoes Verified.
+ * lib/emailCode.ts). Continue stays dimmed until then; tapping it anyway shows why, as an error
+ * under the field. Changing the email undoes Verified.
  * `demo`: opens straight onto the sheet's mail app (demo nav).
  */
 export function DetailsScreen({ onDone, onOpenLegal, demo: initialDemo = null }: { onDone?: () => void; onOpenLegal: (doc: LegalDoc) => void; demo?: 'mail' | null }) {
@@ -27,6 +29,7 @@ export function DetailsScreen({ onDone, onOpenLegal, demo: initialDemo = null }:
   const saved = useProfile();
   const [draft, setDraft] = useState<Profile>(saved);
   const [agreed, setAgreed] = useState(false);
+  const [password, setPassword] = useState('');
   const [errors, setErrors] = useState<Errors>({});
   const [phoneWhy, setPhoneWhy] = useState(false);
   const [codeSheet, setCodeSheet] = useState(initialDemo === 'mail');
@@ -35,6 +38,7 @@ export function DetailsScreen({ onDone, onOpenLegal, demo: initialDemo = null }:
   const lastRef = useRef<TextInput>(null);
   const phoneRef = useRef<TextInput>(null);
   const emailRef = useRef<TextInput>(null);
+  const passwordRef = useRef<TextInput>(null);
 
   const update = (next: Partial<Profile>) => setDraft((d) => ({ ...d, ...next }));
   const clear = (k: keyof Errors) => errors[k] && setErrors((e) => ({ ...e, [k]: undefined }));
@@ -48,6 +52,7 @@ export function DetailsScreen({ onDone, onOpenLegal, demo: initialDemo = null }:
     },
     phone: () => (!draft.phone ? 'Add your phone number.' : isValidPhone(draft.phone, draft.phoneCountry) ? undefined : 'Check your phone number.'),
     email: () => (!draft.email.trim() ? 'Add your email address.' : isValidEmail(draft.email) ? undefined : 'Check your email address.'),
+    password: () => passwordProblem(password),
     terms: () => (agreed ? undefined : 'Tick the box to agree before you begin.'),
   };
 
@@ -65,11 +70,12 @@ export function DetailsScreen({ onDone, onOpenLegal, demo: initialDemo = null }:
   };
 
   const submit = () => {
-    const next: Errors = { name: checks.name(), phone: checks.phone(), email: checks.email() ?? (verified ? undefined : 'Verify your email to continue.'), terms: checks.terms() };
+    const next: Errors = { name: checks.name(), phone: checks.phone(), email: checks.email() ?? (verified ? undefined : 'Verify your email to continue.'), password: checks.password(), terms: checks.terms() };
     setErrors(next);
     if (next.name || next.phone || next.email) scroll.current?.scrollTo({ y: 0, animated: true });
     if (Object.values(next).some(Boolean)) return;
     setProfile({ ...draft, firstName: draft.firstName.trim(), lastName: draft.lastName.trim(), email: draft.email.trim() });
+    createAccount(draft.email.trim(), password);
     onDone?.();
   };
 
@@ -126,7 +132,7 @@ export function DetailsScreen({ onDone, onOpenLegal, demo: initialDemo = null }:
               />
             </FormGroup>
 
-            <FormGroup title="Email" error={errors.email} footer={verified ? undefined : 'Verify your email to continue.'}>
+            <FormGroup title="Email" error={errors.email}>
               <FormInput
                 ref={emailRef}
                 placeholder="name@example.com"
@@ -139,7 +145,8 @@ export function DetailsScreen({ onDone, onOpenLegal, demo: initialDemo = null }:
                 autoCorrect={false}
                 autoComplete="email"
                 textContentType="emailAddress"
-                returnKeyType="done"
+                returnKeyType="next"
+                onSubmitEditing={() => passwordRef.current?.focus()}
                 trailing={
                   verified ? (
                     <View style={styles.verified} accessibilityLabel="Email verified">
@@ -150,6 +157,18 @@ export function DetailsScreen({ onDone, onOpenLegal, demo: initialDemo = null }:
                     <Button label="Verify" variant="mini" onPress={verify} style={{ alignSelf: 'center' }} accessibilityLabel="Verify email" />
                   )
                 }
+              />
+            </FormGroup>
+
+            {/* With the verified email, this is how you log in */}
+            <FormGroup title="Password" error={errors.password}>
+              <PasswordField
+                ref={passwordRef}
+                isNew
+                value={password}
+                onChangeText={(p) => (setPassword(p), clear('password'))}
+                onBlur={() => password && setErrors((e) => ({ ...e, password: checks.password() }))}
+                returnKeyType="done"
               />
             </FormGroup>
           </View>

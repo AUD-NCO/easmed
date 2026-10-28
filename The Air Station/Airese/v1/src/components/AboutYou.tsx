@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
-import { countryByCode, flag, MY_STATES } from '../lib/countries';
+import { countryByCode, flag } from '../lib/countries';
 import {
   ageFrom,
   CM_PER_IN,
@@ -27,7 +27,7 @@ import { SegmentedControl } from '@ds/components/SegmentedControl';
 /** The (i) beside About you, in onboarding and Profile. */
 export const ABOUT_WHY = { title: 'Why we ask', body: 'This helps us understand your nights, and helps a doctor read your report if you share it.' };
 
-type Fields = Pick<Profile, 'gender' | 'birthYear' | 'heightCm' | 'weightKg' | 'units' | 'city' | 'region' | 'country' | 'phoneCountry'>;
+type Fields = Pick<Profile, 'gender' | 'birthYear' | 'heightCm' | 'weightKg' | 'units' | 'city' | 'region' | 'country' | 'postcode' | 'phoneCountry'>;
 type Sheet = 'gender' | 'age' | 'height' | 'weight' | 'place' | null;
 export type AboutKey = Exclude<Sheet, null>;
 
@@ -298,28 +298,32 @@ function MeasureSheet({
 
 // ---------- Where you live ----------
 
-type Place = Pick<Profile, 'city' | 'region' | 'country'>;
-type Step = 'country' | 'malaysia' | 'other';
+type Place = Pick<Profile, 'city' | 'region' | 'country' | 'postcode'>;
+type Step = 'country' | 'malaysia';
 
 /**
- * Singapore is one tap (it's a city-state). Malaysia: pick the state, type the town or city.
- * Anywhere else: type it. Before there's an answer, the phone's country is suggested first.
+ * Singapore is one tap (it's a city-state). Malaysia: the 5-digit postcode, and done.
+ * V1 is for Singapore and Malaysia only (no "Somewhere else" for now). Before there's an answer, the
+ * phone's country is suggested first.
  */
 function PlaceSheet({ visible, value, onDone, onClose }: { visible: boolean; value: Fields; onDone: (p: Place) => void; onClose: () => void }) {
   const [step, setStep] = useState<Step>('country');
-  const [draft, setDraft] = useState<Place>(value);
+  const [postcode, setPostcode] = useState(value.postcode);
+  const [error, setError] = useState('');
   const [wasVisible, setWasVisible] = useState(visible);
   if (visible !== wasVisible) {
     setWasVisible(visible);
     if (visible) {
-      setDraft({ city: value.city, region: value.region, country: value.country });
+      setPostcode(value.country === 'Malaysia' ? value.postcode : '');
+      setError('');
       setStep('country');
     }
   }
+  const NONE: Place = { country: '', region: '', city: '', postcode: '' };
   const suggested = value.country || countryByCode(value.phoneCountry)?.name || '';
 
-  const option = (key: 'Singapore' | 'Malaysia' | 'other', label: string, lead: React.ReactNode, onPress: () => void) => {
-    const on = key === 'other' ? !!suggested && suggested !== 'Singapore' && suggested !== 'Malaysia' : suggested === key;
+  const option = (key: 'Singapore' | 'Malaysia', label: string, lead: React.ReactNode, onPress: () => void) => {
+    const on = suggested === key;
     return (
       <Pressable
         onPress={onPress}
@@ -340,93 +344,34 @@ function PlaceSheet({ visible, value, onDone, onClose }: { visible: boolean; val
         <>
           <SheetHead title="Where do you live?" why="So the sleep care team can suggest a centre near you." />
           <View style={{ gap: space.sm }}>
-            {option('Singapore', 'Singapore', <AppText style={styles.flag}>{flag('SG')}</AppText>, () => onDone({ country: 'Singapore', region: '', city: '' }))}
-            {option('Malaysia', 'Malaysia', <AppText style={styles.flag}>{flag('MY')}</AppText>, () => {
-              if (draft.country !== 'Malaysia') setDraft({ country: 'Malaysia', region: '', city: '' });
-              setStep('malaysia');
-            })}
-            {option('other', 'Somewhere else', <Icon name="public" size={26} color="accent" />, () => {
-              if (draft.country === 'Singapore' || draft.country === 'Malaysia') setDraft({ country: '', region: '', city: '' });
-              setStep('other');
-            })}
+            {option('Singapore', 'Singapore', <AppText style={styles.flag}>{flag('SG')}</AppText>, () => onDone({ ...NONE, country: 'Singapore' }))}
+            {option('Malaysia', 'Malaysia', <AppText style={styles.flag}>{flag('MY')}</AppText>, () => setStep('malaysia'))}
           </View>
-          {value.country ? <Button label="Clear" variant="quiet" onPress={() => onDone({ country: '', region: '', city: '' })} style={{ marginTop: space.lg }} /> : null}
+          {value.country ? <Button label="Clear" variant="quiet" onPress={() => onDone(NONE)} style={{ marginTop: space.lg }} /> : null}
         </>
       )}
 
       {step === 'malaysia' && (
         <>
           <BackLink onPress={() => setStep('country')} />
-          <SheetHead title="Which state?" why="And your town or city, if you like." />
-          <View style={styles.states} accessibilityRole="radiogroup" accessibilityLabel="State">
-            {MY_STATES.map((s) => {
-              const on = draft.region === s;
-              return (
-                <Pressable
-                  key={s}
-                  onPress={() => setDraft((d) => ({ ...d, region: s }))}
-                  accessibilityRole="radio"
-                  accessibilityState={{ selected: on }}
-                  accessibilityLabel={s}
-                  style={({ pressed }) => [styles.state, on && styles.stateOn, pressed && { opacity: 0.8 }]}
-                >
-                  <AppText variant="small" color={on ? 'onAccent' : 'text'}>
-                    {s}
-                  </AppText>
-                </Pressable>
-              );
-            })}
-          </View>
-          <FormGroup title="Town or city" onSheet style={{ marginTop: space.xl }}>
+          <SheetHead title="What’s your postcode?" why="Five digits, e.g. 47400." />
+          <FormGroup title="Postcode" onSheet error={error}>
             <FormInput
-              placeholder="e.g. Petaling Jaya"
-              accessibilityLabel="Town or city"
-              value={draft.city}
-              onChangeText={(city) => setDraft((d) => ({ ...d, city }))}
-              autoCapitalize="words"
-              autoComplete="postal-address-locality"
-              textContentType="addressCity"
+              placeholder="e.g. 47400"
+              accessibilityLabel="Postcode"
+              value={postcode}
+              onChangeText={(t) => {
+                setPostcode(t.replace(/\D/g, '').slice(0, 5));
+                setError('');
+              }}
+              keyboardType="number-pad"
+              maxLength={5}
+              autoComplete="postal-code"
+              textContentType="postalCode"
               returnKeyType="done"
             />
           </FormGroup>
-          <SheetActions onDone={() => onDone({ ...draft, country: 'Malaysia', city: draft.city.trim() })} />
-        </>
-      )}
-
-      {step === 'other' && (
-        <>
-          <BackLink onPress={() => setStep('country')} />
-          <SheetHead title="Where do you live?" why="Type as much as you like." />
-          <FormGroup title="Place" onSheet>
-            <FormInput
-              placeholder="Town or city"
-              value={draft.city}
-              onChangeText={(city) => setDraft((d) => ({ ...d, city }))}
-              autoCapitalize="words"
-              autoComplete="postal-address-locality"
-              textContentType="addressCity"
-            />
-            <FormDivider />
-            <FormInput
-              placeholder="State or region"
-              value={draft.region}
-              onChangeText={(region) => setDraft((d) => ({ ...d, region }))}
-              autoCapitalize="words"
-              autoComplete="postal-address-region"
-              textContentType="addressState"
-            />
-            <FormDivider />
-            <FormInput
-              placeholder="Country"
-              value={draft.country}
-              onChangeText={(country) => setDraft((d) => ({ ...d, country }))}
-              autoCapitalize="words"
-              autoComplete="country"
-              textContentType="countryName"
-              returnKeyType="done"
-            />
-          </FormGroup>
-          <SheetActions onDone={() => onDone({ city: draft.city.trim(), region: draft.region.trim(), country: draft.country.trim() })} />
+          <SheetActions onDone={() => (postcode.length === 5 ? onDone({ ...NONE, country: 'Malaysia', postcode }) : setError('Enter your 5-digit postcode.'))} />
         </>
       )}
     </BottomSheet>
@@ -477,8 +422,5 @@ const styles = StyleSheet.create({
   },
   placeOptionOn: { borderColor: colors.accent },
   flag: { fontSize: type.headline.fontSize, lineHeight: type.headline.lineHeight }, // emoji flag, sized from the type scale
-  states: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
-  state: { minHeight: 44, justifyContent: 'center', paddingHorizontal: space.md, borderRadius: radius.pill, borderWidth: 1, borderColor: colors.divider, backgroundColor: colors.background },
-  stateOn: { borderColor: colors.accent, backgroundColor: colors.accent },
   back: { flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', minHeight: 44, marginTop: -space.md, marginLeft: -space.xs, marginBottom: space.xs },
 });

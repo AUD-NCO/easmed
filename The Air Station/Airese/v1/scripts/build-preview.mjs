@@ -75,5 +75,7 @@ document.addEventListener('click', function (e) {
 });
 </script>`;
 writeFileSync(join(out, 'email-code.html'), readFileSync(join(root, 'public', 'email-code.html'), 'utf8').replace('</body>', () => `${copyOtp}\n</body>`));
+// The verdict copy review page (left pane: For the team), and the copy it shares with the app
+for (const f of ['verdicts.html', 'verdicts.json']) writeFileSync(join(out, f), readFileSync(join(root, 'public', f), 'utf8'));
 rmSync(tmp, { recursive: true, force: true });
 console.log(`\nPreview written to Airese/preview-dist/${version}/index.html (${(html.length / 1024).toFixed(0)} KB)`);

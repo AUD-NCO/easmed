@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Verdict copy review</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Montserrat:wght@400;600;700&display=swap" />
+<style>
+  /* Page chrome follows the viewer's theme; the cards are always the app's (night) colours. */
+  :root { --page: #E9EBF0; --ink: #1A1A1A; --muted: #5A5F69; --edge: #D3D6DE; --ok: #1E7A4C; --bad: #B3261E; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --page: #0A0D16; --ink: #F2F3F5; --muted: #A3AABB; --edge: #2A3244; --ok: #7FD8A8; --bad: #FFA49B; } }
+  :root[data-theme="dark"] { --page: #0A0D16; --ink: #F2F3F5; --muted: #A3AABB; --edge: #2A3244; --ok: #7FD8A8; --bad: #FFA49B; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--page); color: var(--ink); font-family: Inter, system-ui, sans-serif; }
+  main { max-width: 1200px; margin: 0 auto; padding: 40px 24px 64px; }
+  h1 { font: 700 28px/36px Montserrat, system-ui, sans-serif; margin: 0; }
+  .lede { color: var(--muted); max-width: 70ch; margin: 8px 0 32px; line-height: 1.5; }
+  .cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(354px, 1fr)); gap: 32px; }
+  h2 { font: 600 20px/28px Montserrat, system-ui, sans-serif; margin: 0 0 4px; }
+  .when { color: var(--muted); font-size: 14px; margin: 0 0 16px; line-height: 1.5; }
+  .stack { display: flex; flex-direction: column; gap: 16px; }
+  .item { width: 100%; max-width: 354px; } /* the card's width on an iPhone 17 Pro */
+  .n { font-size: 12px; color: var(--muted); margin: 0 0 6px; }
+
+  /* The verdict card, as in the app (design-system VerdictCard + HeroBackground) */
+  .card { position: relative; overflow: hidden; border-radius: 20px; padding: 20px; color: #EEF1F7; }
+  .card::after { content: ''; position: absolute; inset: 0; pointer-events: none; }
+  .calm { background: linear-gradient(135deg, #1C3470, #19294E); }
+  .calm::after { background: radial-gradient(circle at 90% 0, rgba(157,180,255,.10), transparent 75%); }
+  .watch { background: linear-gradient(135deg, #3D2E3C, #19294E); }
+  .watch::after { background: radial-gradient(circle at 90% 0, rgba(244,182,95,.10), transparent 75%); }
+  .urgent { background: linear-gradient(135deg, #5A1C24, #2E1830); }
+  .urgent::after { background: radial-gradient(circle at 90% 0, rgba(255,90,79,.16), transparent 75%); }
+  .card h3 { font: 600 20px/28px Montserrat, system-ui, sans-serif; margin: 0; position: relative; }
+  .card p { font: 400 16px/24px Inter, system-ui, sans-serif; margin: 8px 0 0; position: relative; white-space: nowrap; }
+  .card button { position: relative; margin-top: 20px; width: 100%; min-height: 48px; border: 0; border-radius: 999px; font: 400 16px/20px Montserrat, system-ui, sans-serif; color: #0B1020; display: flex; align-items: center; justify-content: center; gap: 8px; }
+  .calm button { background: #9DB4FF; }
+  .watch button { background: #F4B65F; }
+  .urgent button { background: #FF7F72; }
+
+  .fit { font-size: 12px; margin: 6px 0 0; }
+  .fit.ok { color: var(--ok); }
+  .fit.bad { color: var(--bad); }
+  .card.over p { white-space: normal; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Verdict copy</h1>
+  <p class="lede">The verdict on each night’s report is about that night only, never a comparison with other nights. Each kind of night has five versions, which take turns from night to night. The line under the headline must fit on one line. Under each card you can see whether it fits at the card’s real width. To change the copy, edit <code>v1/public/verdicts.json</code>. The app reads the same file.</p>
+  <div class="cols" id="cols"></div>
+</main>
+<script>
+  var KINDS = [
+    { key: 'calm', name: 'Ordinary night', when: 'Blue card. Snoring and breathing look ordinary.', action: 'Keep tracking' },
+    { key: 'watch', name: 'Unusual night', when: 'Warm card. A lot of snoring that night.', action: 'Try using a remedy' },
+    { key: 'urgent', name: 'Breathing paused often', when: 'Wine card. Breathing paused often that night.', action: 'Talk to a sleep team' },
+  ];
+  fetch('verdicts.json').then(function (r) { return r.json(); }).then(function (copy) {
+    var cols = document.getElementById('cols');
+    KINDS.forEach(function (k) {
+      var col = document.createElement('section');
+      col.innerHTML = '<h2></h2><p class="when"></p><div class="stack"></div>';
+      col.querySelector('h2').textContent = k.name;
+      col.querySelector('.when').textContent = k.when;
+      var stack = col.querySelector('.stack');
+      copy[k.key].forEach(function (v, i) {
+        var item = document.createElement('div');
+        item.className = 'item';
+        item.innerHTML = '<p class="n"></p><div class="card ' + k.key + '"><h3></h3><p></p><button type="button" tabindex="-1"></button></div><p class="fit"></p>';
+        item.querySelector('.n').textContent = 'Version ' + (i + 1);
+        item.querySelector('h3').textContent = v.headline;
+        item.querySelector('.card p').textContent = v.body;
+        item.querySelector('button').textContent = k.action;
+        stack.appendChild(item);
+      });
+      cols.appendChild(col);
+    });
+    // One line or not, at the real width (the text area inside a 354 px card)
+    document.fonts.ready.then(function () {
+      document.querySelectorAll('.item').forEach(function (item) {
+        var card = item.querySelector('.card'), p = card.querySelector('p'), fit = item.querySelector('.fit');
+        var room = card.clientWidth - 40, chars = p.textContent.length;
+        var ok = p.scrollWidth <= room;
+        fit.className = 'fit ' + (ok ? 'ok' : 'bad');
+        fit.textContent = (ok ? 'Fits one line' : 'Too long: wraps to two lines') + ' · ' + chars + ' characters';
+        if (!ok) card.classList.add('over');
+      });
+    });
+  });
+</script>
+</body>
+</html>

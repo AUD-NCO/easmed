@@ -27,6 +27,7 @@ export type Profile = {
   city: string;
   region: string; // state, county or province
   country: string; // country name, e.g. 'Singapore'
+  postcode: string; // Malaysia: the 5-digit postcode (V1 asks only this, in place of state and town)
 };
 
 const EMPTY: Profile = {
@@ -44,6 +45,7 @@ const EMPTY: Profile = {
   city: '',
   region: '',
   country: '',
+  postcode: '',
 };
 
 let profile: Profile = { ...EMPTY, ...recall<Partial<Profile>>('profile', {}) };
@@ -145,10 +147,10 @@ export function weightLabel(weightKg: string, units: Units) {
 
 export const GENDER_LABEL: Record<Gender, string> = { male: 'Male', female: 'Female', transgender: 'Transgender', unsaid: 'Prefer not to say' };
 
-/** "Singapore", "Petaling Jaya, Selangor", "Leeds, United Kingdom". Empty when not set. */
-export function placeLabel({ city, region, country }: Pick<Profile, 'city' | 'region' | 'country'>) {
+/** "Singapore", "Malaysia 47400", "Leeds, United Kingdom". Empty when not set. */
+export function placeLabel({ city, region, country, postcode }: Pick<Profile, 'city' | 'region' | 'country' | 'postcode'>) {
   if (country === 'Singapore') return 'Singapore';
-  if (country === 'Malaysia') return [city, region].filter(Boolean).join(', ') || 'Malaysia';
+  if (country === 'Malaysia') return postcode ? `Malaysia ${postcode}` : [city, region].filter(Boolean).join(', ') || 'Malaysia';
   return [city, region, country].filter(Boolean).join(', ');
 }
 

@@ -9,8 +9,10 @@ import {
   DataCard,
   DetailPage,
   ExplainSheet,
+  FlipLine,
   HourlyBars,
   Icon,
+  ListenButton,
   CheckInBanner,
   type IconName,
   LargeSheet,
@@ -21,7 +23,6 @@ import {
   PrivacyFooter,
   PromptBody,
   ReviewNote,
-  ScoreSummary,
   ScoreTile,
   SnoringChart,
 } from '../components';
@@ -82,7 +83,6 @@ export function NightScreen({
   bottomInset,
   onRecordAgain,
   tag,
-  option2 = false,
   onAddNotes,
   notesChosen = [],
 }: {
@@ -103,12 +103,6 @@ export function NightScreen({
   bottomInset?: number;
   /** "Record again tonight": where that goes (Reports: to Home). Defaults to going back. */
   onRecordAgain?: () => void;
-  /**
-   * Option 2 (exploring, for the worst nights): the first fold is the Sound Score as one wide card
-   * (text left, ring right, the parts it's made of), Breathing pauses the same
-   * way, then the verdict with its one action. The rest of the page as usual.
-   */
-  option2?: boolean;
   /** A small banner under the header opens this night's Morning check-in. */
   onAddNotes?: () => void;
   /** The remedies already in this night's Morning check-in; empty when none yet. */
@@ -151,8 +145,28 @@ export function NightScreen({
         ? { label: 'Try using a remedy', onPress: () => setExplain('remedy') }
         : { label: 'Keep tracking', onPress: () => (onRecordAgain ? onRecordAgain() : onBack && leave(onBack)) };
 
-  // Snoring is a score; breathing a plain level (its exact rate is in the Night report). Name and level only.
-  const scores = (
+  // Listen, from a score: down to the recording (the moment card) with that moment picked, and the card
+  // lit up for a moment so the eye lands on it. Nothing plays until they press play there.
+  const bodyY = useRef(0); // where the cards start in the page
+  const playerY = useRef(0); // where the moment card starts among them
+  const glow = useRef(new Animated.Value(0)).current;
+  const reduced = useReducedMotion();
+  const goListen = (c: Clip, scrollTo: (y: number) => void) => {
+    setSelected(c.id);
+    scrollTo(bodyY.current + playerY.current);
+    glow.setValue(0);
+    Animated.sequence([
+      Animated.delay(reduced ? 0 : motion.stagger), // once the scroll has mostly settled
+      Animated.timing(glow, { toValue: 1, duration: motion.fast.duration, easing: motion.fast.easeOut, useNativeDriver: motion.useNativeDriver }),
+      Animated.timing(glow, { toValue: 0, duration: motion.slow.duration, delay: motion.hold, easing: motion.slow.easeIn, useNativeDriver: motion.useNativeDriver }),
+    ]).start();
+  };
+  const loudSnore = d.featured.find((c) => c.type !== 'Interrupted breathing');
+  const pause = d.featured.find((c) => c.type === 'Interrupted breathing');
+
+  // Snoring is a score; breathing a plain level (its exact rate is in the Night report). Name and level only,
+  // and under each, Listen: the way from the number to the sound behind it.
+  const scores = (scrollTo: (y: number) => void) => (
     <View style={styles.pair}>
       <ScoreTile
         tone="snoring"
@@ -161,6 +175,8 @@ export function NightScreen({
         name="Sound Score"
         level={zoneOf(sound).word}
         accessibilityLabel={`Sound Score: ${sound.display} out of 100, ${zoneOf(sound).word}`}
+        ringSize={96}
+        action={loudSnore && <ListenButton accessibilityLabel="Listen to your snoring" onPress={() => goListen(loudSnore, scrollTo)} />}
       />
       <ScoreTile
         tone="breathing"
@@ -169,34 +185,10 @@ export function NightScreen({
         name="Breathing pauses"
         level={zoneOf(breathing).word}
         accessibilityLabel={`Breathing pauses: ${zoneOf(breathing).word}`}
+        ringSize={96}
+        action={pause && <ListenButton accessibilityLabel="Listen to a breathing pause" onPress={() => goListen(pause, scrollTo)} />}
       />
     </View>
-  );
-
-  // Option 2's first fold: the two scores as wide cards, text beside the ring
-  const wideScores = (
-    <>
-      <ScoreSummary
-        tone="snoring"
-        fraction={sound.value / sound.max}
-        value={sound.display}
-        name="Sound Score"
-        level={zoneOf(sound).word}
-        parts={[
-          { label: 'Loudness', value: d.soundParts.loudness, max: 50 },
-          { label: 'Snoring', value: d.soundParts.snoring, max: 50 },
-        ]}
-      />
-      <ScoreSummary
-        tone="breathing"
-        fraction={breathing.value / breathing.max}
-        icon="airwave"
-        name="Breathing pauses"
-        level={zoneOf(breathing).word}
-        facts={`${breathing.value} an hour · ${d.breathingEvents.length} in the night`}
-        ringSize={80}
-      />
-    </>
   );
 
   // Two cards: the chart (the index to the audio: tap a moment to hear it), then the moment's player.
@@ -206,6 +198,7 @@ export function NightScreen({
         <SnoringChart d={d} mode="overview" moments={d.featured} selected={lead?.id} onSelect={pick} />
       </DataCard>
       {lead && (
+      <View onLayout={(e) => (playerY.current = e.nativeEvent.layout.y)}>
       <DataCard>
         <ClipPlayer clip={lead} time={clockAt(d, lead.at)} player={player} detail={`${CLIP_LABEL[lead.type]} · ${lead.seconds} sec`} />
         {d.featured.length > 1 && (
@@ -226,6 +219,9 @@ export function NightScreen({
       </View>
         )}
       </DataCard>
+      {/* Lit up on arriving from Listen */}
+      <Animated.View pointerEvents="none" style={[styles.glow, { opacity: glow }]} />
+      </View>
       )}
     </>
   );
@@ -235,7 +231,7 @@ export function NightScreen({
       <DetailPage
         backLabel={onBack ? 'Back' : undefined}
         title={formatNightDate(night.date)}
-        subtitle={`${formatRecorded(night.minutes)}\n${formatSpan(night)}`} // two lines: how long, then when
+        subtitle={<FlipLine lines={[formatRecorded(night.minutes), formatSpan(night)]} />} // one line: how long, then when, taking turns
         subtitleTag={tag}
         onBack={onBack}
         slideIn={onBack ? slideIn : false}
@@ -251,8 +247,8 @@ export function NightScreen({
         }
         footerAfter={ready ? heroBottom : undefined} // hidden from the start; shows once the verdict card has scrolled away
       >
-        {(leave) => (
-        <View style={styles.body}>
+        {(leave, scrollTo) => (
+        <View style={styles.body} onLayout={(e) => (bodyY.current = e.nativeEvent.layout.y)}>
           {problem && <PromptBody art={problem.copy.art} title={problem.copy.title} body={problem.copy.reason} fix={problem.copy.fix} cta={problem.cta} onCta={problem.onCta} />}
           {state === 'processing' && <Processing />}
           {onAddNotes && <NotesNudge chosen={notesChosen} onPress={onAddNotes} />}
@@ -264,7 +260,7 @@ export function NightScreen({
                 <Icon name="warning" size={18} color="lamp" />
                 <AppText variant="small" color="text">{`Partial recording · stopped at ${stopTime(wholeNight, stopped)}`}</AppText>
               </View>
-              {readable && scores}
+              {readable && scores(scrollTo)}
               {sound_}
               <PrivacyFooter onMore={() => setExplain('privacy')} />
             </>
@@ -272,7 +268,7 @@ export function NightScreen({
 
           {ready && (
             <>
-              {option2 ? wideScores : scores}
+              {scores(scrollTo)}
 
               {/* The verdict: the words, the night's one next step, and the week as a graph behind them */}
               <View onLayout={(e) => setHeroBottom(e.nativeEvent.layout.y + e.nativeEvent.layout.height)}>
@@ -280,7 +276,7 @@ export function NightScreen({
                   mood={mood}
                   title={sum.headline}
                   body={sum.body}
-                  values={d.recent.map((r) => r.snoringMinutes)} // the week behind the words: last 7 nights of snoring, tonight last
+                  values={d.hourly.map((h) => h.minutes)} // the night behind the words: its snoring, hour by hour (the verdict is about this night only)
                   action={step(leave)}
                 />
               </View>
@@ -558,6 +554,7 @@ const styles = StyleSheet.create({
   stepper: { flexDirection: 'row', alignItems: 'center', gap: space.sm, marginTop: space.lg },
   stepButton: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', backgroundColor: alpha(colors.moon, 0.08) },
   off: { opacity: 0.4 },
+  glow: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, borderRadius: radius.card, borderWidth: 2, borderColor: colors.accent },
   stats: { flexDirection: 'row', gap: space.md },
 
   // The card's next step: full width, 48 pt. On the urgent (wine) card it's Moon, not Breath: blue on wine clashes.

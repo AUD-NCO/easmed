@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Animated, Pressable, ScrollView, StyleSheet, View, type ImageSourcePropType, type LayoutChangeEvent } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { AppText, BottomSheet, Button, IconButton, InfoButton } from '../components';
-import { colors, motion, space, useReducedMotion } from '@ds/theme';
+import { colors, motion, radius, space, useInsets, useReducedMotion } from '@ds/theme';
 
 /**
  * Artwork shown inside the circle. Each source image is a square with the
@@ -50,6 +50,7 @@ const REF_TOP = 12; // circle top
 const REF_GAP = 50; // circle bottom to headline
 const SHIFT_RATIO = 116 / 556; // how far the circle moves per page, relative to its size
 const TEXT_MIN = 260; // room always kept below the circle for headline, Continue and the home indicator
+const ACCOUNT_ROOM = 48 + space.lg; // plus the pinned "I already have an account" button and its gap
 const DASH_H = 4;
 const DASH_W = 28;
 const TARGET = 44; // minimum touch target (WCAG 2.5.5 AAA): each dash sits in a 44 × 44 tap area
@@ -65,14 +66,26 @@ const native = motion.useNativeDriver;
  * the illustrations cross-fade and slide slightly against the circle's movement
  * (parallax), and the scene breathes slowly the whole time.
  */
-export function OnboardingScreen({ onContinue }: { onContinue?: () => void }) {
+export function OnboardingScreen({ onContinue, onLogIn }: { onContinue?: () => void; onLogIn?: () => void }) {
   // Sized from the screen's own layout (not the window), so it's right in split view and in the preview frame.
+  const insets = useInsets();
   const [box, setBox] = useState({ width: 0, height: 0 });
   const onLayout = (e: LayoutChangeEvent) => setBox({ width: e.nativeEvent.layout.width, height: e.nativeEvent.layout.height });
   return (
     <View style={styles.root} onLayout={onLayout}>
       <StatusBar style="light" />
-      {box.width > 0 && <Carousel width={box.width} height={box.height} onContinue={onContinue} />}
+      {box.width > 0 && <Carousel width={box.width} height={box.height - (onLogIn ? ACCOUNT_ROOM : 0)} onContinue={onContinue} />}
+      {/* Returning people (a new phone): a full-size way in on every page, pinned to the bottom, as
+          sure-footed as Get started. Outlined, so the page's own button stays the first choice. */}
+      {onLogIn ? (
+        <View style={[styles.account, { bottom: insets.bottom + space.lg }]}>
+          <Pressable onPress={onLogIn} accessibilityRole="button" style={({ pressed }) => [styles.accountButton, pressed && { opacity: 0.8 }]}>
+            <AppText variant="button" color="text">
+              I already have an account
+            </AppText>
+          </Pressable>
+        </View>
+      ) : null}
     </View>
   );
 }
@@ -231,7 +244,7 @@ function Carousel({ width, height, onContinue }: { width: number; height: number
               {/* Part of the page: there with the text, moves and fades with it (no animation of its own) */}
               <View style={{ alignSelf: 'flex-start', marginTop: space.xl }}>
                 {slide.showContinue ? (
-                  <Button label="Continue" onPress={onContinue} />
+                  <Button label="Get started" onPress={onContinue} />
                 ) : (
                   <IconButton icon="arrow_forward" label="Next" onPress={() => goTo(i + 1)} />
                 )}
@@ -279,4 +292,7 @@ const styles = StyleSheet.create({
   dashes: { position: 'absolute', left: SIDE - (TARGET - DASH_W) / 2, flexDirection: 'row' },
   dashTarget: { width: TARGET, height: TARGET, alignItems: 'center', justifyContent: 'center' },
   dash: { width: DASH_W, height: DASH_H, borderRadius: DASH_H / 2, backgroundColor: colors.text },
+  account: { position: 'absolute', left: SIDE, right: SIDE },
+  // Moon label 15:1; Mist outline 3:1+ against Midnight (WCAG 1.4.11)
+  accountButton: { minHeight: 48, borderRadius: radius.pill, borderWidth: 1.5, borderColor: colors.textMuted, alignItems: 'center', justifyContent: 'center', paddingHorizontal: space.xl },
 });

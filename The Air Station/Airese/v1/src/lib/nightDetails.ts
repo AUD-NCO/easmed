@@ -1,5 +1,6 @@
 import { formatClock, fromMinutes } from './time';
 import { sampleNights, type Night } from './recordings';
+import verdictCopy from '../../public/verdicts.json';
 
 /**
  * Recording Details: what one night held. Shape follows the PRD (§17), trimmed to what the
@@ -271,19 +272,17 @@ export type Trend = 'less' | 'same' | 'more';
 export const trend = (value: number, usual: number): Trend => (value < usual * 0.8 ? 'less' : value > usual * 1.2 ? 'more' : 'same');
 export const trendWords: Record<Trend, string> = { less: 'Less than usual', same: 'About usual', more: 'More than usual' };
 
-// A repeated pattern names itself plainly; the headline varies from night to night so it isn't tuned out.
-const PATTERN_HEADLINES = ['Time to get this checked', 'This keeps happening', 'Not just one night', 'Your breathing needs a look'];
+/**
+ * The verdict's words: five for each kind of night, taking turns from night to night so they aren't
+ * tuned out. About that night only, never compared with other nights; the line under the headline
+ * fits on one line (35 characters at most). One file for the app and the review page (public/verdicts.html).
+ */
+export const VERDICTS = verdictCopy as Record<'calm' | 'watch' | 'urgent', { headline: string; body: string }[]>;
 
-/** Headline and one short, general line under it (PRD §5): no numbers, two lines at most. Plain, factual, calm. */
+/** Headline and one short, general line under it (PRD §5): no numbers, one line. Plain, factual, calm. */
 export function summary(d: NightDetails): { headline: string; body: string } {
-  switch (d.state) {
-    case 'unusual':
-      return { headline: 'More snoring than usual', body: 'You snored more than you usually do. Something small may help tonight.' };
-    case 'pattern':
-      return { headline: PATTERN_HEADLINES[d.night.date.getDate() % PATTERN_HEADLINES.length], body: 'Your breathing has paused often on several recent nights.' };
-    default:
-      return { headline: 'A steadier night', body: 'Your breathing was steadier than on your recent nights.' };
-  }
+  const set = VERDICTS[d.state === 'pattern' ? 'urgent' : d.state === 'unusual' ? 'watch' : 'calm'];
+  return set[d.night.date.getDate() % set.length];
 }
 
 
@@ -320,7 +319,6 @@ const STATES: NightState[] = ['processing', 'poor', 'steady', 'unusual', 'patter
 /** The state to show: a demo override (?state=…) if valid, else the sample night's own. */
 export function nightState(night: Night, override?: string): NightState {
   if (override?.startsWith('stopped-')) return 'stopped';
-  if (override === 'option-2') return 'pattern'; // the repeated-pattern night, laid out as Option 2 (NightScreen)
   if (override && (STATES as string[]).includes(override)) return override as NightState;
   return sampleState(night, sampleNights());
 }

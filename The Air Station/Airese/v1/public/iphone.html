@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <title>Airese v1 · iPhone 17 Pro</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Montserrat:wght@400;600&display=swap" />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Montserrat:wght@400;600;700&display=swap" />
 <style>
   :root { --page: #E9EBF0; --ink: #1A1A1A; --muted: #6B6F78; --field: #FFFFFF; --field-edge: #D3D6DE; --frame: #2B3140; --frame-edge: #4A5266; }
   @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --page: #0A0D16; --ink: #F2F3F5; --muted: #8C93A6; --field: #141A28; --field-edge: #2A3244; } }
@@ -110,12 +110,14 @@
   // To add a screen: one line here (key, label, route). A 'page' item (6th entry) opens full width instead of in the phone.
   (function () {
     var SCREENS = [
+      { group: 'For the team', items: [
+        ['verdicts', 'Verdict copy', 'verdicts.html', 'The 15 verdict banners: five for each kind of night, taking turns from night to night. Review and finalise the copy.', 'New', 'page'] ] },
       { group: 'Getting started', items: [
-        ['splash', 'Splash', '/', 'App launch. The logo arrives, then falls away into the walkthrough.'],
-        ['onboarding', 'Walkthrough', '/onboarding', 'Three pages. Swipe or tap the dashes; Continue on the last page.'],
+        ['splash', 'Splash', '/', 'App launch. The logo arrives, then falls away into Home (logged in), Log in (logged out) or the walkthrough (first run).'],
+        ['onboarding', 'Walkthrough', '/onboarding', 'Three pages. Swipe or tap the dashes; Get started on the last page. I already have an account (pinned to the bottom of every page) goes to Log in.'],
         ['microphone', 'Microphone access', '/permissions/microphone', 'Asks for the mic, saying why first. Skip or Don’t Allow opens a second-chance sheet.'],
         ['notifications', 'Notifications', '/permissions/notifications', 'Asks for notifications. Same pattern as the microphone screen.'],
-        ['details', 'Your details', '/details', 'Name, phone, email and agreeing to Terms and Privacy, all required. Verify (in the email field) sends a code and opens the Verify your email sheet; Continue is off until the email is verified.'],
+        ['details', 'Your details', '/details', 'Name, phone, email, a password and agreeing to Terms and Privacy, all required. Continue creates the account. Verify (in the email field) sends a code and opens the Verify your email sheet; Continue is off until the email is verified.'],
         ['email-code', 'Email · your code', '/details?state=mail', 'The phone’s mail app, open on the Airese email. Copy OTP copies the code and goes back to the Verify your email sheet, where Paste code verifies it. Template for developers: public/email-code.html.'],
         ['about-you', 'About you', '/about-you', 'Gender, age, height, weight and where you live, all required. (i) says why. Begin your journey goes Home.'] ] },
       { group: 'App', items: [
@@ -123,6 +125,14 @@
         ['recording', 'Recording', '/recording', 'Shown all night. Tap the ring and confirm to stop. Stops by itself after 8 hours.'],
         ['reports', 'Reports', '/reports', 'The latest night’s report. The calendar (top right) picks another night.'],
         ['profile', 'Profile', '/profile', 'Details, notification settings, sleep centres, and deleting data.'] ] },
+      { group: 'Account', items: [
+        ['login', 'Log in', '/login', 'From I already have an account on the walkthrough, and where the app opens once you’ve logged out. Any email and an 8+ character password works in the demo.', 'New'],
+        ['forgot-password', 'Forgot password', '/forgot-password', 'From Log in. Send code opens the same Verify your email sheet as sign-up (demo code 482913).', 'New'],
+        ['forgot-password-new', 'New password', '/forgot-password?state=new', 'After the code: a new password, then Save and log in goes Home.', 'New'],
+        ['log-out', 'Log out', '/profile?sheet=log-out', 'Profile → Log out. A quick check; recordings stay. Goes to Log in.', 'New'],
+        ['delete-recordings', 'Delete all recordings', '/profile?sheet=delete-recordings', 'Profile → Delete all recordings. Full sheet: can’t be undone, and three short reasons to keep them.', 'New'],
+        ['reports-empty', 'Reports · after deleting', '/reports?state=empty', 'The Reports tab once every recording is deleted. Record tonight goes Home.', 'New'],
+        ['delete-account', 'Delete account', '/profile?sheet=delete-account', 'Profile → Delete account. Same full sheet; deleting starts the app again.', 'New'] ] },
       { group: 'Sleep Diary', items: [
         ['notes-before', 'Bedtime check-in', '/night-notes', 'From Recording’s banner. Same as last night fills in last night’s choices in one tap (demo: Caffeine, Ate late).'],
         ['notes-remedies', 'Morning check-in', '/night-notes?night=latest', 'From the report’s banner. Same as last night fills in the remedies from the night before (demo: Side sleeping, Nasal strip).'] ] },
@@ -130,7 +140,6 @@
         ['night-steady', 'Ordinary night', '/reports?state=steady', 'Blue verdict card. Next step: Keep tracking.'],
         ['night-unusual', 'Unusual night', '/reports?state=unusual', 'Warm verdict card. Next step: Try using a remedy.'],
         ['night-pattern', 'Repeated pattern', '/reports?state=pattern', 'Wine verdict card. Next step: Talk to a sleep team (the one coral button).'],
-        ['night-option-2', 'Option 2', '/reports?state=option-2', 'The worst night, another way: Sound Score as one wide card (text left, ring right), Breathing pauses the same, then Talk to a sleep team. All in the first fold.', 'New'],
         ['night-processing', 'Processing', '/reports?state=processing', 'Right after stopping: “Looking through your night”, then the report.'] ] },
       { group: 'Recording problems', items: [
         ['no-space', 'Not enough space', '/recording-problem?kind=space', 'On tapping record. Try again checks the space again (demo: it works and recording starts). × back to Home.'],

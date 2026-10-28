@@ -26,13 +26,16 @@ import { UpdateScreen } from '../src/screens/UpdateScreen';
 import { ProfileScreen } from '../src/screens/ProfileScreen';
 import { CentresScreen } from '../src/screens/CentresScreen';
 import { EditDetailsScreen } from '../src/screens/EditDetailsScreen';
-import { eraseEverything } from '../src/lib/account';
+import { deleteAccount, startRoute } from '../src/lib/account';
+import { LoginScreen } from '../src/screens/LoginScreen';
+import { ForgotPasswordScreen } from '../src/screens/ForgotPasswordScreen';
+import type { ProfileSheet } from '../src/screens/ProfileScreen';
 import { setDemoLastNightStopped, setDemoStartProblem, type StartProblem } from '../src/lib/recordingIssues';
 import { StartProblemScreen } from '../src/screens/ProblemScreen';
 
-type Step = 'splash' | 'onboarding' | 'microphone' | 'notifications' | 'details' | 'about-you' | 'home' | 'recording' | 'update' | 'problem';
+type Step = 'splash' | 'onboarding' | 'microphone' | 'notifications' | 'details' | 'about-you' | 'home' | 'recording' | 'update' | 'problem' | 'login' | 'forgot-password';
 
-const STEPS: Step[] = ['splash', 'onboarding', 'microphone', 'notifications', 'details', 'about-you', 'home', 'recording', 'update', 'problem'];
+const STEPS: Step[] = ['splash', 'onboarding', 'microphone', 'notifications', 'details', 'about-you', 'home', 'recording', 'update', 'problem', 'login', 'forgot-password'];
 
 function PreviewApp() {
   const [step, setStep] = useState<Step>('splash');
@@ -40,6 +43,10 @@ function PreviewApp() {
   const [recording, setRecording] = useState<{ startedAt: Date; from?: RecordOrigin; pausedAt?: Date }>(() => ({ startedAt: new Date() }));
   const [reportState, setReportState] = useState<string | undefined>(); // demo menu: last night's report in a given state
   const [openProfile, setOpenProfile] = useState(false); // demo menu: Profile, over Home
+  const [profileSheet, setProfileSheet] = useState<ProfileSheet>(); // demo menu: Profile, open on one of its sheets
+  const [loggedOut, setLoggedOut] = useState(false); // Log in after logging out: no back
+  const [resetDemo, setResetDemo] = useState(false); // demo menu: Forgot password's new-password step
+  const [loginEmail, setLoginEmail] = useState('');
   const [openRemedies, setOpenRemedies] = useState(false); // demo menu: the latest night's remedies, over Reports
   const [recordingNotes, setRecordingNotes] = useState(false); // Before sleeping, opened from Recording's banner
   const nightNotes = useNightNotes();
@@ -59,7 +66,15 @@ function PreviewApp() {
       if (key === 'details') setProfile({ verifiedEmail: '' }); // starts unverified, like the app
       if (key === 'email-code') key = 'details';
       setReportState(undefined);
+      // Profile's sheets (demo nav): Profile, open on the sheet
+      const sheet = ({ 'delete-recordings': 'delete-recordings', 'delete-account': 'delete-account', 'log-out': 'log-out' } as Record<string, ProfileSheet>)[key];
+      setProfileSheet(sheet);
+      if (sheet) key = 'profile';
       setOpenProfile(key === 'profile');
+      setLoggedOut(false);
+      setResetDemo(key === 'forgot-password-new');
+      if (key === 'forgot-password-new') key = 'forgot-password';
+      if (key === 'reports-empty') key = 'night-empty';
       // Night Notes pages: Before sleeping over Recording, remedies over the latest report
       setRecordingNotes(key === 'notes-before');
       setOpenRemedies(key === 'notes-remedies');
@@ -106,12 +121,30 @@ function PreviewApp() {
   return (
     <SafeAreaProvider>
       <View key={run} style={{ flex: 1 }}>
-        {step === 'splash' && <SplashScreen onFinish={() => setStep('onboarding')} />}
-        {step === 'onboarding' && <OnboardingScreen onContinue={() => setStep('microphone')} />}
+        {step === 'splash' && (
+          <SplashScreen
+            onFinish={() => {
+              // As the app: Home when logged in, Log in when logged out, else the walkthrough
+              const to = startRoute();
+              setLoggedOut(to === 'login');
+              setStep(to === 'home' ? 'home' : to);
+            }}
+          />
+        )}
+        {step === 'onboarding' && <OnboardingScreen onContinue={() => setStep('microphone')} onLogIn={() => setStep('login')} />}
         {step === 'microphone' && <MicrophonePermissionScreen onDone={() => setStep('notifications')} />}
         {step === 'notifications' && <NotificationsPermissionScreen onDone={() => setStep('details')} />}
         {step === 'details' && <DetailsScreen demo={detailsDemo} onDone={() => setStep('about-you')} onOpenLegal={setLegal} />}
         {step === 'about-you' && <AboutYouScreen onDone={() => setStep('home')} />}
+        {step === 'login' && (
+          <LoginScreen
+            onBack={loggedOut ? undefined : () => setStep('onboarding')}
+            onLoggedIn={() => (setStep('home'), setTab('home'))}
+            onForgot={(email) => (setLoginEmail(email), setStep('forgot-password'))}
+            onSignUp={() => setStep('onboarding')}
+          />
+        )}
+        {step === 'forgot-password' && <ForgotPasswordScreen email={loginEmail} demo={resetDemo} onBack={() => setStep('login')} onDone={() => (setStep('home'), setTab('home'))} />}
         {step === 'details' && legal && (
           <View style={{ position: 'absolute', top: 0, right: 0, bottom: 0, left: 0 }}>
             <LegalScreen doc={legal} onBack={() => setLegal(null)} />
@@ -135,6 +168,11 @@ function PreviewApp() {
             onTab={setTab}
             reportState={reportState}
             initialProfile={openProfile}
+            profileSheet={profileSheet}
+            onLoggedOut={() => {
+              setLoggedOut(true);
+              setStep('login');
+            }}
             initialRemedies={openRemedies}
             onAccountDeleted={() => {
               setStep('splash');
@@ -196,6 +234,8 @@ function HomeTabs({
   initialProfile,
   initialRemedies,
   onAccountDeleted,
+  onLoggedOut,
+  profileSheet,
   onOpenLastNight,
   onCantStart,
 }: {
@@ -208,6 +248,8 @@ function HomeTabs({
   initialProfile: boolean;
   initialRemedies: boolean;
   onAccountDeleted: () => void;
+  onLoggedOut: () => void;
+  profileSheet?: ProfileSheet;
 }) {
   const latest = useNights()[0];
   const [notes, setNotes] = useState<Night | null>(initialRemedies ? latest : null); // a night's Night Notes, from its report
@@ -228,8 +270,10 @@ function HomeTabs({
           onBack={() => setProfile(null)}
           onOpenDetails={() => setProfile('details')}
           onOpenCentres={() => setProfile('centres')}
-          onErased={() => {
-            eraseEverything();
+          demoSheet={profileSheet}
+          onLoggedOut={onLoggedOut}
+          onAccountDeleted={() => {
+            deleteAccount(); // already done by Profile; kept so a demo run always starts clean
             onAccountDeleted();
           }}
         />

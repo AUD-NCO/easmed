@@ -1,10 +1,11 @@
+import '../lib/typeTweaks';
 import React, { useEffect } from 'react';
 import { Platform } from 'react-native';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { SystemAlertHost } from '../components';
-import { useFonts, Montserrat_400Regular, Montserrat_600SemiBold } from '@expo-google-fonts/montserrat';
+import { useFonts, Montserrat_400Regular, Montserrat_600SemiBold, Montserrat_700Bold } from '@expo-google-fonts/montserrat';
 import { Inter_400Regular, Inter_600SemiBold } from '@expo-google-fonts/inter';
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
@@ -16,7 +17,7 @@ const PUSH =
     : ({ animation: 'slide_from_right' } as const);
 
 export default function RootLayout() {
-  const [loaded, error] = useFonts({ Montserrat_400Regular, Montserrat_600SemiBold, Inter_400Regular, Inter_600SemiBold });
+  const [loaded, error] = useFonts({ Montserrat_400Regular, Montserrat_600SemiBold, Montserrat_700Bold, Inter_400Regular, Inter_600SemiBold });
 
   useEffect(() => {
     if (loaded || error) SplashScreen.hideAsync().catch(() => {});
@@ -37,6 +38,9 @@ export default function RootLayout() {
         <Stack.Screen name="centres" options={PUSH} />
         {/* Terms and Privacy, from the agreement on the details screen */}
         <Stack.Screen name="legal/[doc]" options={PUSH} />
+        {/* Account: log in (pushed from the walkthrough) and its password reset */}
+        <Stack.Screen name="login" options={PUSH} />
+        <Stack.Screen name="forgot-password" options={PUSH} />
         {/* Recording can't start (no space, or the recorder failed) */}
         <Stack.Screen name="recording-problem" />
         {/* Update prompt: no swipe-back, so the update can't be dismissed */}

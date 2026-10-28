@@ -1,0 +1,23 @@
+{
+  "calm": [
+    { "headline": "A steadier night", "body": "Your breathing stayed even." },
+    { "headline": "A quiet night", "body": "Light snoring, steady breathing." },
+    { "headline": "Easy breathing", "body": "Only a few breathing pauses." },
+    { "headline": "A settled night", "body": "Snoring stayed light all night." },
+    { "headline": "Mostly quiet", "body": "Some light snoring, nothing more." }
+  ],
+  "watch": [
+    { "headline": "A louder night", "body": "You snored for long stretches." },
+    { "headline": "Lots of snoring", "body": "Snoring came and went all night." },
+    { "headline": "A noisier night", "body": "Your snoring was loud at times." },
+    { "headline": "Long spells of snoring", "body": "Have a listen to the loudest part." },
+    { "headline": "A restless-sounding night", "body": "Something small may help tonight." }
+  ],
+  "urgent": [
+    { "headline": "Your breathing paused often", "body": "Worth talking to a sleep team." },
+    { "headline": "Many breathing pauses", "body": "Hear one, then decide what’s next." },
+    { "headline": "Breathing paused a lot", "body": "This is worth getting checked." },
+    { "headline": "Uneven breathing", "body": "A sleep team can look at this." },
+    { "headline": "Frequent breathing pauses", "body": "Have a listen, then get it checked." }
+  ]
+}

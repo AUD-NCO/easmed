@@ -31,6 +31,8 @@ export function ScoreTile({
   detail,
   onPress,
   accessibilityLabel,
+  action,
+  ringSize = 116,
 }: {
   tone: Exclude<DataTone, 'neutral'>;
   fraction: number;
@@ -42,6 +44,10 @@ export function ScoreTile({
   detail?: string;
   onPress?: () => void;
   accessibilityLabel?: string;
+  /** A small action at the foot of the tile (e.g. Listen); tiles side by side keep it level. */
+  action?: React.ReactNode;
+  /** The ring's size; smaller when the tile carries an action, so the pair stays short. */
+  ringSize?: number;
 }) {
   const ramped = RAMPED[tone];
   const ink = dataInk(tone, fraction);
@@ -58,7 +64,7 @@ export function ScoreTile({
           <Icon name="chevron_right" size={20} color="textMuted" />
         </View>
       ) : null}
-      <ScoreRing fraction={fraction} color={INK[tone]} ramp={ramped ? loudnessRamp : undefined} size={116} stroke={10}>
+      <ScoreRing fraction={fraction} color={INK[tone]} ramp={ramped ? loudnessRamp : undefined} size={ringSize} stroke={10}>
         {value ? (
           <AppText variant="title" color="text" numberOfLines={1}>
             {value}
@@ -81,6 +87,7 @@ export function ScoreTile({
           {detail}
         </AppText>
       ) : null}
+      {action ? <View style={styles.action}>{action}</View> : null}
     </Pressable>
   );
 }
@@ -93,4 +100,5 @@ const styles = StyleSheet.create({
   level: { flexDirection: 'row', alignItems: 'center', gap: space.sm, minHeight: 28, paddingHorizontal: space.md, borderRadius: radius.pill, marginTop: space.sm },
   dot: { width: 8, height: 8, borderRadius: 4 },
   detail: { marginTop: space.sm, textAlign: 'center' },
+  action: { alignSelf: 'stretch', marginTop: 'auto', paddingTop: space.lg },
 });

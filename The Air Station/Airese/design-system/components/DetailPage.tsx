@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Animated, Platform, Pressable, StyleSheet, View, type LayoutChangeEvent, type StyleProp, type ViewStyle } from 'react-native';
+import { Animated, Platform, Pressable, ScrollView, StyleSheet, View, type LayoutChangeEvent, type StyleProp, type ViewStyle } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import Svg, { Defs, LinearGradient, Rect, Stop } from 'react-native-svg';
 import { alpha, colors, motion, radius, space, useInsets, useReducedMotion } from '../theme';
@@ -43,8 +43,8 @@ export function DetailPage({
   /** Back button text. Leave out (with onBack) for a tab's own page, which has no back. */
   backLabel?: string;
   title: string;
-  /** Muted text under the title (a "\n" makes a second line). */
-  subtitle?: string;
+  /** Muted text under the title (a "\n" makes a second line), or your own first line (e.g. lines that take turns). */
+  subtitle?: string | React.ReactElement;
   /** A small Breath pill at the end of the subtitle's first line (e.g. "Last night"). */
   subtitleTag?: string;
   onBack?: () => void;
@@ -58,7 +58,8 @@ export function DetailPage({
   bottomInset?: number;
   footer?: (leave: (then: () => void) => void) => React.ReactNode;
   footerAfter?: number;
-  children: React.ReactNode | ((leave: (then: () => void) => void) => React.ReactNode);
+  /** As a function it also gets `scrollTo(y)`: brings a point in the content (e.g. a card's top) up to just under the bar. */
+  children: React.ReactNode | ((leave: (then: () => void) => void, scrollTo: (y: number) => void) => React.ReactNode);
 }) {
   const insets = useInsets();
   const reduced = useReducedMotion();
@@ -94,6 +95,9 @@ export function DetailPage({
     Animated.timing(t, { toValue: 0, duration: motion.fast.duration, easing: motion.fast.easeIn, useNativeDriver: native }).start(() => then());
   };
 
+  const scroller = useRef<ScrollView>(null);
+  const scrollTo = (y: number) => scroller.current?.scrollTo({ y: Math.max(0, y - insets.top - BAR - space.lg), animated: !reduced });
+
   const page = slideIn
     ? reduced
       ? { opacity: t }
@@ -110,6 +114,7 @@ export function DetailPage({
 
       <Animated.View style={[styles.page, page]}>
         <Animated.ScrollView
+          ref={scroller}
           contentContainerStyle={{ flexGrow: 1, paddingTop: insets.top + (tab ? PAGE_TITLE_TOP : BAR), paddingBottom: (footer ? footerHeight : insets.bottom) + bottomInset + space.xl }}
           showsVerticalScrollIndicator={false}
           scrollEventThrottle={16}
@@ -135,7 +140,7 @@ export function DetailPage({
               <Subtitle text={subtitle} tag={subtitleTag} style={[{ marginTop: space.xs }, tab && { paddingHorizontal: PAGE_SIDE }]} />
             ) : null}
           </View>
-          {typeof children === 'function' ? children(leave) : children}
+          {typeof children === 'function' ? children(leave, scrollTo) : children}
         </Animated.ScrollView>
 
         {/* Sticky top bar: frosted background and compact title fade in; back always here */}
@@ -186,12 +191,12 @@ export function DetailPage({
 }
 
 /** The muted line(s) under the title; an optional tag pill sits at the end of the first line. */
-function Subtitle({ text, tag, style }: { text: string; tag?: string; style: StyleProp<ViewStyle> }) {
-  const [first, ...rest] = text.split('\n');
+function Subtitle({ text, tag, style }: { text: string | React.ReactElement; tag?: string; style: StyleProp<ViewStyle> }) {
+  const [first, ...rest] = typeof text === 'string' ? text.split('\n') : [text];
   return (
     <View style={style}>
       <View style={styles.subtitleRow}>
-        <AppText color="textMuted">{first}</AppText>
+        {typeof first === 'string' ? <AppText color="textMuted">{first}</AppText> : first}
         {tag ? (
           <View style={styles.tag}>
             <AppText variant="small" color="accent">
