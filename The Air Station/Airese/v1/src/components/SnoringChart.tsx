@@ -9,7 +9,6 @@ import { Icon } from '@ds/components/Icon';
 const DB_MIN = 30;
 const DB_MAX = 90;
 const GRID = [40, 60, 80];
-const AXIS = 52; // room for the dB labels on the right
 const LANE = 18; // event markers above the plot
 const MIN_SPAN = 2; // closest zoom, in minutes
 const STEP = 2; // zoom factor per button press
@@ -29,8 +28,8 @@ const EVENT_LABEL: Record<Event['kind'], string> = {
 };
 
 /**
- * Snoring through the night: the sound level, every 20 seconds, as one filled shape against a
- * decibel scale. Built to match Engineering's interactive chart, in the Airese palette:
+ * Snoring through the night: the sound level, every 20 seconds, as one filled shape. Faint guide
+ * lines at 40, 60 and 80 dB, unlabelled. Built to match Engineering's interactive chart, in the Airese palette:
  *   fill       the `loudness` ramp, cyan → yellow → orange → red, pinned to decibels (see LEVELS)
  *   lane       events above the plot, each its own shape: breathing pause (Iris pill), cough (Moon
  *              diamond), movement (Mist ring), so colour is never the only cue
@@ -296,20 +295,10 @@ export function SnoringChart({
             </>
           )}
         </View>
-
-        {/* dB scale */}
-        <View style={{ width: AXIS, height: H }} pointerEvents="none">
-          {width > 0 &&
-            GRID.map((db) => (
-              <AppText key={db} variant="small" color="textMuted" style={[styles.gridLabel, { top: y(db) - 9 }]}>
-                {db === GRID[GRID.length - 1] ? `${db} dB` : `${db}`}
-              </AppText>
-            ))}
-        </View>
       </View>
 
       {/* Window ends */}
-      <View style={[styles.ends, { marginRight: AXIS }]}>
+      <View style={styles.ends}>
         <AppText variant="small" color="textMuted">
           {clockAt(d, Math.floor(view.start))}
         </AppText>
@@ -447,7 +436,6 @@ const styles = StyleSheet.create({
   },
   readoutValue: { fontVariant: ['tabular-nums'] },
   overlay: { position: 'absolute', left: 0, top: 0, overflow: 'visible' },
-  gridLabel: { position: 'absolute', left: space.sm, width: AXIS - space.sm },
   ends: {
     flexDirection: 'row',
     justifyContent: 'space-between',

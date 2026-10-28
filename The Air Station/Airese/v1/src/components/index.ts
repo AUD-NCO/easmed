@@ -11,3 +11,4 @@ export * from './MonthCalendar';
 export * from './MailDemo';
 export * from './EmailCodeSheet';
 export * from './ScoreSummary';
+export * from './ReviewNote';

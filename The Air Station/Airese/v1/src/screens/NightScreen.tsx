@@ -2,7 +2,6 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Animated, Platform, Pressable, StyleSheet, View } from 'react-native';
 import {
   AppText,
-  BenchmarkScale,
   BigNumber,
   Button,
   ClipPlayer,
@@ -21,6 +20,7 @@ import {
   PAGE_SIDE,
   PrivacyFooter,
   PromptBody,
+  ReviewNote,
   ScoreSummary,
   ScoreTile,
   SnoringChart,
@@ -30,12 +30,10 @@ import { useClipPlayer } from '../lib/clipPlayer';
 import {
   EXPLAIN,
   asleepStretches,
-  busiestWindow,
   CLIP_LABEL,
+  INTENSITY_LABEL,
   SAMPLE_SECONDS,
   clockAt,
-  dbAt,
-  loudMinutes,
   nightDetails,
   shortDuration,
   summary,
@@ -49,7 +47,7 @@ import {
 import { MIN_READABLE_MINUTES, stopTime, type ProblemCopy, type Stop } from '../lib/recordingIssues';
 import { formatNightDate, formatRecorded, formatSpan, type Night } from '../lib/recordings';
 import { formatDuration } from '../lib/time';
-import { alpha, colors, dataInk, motion, radius, space, type, useReducedMotion } from '@ds/theme';
+import { alpha, colors, motion, radius, space, type, useReducedMotion } from '@ds/theme';
 
 
 /**
@@ -205,14 +203,11 @@ export function NightScreen({
   const sound_ = (
     <>
       <DataCard title="Your night in sound">
-        <AppText color="text" style={{ marginBottom: space.xl }}>
-          {chartLine(d)}
-        </AppText>
         <SnoringChart d={d} mode="overview" moments={d.featured} selected={lead?.id} onSelect={pick} />
       </DataCard>
       {lead && (
       <DataCard>
-        <ClipPlayer clip={lead} time={clockAt(d, lead.at)} player={player} detail={`${CLIP_LABEL[lead.type]} · ${dbAt(d, lead.at)} dB · ${lead.seconds} sec`} />
+        <ClipPlayer clip={lead} time={clockAt(d, lead.at)} player={player} detail={`${CLIP_LABEL[lead.type]} · ${lead.seconds} sec`} />
         {d.featured.length > 1 && (
       <View style={styles.stepper}>
         <Pressable onPress={() => pick(d.featured[moment - 1])} disabled={moment <= 0} accessibilityRole="button" accessibilityLabel="Previous moment" style={[styles.stepButton, moment <= 0 && styles.off]}>
@@ -301,21 +296,24 @@ export function NightScreen({
                     <HourlyBars compact hours={d.hourly} />
                   </View>
                 </DataCard>
-                <DataCard shape="square" icon="bedtime" tone="sleep" label="Sleep" accessibilityLabel={`Sleep: ${formatDuration(d.sleepMinutes)}. ${zoneOf(mark(marks, 'sleep')).word}`}>
-                  <BigNumber value={shortDuration(d.sleepMinutes)} />
-                  <Note>{zoneOf(mark(marks, 'sleep')).word}</Note>
-                  <View style={styles.mini}>
-                    <AsleepStrip d={d} />
-                  </View>
-                </DataCard>
+                {/* Review: open question from stakeholder feedback (Oct 2026) */}
+                <ReviewNote note="If we’re strict, our metric is time recorded, not sleep. Something to discuss.">
+                  <DataCard shape="square" icon="bedtime" tone="sleep" label="Sleep" accessibilityLabel={`Sleep: ${formatDuration(d.sleepMinutes)}. ${zoneOf(mark(marks, 'sleep')).word}`}>
+                    <BigNumber value={shortDuration(d.sleepMinutes)} />
+                    <Note>{zoneOf(mark(marks, 'sleep')).word}</Note>
+                    <View style={styles.mini}>
+                      <AsleepStrip d={d} />
+                    </View>
+                  </DataCard>
+                </ReviewNote>
               </View>
 
               {/* The night report: every measure, for the curious and for a doctor */}
               <DataCard title="Night report" insight="Every measure from last night, and how Airese got it. Handy to show a doctor." onPress={() => setReport(true)}>
                 <View style={styles.stats}>
-                  <Stat value={`${d.peakDb} dB`} label="Loudest" />
-                  <Stat value={String(breathing.value)} label="Pauses an hour" />
-                  <Stat value={shortDuration(loudMinutes(d))} label="Above 60 dB" />
+                  <Stat value={shortDuration(d.snoringMinutes)} label="Snoring" />
+                  <Stat value={`${snoringPerHour(d)} min`} label="Snoring an hour" />
+                  <Stat value={`${pct(d.snoringMinutes, d.night.minutes)}%`} label="Snoring rate" />
                 </View>
               </DataCard>
 
@@ -328,7 +326,7 @@ export function NightScreen({
 
       {/* The Night report: every measure, and how it's measured */}
       <LargeSheet visible={report} title="Night report" onClose={() => setReport(false)}>
-        <ReportBody d={d} marks={marks} />
+        <ReportBody d={d} />
       </LargeSheet>
 
       {/* Small sheets: one-line explanations */}
@@ -356,7 +354,6 @@ const REMEDY = {
 
 const mark = (marks: Benchmark[], k: Benchmark['key']) => marks.find((b) => b.key === k)!;
 /** Where a score sits on its guide scale, 0 to 1. */
-const scaleAt = (b: Benchmark) => (b.value - b.min) / (b.max - b.min);
 
 // ---------- Small pieces ----------
 
@@ -403,87 +400,55 @@ function AsleepStrip({ d }: { d: NightDetails }) {
 
 const pct = (part: number, whole: number) => Math.round((part / whole) * 100);
 
-/** The chart's one line: how long it was louder than a conversation, and when. */
-function chartLine(d: NightDetails) {
-  const loud = loudMinutes(d);
-  return loud ? `Louder than a conversation for ${formatDuration(loud)}, mostly between ${busiestWindow(d)}.` : `Quieter than a conversation all night.`;
-}
-
 // ---------- Sheet contents ----------
 
-/** The Night report sheet: every measure from the night, the guide ranges, and how Airese measures. */
-function ReportBody({ d, marks }: { d: NightDetails; marks: Benchmark[] }) {
+/**
+ * The Night report sheet: the snoring measures Airese can stand behind (time, rate, loudness level),
+ * and how it measures. No decibels, sleep estimate, pauses, coughs, movement or scores for now
+ * (stakeholder review, Oct 2026): more snoring measures to come from Engineering.
+ */
+function ReportBody({ d }: { d: NightDetails }) {
   return (
     <View style={styles.sheetBody}>
       <AppText color="textMuted">Everything Airese measured last night, and how. Phones differ, so compare nights rather than reading one number on its own.</AppText>
-      <Block label="Measures">
-        {[
-          ['Recorded', formatDuration(d.night.minutes)],
-          ['Asleep (estimated)', formatDuration(d.sleepMinutes)],
-          ['Snoring', `${formatDuration(d.snoringMinutes)} · ${pct(d.snoringMinutes, d.night.minutes)}%`],
-          ['Above 60 dB', formatDuration(loudMinutes(d))],
-          ['Average while snoring', `${d.averageDb} dB`],
-          ['Loudest', `${d.peakDb} dB`],
-          ['Breathing pauses', `${d.breathingEvents.length} · ${mark(marks, 'breathing').value} an hour`],
-          ['Coughs', String(d.coughs.length)],
-          ['Movements', String(d.movements.length)],
-          ['Restless', `${d.awakenings} ${d.awakenings === 1 ? 'time' : 'times'}`],
-          ['Sound Score', `${d.soundScore} · loudness ${d.soundParts.loudness} + snoring ${d.soundParts.snoring}`],
-        ].map(([what, value]) => (
-          <View key={what} style={styles.refRow}>
-            <AppText color="text" style={{ flex: 1 }}>
-              {what}
-            </AppText>
-            <AppText color="textMuted" style={{ textAlign: 'right', flexShrink: 1 }}>
-              {value}
-            </AppText>
-          </View>
-        ))}
+      <Block label="Snoring">
+        <Rows
+          rows={[
+            ['Recorded', formatDuration(d.night.minutes)],
+            ['Snoring time', formatDuration(d.snoringMinutes)],
+            ['Snoring an hour', `${snoringPerHour(d)} min`],
+            ['Snoring rate', `${pct(d.snoringMinutes, d.night.minutes)}% of the recording`],
+          ]}
+        />
       </Block>
-      {marks.map((b) => (
-        <ScoreCard key={b.key} b={b} />
-      ))}
+      <Block label="How loud, as a share of snoring time">
+        <Rows rows={(['light', 'moderate', 'loud', 'veryLoud'] as const).map((k) => [INTENSITY_LABEL[k], `${d.intensityShare[k]}%`])} />
+      </Block>
       <Block label="How Airese measures">
-        <AppText color="text">{`Your phone’s microphone measures sound level every ${SAMPLE_SECONDS} seconds. Airese recognises snoring, pauses in breathing, coughs and movement from the sound alone, on your phone. A pause is counted when snoring stops for a moment and starts again with a louder breath.`}</AppText>
+        <AppText color="text">{`Your phone’s microphone listens through the night and checks the sound every ${SAMPLE_SECONDS} seconds. Airese recognises snoring from the sound alone, on your phone, and sorts it into four levels, from light to very loud.`}</AppText>
       </Block>
       <AppText variant="small" color="textMuted">
-        Prototype: guide ranges and the Sound Score formula are placeholders for Clinical and Engineering to confirm. Not a diagnosis.
+        Prototype: the loudness levels are placeholders for Clinical and Engineering to confirm. Not a diagnosis.
       </AppText>
     </View>
   );
 }
 
-/** One score with its scale (All details). */
-function ScoreCard({ b }: { b: Benchmark }) {
-  const zone = zoneOf(b);
-  const color = dataInk(b.tone, scaleAt(b)); // the colour the score reaches, as on its ring
-  return (
-    <View style={styles.block}>
-      <View style={styles.scoreHead}>
-        <AppText color="text" style={{ flex: 1 }}>
-          {b.name}
-        </AppText>
-        <View style={[styles.word, { borderColor: color }]}>
-          <AppText variant="small" color="text">
-            {zone.word}
-          </AppText>
-        </View>
-      </View>
-      <AppText variant="title" color="text" style={{ marginTop: space.sm }}>
-        {b.display}
+function Rows({ rows }: { rows: string[][] }) {
+  return rows.map(([what, value]) => (
+    <View key={what} style={styles.refRow}>
+      <AppText color="text" style={{ flex: 1 }}>
+        {what}
       </AppText>
-      <View style={{ marginTop: space.lg }}>
-        <BenchmarkScale b={b} color={color} />
-      </View>
-      <AppText variant="small" color="textMuted" style={{ marginTop: space.md }}>
-        {b.usual != null ? `${b.guide}. The thin line is your usual.` : `${b.guide}.`}
-      </AppText>
-      <AppText variant="small" color="text" style={{ marginTop: space.sm }}>
-        {b.explain}
+      <AppText color="textMuted" style={{ textAlign: 'right', flexShrink: 1 }}>
+        {value}
       </AppText>
     </View>
-  );
+  ));
 }
+
+/** Minutes of snoring in an average hour of the recording. */
+const snoringPerHour = (d: NightDetails) => Math.round(d.snoringMinutes / (d.night.minutes / 60));
 
 function Block({ label, children }: { label: string; children: React.ReactNode }) {
   return (
@@ -603,8 +568,6 @@ const styles = StyleSheet.create({
 
   sheetBody: { gap: space.xl, paddingTop: space.sm },
   block: { backgroundColor: colors.surface, borderRadius: radius.card, padding: space.gutter },
-  scoreHead: { flexDirection: 'row', alignItems: 'center', gap: space.md },
-  word: { paddingHorizontal: space.md, minHeight: 28, justifyContent: 'center', borderRadius: radius.pill, borderWidth: 1.5 },
   refRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: space.sm },
 
   nudgeMeasured: { position: 'absolute', top: 0, left: 0, right: 0 }, // full height while its holder opens

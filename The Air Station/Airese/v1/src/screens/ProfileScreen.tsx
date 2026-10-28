@@ -164,13 +164,10 @@ export function ProfileScreen({
           </FormGroup>
 
           {/* Brand: quiet, at the end */}
-          <View style={styles.brand} accessible accessibilityLabel={`Airese, powered by The Air Station. Everything Airese keeps is on this phone. Version ${version}`}>
+          <View style={styles.brand} accessible accessibilityLabel={`Airese, powered by The Air Station. Version ${version}`}>
             <Logo width={52} color="mist" />
             <AppText variant="small" color="textMuted" style={{ marginTop: space.lg }}>
               Powered by The Air Station
-            </AppText>
-            <AppText variant="small" color="textMuted" style={{ marginTop: space.xs, textAlign: 'center' }}>
-              Everything Airese keeps is on this phone.
             </AppText>
             {version ? (
               <AppText variant="caption" color="textMuted" style={{ marginTop: space.xs }}>
