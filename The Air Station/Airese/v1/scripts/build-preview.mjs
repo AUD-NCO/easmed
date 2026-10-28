@@ -75,7 +75,5 @@ document.addEventListener('click', function (e) {
 });
 </script>`;
 writeFileSync(join(out, 'email-code.html'), readFileSync(join(root, 'public', 'email-code.html'), 'utf8').replace('</body>', () => `${copyOtp}\n</body>`));
-// Full pages from the left pane ("For the team"), loaded next to the app by a relative link.
-writeFileSync(join(out, 'decisions.html'), readFileSync(join(root, 'public', 'decisions.html'), 'utf8'));
 rmSync(tmp, { recursive: true, force: true });
 console.log(`\nPreview written to Airese/preview-dist/${version}/index.html (${(html.length / 1024).toFixed(0)} KB)`);

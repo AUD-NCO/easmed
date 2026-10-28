@@ -65,18 +65,23 @@ export function SettingRow({
   );
 }
 
-export function SettingSwitch({ icon, title, value, enabled = true, onChange }: { icon?: IconName; title: string; value: boolean; enabled?: boolean; onChange: (on: boolean) => void }) {
+export function SettingSwitch({ icon, title, detail, value, enabled = true, onChange }: { icon?: IconName; title: string; detail?: string; value: boolean; enabled?: boolean; onChange: (on: boolean) => void }) {
   return (
     <View style={[styles.row, !enabled && styles.disabled]}>
       {icon && <Icon name={icon} size={24} color="text" />}
-      <AppText color="text" style={{ flex: 1 }}>
-        {title}
-      </AppText>
+      <View style={{ flex: 1 }}>
+        <AppText color="text">{title}</AppText>
+        {detail ? (
+          <AppText variant="small" color="textMuted">
+            {detail}
+          </AppText>
+        ) : null}
+      </View>
       <Switch
         value={value}
         disabled={!enabled}
         onValueChange={onChange}
-        accessibilityLabel={title}
+        accessibilityLabel={`${title}${detail ? `, ${detail}` : ''}`}
         trackColor={{ false: alpha(colors.mist, 0.3), true: colors.accent }}
         thumbColor={colors.white}
         ios_backgroundColor={alpha(colors.mist, 0.3)}

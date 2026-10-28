@@ -131,7 +131,7 @@ export function ProfileScreen({
           {/* Settings */}
           <FormGroup title="Settings">
             {notificationsOn ? (
-              <SettingSwitch icon="notifications" title="Bedtime reminder" value={prefs.bedtime} onChange={(on) => setNotificationPref('bedtime', on)} />
+              <SettingSwitch icon="notifications" title="Bedtime reminder" detail="Every night at 10 pm" value={prefs.bedtime} onChange={(on) => setNotificationPref('bedtime', on)} />
             ) : (
               <SettingRow icon="notifications" title="Bedtime reminder" detail="Notifications are off" action={{ label: 'Turn on', onPress: () => setNotificationsSheet(true) }} />
             )}

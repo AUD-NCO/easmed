@@ -30,7 +30,7 @@
   .nav button:focus-visible { outline: 2px solid #9DB4FF; outline-offset: -2px; }
 
   .pane { flex: 1; min-width: 0; height: 100%; display: flex; align-items: center; justify-content: center; overflow: hidden; }
-  /* A full page from the nav (not a screen in the phone), e.g. the stakeholder decisions wizard */
+  /* A full page from the nav (not a screen in the phone) */
   #page { display: none; flex: 1; min-width: 0; height: 100%; border: 0; background: var(--page); }
   body.paged .pane { display: none; }
   body.paged #page { display: block; }
@@ -110,9 +110,6 @@
   // To add a screen: one line here (key, label, route). A 'page' item (6th entry) opens full width instead of in the phone.
   (function () {
     var SCREENS = [
-      // Archived: the stakeholder decisions wizard (public/decisions.html). Uncomment to show it again.
-      // { group: 'For the team', items: [
-      //   ['decisions', 'Decisions to make', 'decisions.html', 'Open decisions blocking build: report contents, night classification, accounts.', 'New', 'page'] ] },
       { group: 'Getting started', items: [
         ['splash', 'Splash', '/', 'App launch. The logo arrives, then falls away into the walkthrough.'],
         ['onboarding', 'Walkthrough', '/onboarding', 'Three pages. Swipe or tap the dashes; Continue on the last page.'],
