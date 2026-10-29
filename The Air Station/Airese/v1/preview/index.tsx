@@ -10,6 +10,7 @@ import { registerRootComponent } from 'expo';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { HOME_TABS, SystemAlertHost, TabBar } from '../src/components';
 import { DetailsScreen } from '../src/screens/DetailsScreen';
+import { RegisterScreen } from '../src/screens/RegisterScreen';
 import { AboutYouScreen } from '../src/screens/AboutYouScreen';
 import { setProfile } from '../src/lib/profile';
 import { LegalScreen, type LegalDoc } from '../src/screens/LegalScreen';
@@ -26,16 +27,16 @@ import { UpdateScreen } from '../src/screens/UpdateScreen';
 import { ProfileScreen } from '../src/screens/ProfileScreen';
 import { CentresScreen } from '../src/screens/CentresScreen';
 import { EditDetailsScreen } from '../src/screens/EditDetailsScreen';
-import { deleteAccount, startRoute } from '../src/lib/account';
+import { deleteAccount, finishSetup, startRoute } from '../src/lib/account';
 import { LoginScreen } from '../src/screens/LoginScreen';
 import { ForgotPasswordScreen } from '../src/screens/ForgotPasswordScreen';
 import type { ProfileSheet } from '../src/screens/ProfileScreen';
 import { setDemoLastNightStopped, setDemoStartProblem, type StartProblem } from '../src/lib/recordingIssues';
 import { StartProblemScreen } from '../src/screens/ProblemScreen';
 
-type Step = 'splash' | 'onboarding' | 'microphone' | 'notifications' | 'details' | 'about-you' | 'home' | 'recording' | 'update' | 'problem' | 'login' | 'forgot-password';
+type Step = 'splash' | 'onboarding' | 'register' | 'microphone' | 'notifications' | 'details' | 'about-you' | 'home' | 'recording' | 'update' | 'problem' | 'login' | 'forgot-password';
 
-const STEPS: Step[] = ['splash', 'onboarding', 'microphone', 'notifications', 'details', 'about-you', 'home', 'recording', 'update', 'problem', 'login', 'forgot-password'];
+const STEPS: Step[] = ['splash', 'onboarding', 'register', 'microphone', 'notifications', 'details', 'about-you', 'home', 'recording', 'update', 'problem', 'login', 'forgot-password'];
 
 function PreviewApp() {
   const [step, setStep] = useState<Step>('splash');
@@ -51,8 +52,8 @@ function PreviewApp() {
   const [recordingNotes, setRecordingNotes] = useState(false); // Before sleeping, opened from Recording's banner
   const nightNotes = useNightNotes();
   const latest = useNights()[0]; // the night just recorded shows as the latest sample night
-  const [detailsDemo, setDetailsDemo] = useState<'mail' | null>(null); // demo nav: the email step
-  const [legal, setLegal] = useState<LegalDoc | null>(null); // Terms / Privacy, over the details screen
+  const [registerDemo, setRegisterDemo] = useState<'mail' | null>(null); // demo nav: the email step
+  const [legal, setLegal] = useState<LegalDoc | null>(null); // Terms / Privacy, over Create account
   const [problem, setProblem] = useState<StartProblem>('space'); // recording can't start: which problem
   const [run, setRun] = useState(0); // remounts the screen when the demo menu picks it again
 
@@ -61,10 +62,10 @@ function PreviewApp() {
     const onJump = (e: Event) => {
       let key = (e as CustomEvent<string>).detail;
       endAnalysing(); // a jump leaves the report that was being looked through
-      // The email step plays inside Your details
-      setDetailsDemo(key === 'email-code' ? 'mail' : null);
-      if (key === 'details') setProfile({ verifiedEmail: '' }); // starts unverified, like the app
-      if (key === 'email-code') key = 'details';
+      // The email step plays inside Create account
+      setRegisterDemo(key === 'email-code' ? 'mail' : null);
+      if (key === 'register') setProfile({ verifiedEmail: '' }); // starts unverified, like the app
+      if (key === 'email-code') key = 'register';
       setReportState(undefined);
       // Profile's sheets (demo nav): Profile, open on the sheet
       const sheet = ({ 'delete-recordings': 'delete-recordings', 'delete-account': 'delete-account', 'log-out': 'log-out' } as Record<string, ProfileSheet>)[key];
@@ -127,25 +128,28 @@ function PreviewApp() {
               // As the app: Home when logged in, Log in when logged out, else the walkthrough
               const to = startRoute();
               setLoggedOut(to === 'login');
-              setStep(to === 'home' ? 'home' : to);
+              setStep(to === 'home' ? 'home' : to === 'setup' ? 'microphone' : to);
             }}
           />
         )}
-        {step === 'onboarding' && <OnboardingScreen onContinue={() => setStep('microphone')} onLogIn={() => setStep('login')} />}
+        {step === 'onboarding' && <OnboardingScreen onContinue={() => setStep('register')} onLogIn={() => setStep('login')} />}
+        {step === 'register' && (
+          <RegisterScreen demo={registerDemo} onBack={() => setStep('onboarding')} onDone={() => setStep('microphone')} onOpenLegal={setLegal} />
+        )}
         {step === 'microphone' && <MicrophonePermissionScreen onDone={() => setStep('notifications')} />}
         {step === 'notifications' && <NotificationsPermissionScreen onDone={() => setStep('details')} />}
-        {step === 'details' && <DetailsScreen demo={detailsDemo} onDone={() => setStep('about-you')} onOpenLegal={setLegal} />}
-        {step === 'about-you' && <AboutYouScreen onDone={() => setStep('home')} />}
+        {step === 'details' && <DetailsScreen onDone={() => setStep('about-you')} />}
+        {step === 'about-you' && <AboutYouScreen onDone={() => (finishSetup(), setStep('home'), setTab('home'))} />}
         {step === 'login' && (
           <LoginScreen
             onBack={loggedOut ? undefined : () => setStep('onboarding')}
             onLoggedIn={() => (setStep('home'), setTab('home'))}
             onForgot={(email) => (setLoginEmail(email), setStep('forgot-password'))}
-            onSignUp={() => setStep('onboarding')}
+            onSignUp={() => setStep('register')}
           />
         )}
         {step === 'forgot-password' && <ForgotPasswordScreen email={loginEmail} demo={resetDemo} onBack={() => setStep('login')} onDone={() => (setStep('home'), setTab('home'))} />}
-        {step === 'details' && legal && (
+        {step === 'register' && legal && (
           <View style={{ position: 'absolute', top: 0, right: 0, bottom: 0, left: 0 }}>
             <LegalScreen doc={legal} onBack={() => setLegal(null)} />
           </View>

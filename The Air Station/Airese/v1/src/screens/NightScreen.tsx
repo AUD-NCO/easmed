@@ -22,7 +22,6 @@ import {
   PAGE_SIDE,
   PrivacyFooter,
   PromptBody,
-  ReviewNote,
   ScoreTile,
   SnoringChart,
 } from '../components';
@@ -292,16 +291,13 @@ export function NightScreen({
                     <HourlyBars compact hours={d.hourly} />
                   </View>
                 </DataCard>
-                {/* Review: open question from stakeholder feedback (Oct 2026) */}
-                <ReviewNote note="If we’re strict, our metric is time recorded, not sleep. Something to discuss.">
-                  <DataCard shape="square" icon="bedtime" tone="sleep" label="Sleep" accessibilityLabel={`Sleep: ${formatDuration(d.sleepMinutes)}. ${zoneOf(mark(marks, 'sleep')).word}`}>
-                    <BigNumber value={shortDuration(d.sleepMinutes)} />
-                    <Note>{zoneOf(mark(marks, 'sleep')).word}</Note>
-                    <View style={styles.mini}>
-                      <AsleepStrip d={d} />
-                    </View>
-                  </DataCard>
-                </ReviewNote>
+                <DataCard shape="square" icon="bedtime" tone="sleep" label="Sleep" accessibilityLabel={`Sleep: ${formatDuration(d.sleepMinutes)}. ${zoneOf(mark(marks, 'sleep')).word}`}>
+                  <BigNumber value={shortDuration(d.sleepMinutes)} />
+                  <Note>{zoneOf(mark(marks, 'sleep')).word}</Note>
+                  <View style={styles.mini}>
+                    <AsleepStrip d={d} />
+                  </View>
+                </DataCard>
               </View>
 
               {/* The night report: every measure, for the curious and for a doctor */}

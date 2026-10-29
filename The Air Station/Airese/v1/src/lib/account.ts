@@ -8,7 +8,8 @@ import { recall, remember } from './session';
  * The Airese account (management decision, Oct 2026): a verified email and a password make a user in
  * the database, with its own user ID. Then: log in, forgot password, log out, delete account.
  *
- *   create   Your details: email verified with a code (lib/emailCode.ts), a password, Continue
+ *   create   Create account (Get started, on the walkthrough): email verified with a code (lib/emailCode.ts),
+ *            a password, Continue. Then set-up: microphone, notifications, Your details, About you, Home
  *   log in   email and password (I already have an account, on the walkthrough; where the app opens once logged out)
  *   forgot   email → a 6-digit code (the same Verify your email sheet) → a new password → logged in
  *   log out  Profile. Recordings stay on the phone; logging in again brings everything back
@@ -23,7 +24,7 @@ import { recall, remember } from './session';
 export const PASSWORD_MIN = 8;
 
 type Account = { userId: string; email: string; password: string };
-type State = { account: Account | null; signedIn: boolean };
+type State = { account: Account | null; signedIn: boolean; settingUp?: boolean }; // settingUp: made, set-up not finished
 
 let state: State = recall<State>('account', { account: null, signedIn: false });
 const listeners = new Set<() => void>();
@@ -38,9 +39,14 @@ const newUserId = () => `usr_${Math.random().toString(36).slice(2, 10)}`;
 
 export const passwordProblem = (p: string) => (!p ? 'Create a password.' : p.length < PASSWORD_MIN ? `Use at least ${PASSWORD_MIN} characters.` : undefined);
 
-/** End of Your details: the verified email and the password become an account, and you're in. */
+/** Create account: the verified email and the password become an account, and you're in. Set-up follows. */
 export function createAccount(email: string, password: string) {
-  save({ account: { userId: newUserId(), email, password }, signedIn: true });
+  save({ account: { userId: newUserId(), email, password }, signedIn: true, settingUp: true });
+}
+
+/** End of set-up (About you): from now on the app opens on Home. */
+export function finishSetup() {
+  if (state.settingUp) save({ ...state, settingUp: false });
 }
 
 /** Log in. Prototype: see above. Says what's wrong, plainly, or nothing when it worked. */
@@ -48,7 +54,7 @@ export async function logIn(email: string, password: string): Promise<string | u
   const known = state.account;
   if (known && known.email.toLowerCase() === email.toLowerCase() && known.password !== password) return 'That password isn’t right. Try again, or reset it.';
   if (password.length < PASSWORD_MIN) return 'That password isn’t right. Try again, or reset it.';
-  save({ account: known && known.email.toLowerCase() === email.toLowerCase() ? known : { userId: newUserId(), email, password }, signedIn: true });
+  save({ account: known && known.email.toLowerCase() === email.toLowerCase() ? known : { userId: newUserId(), email, password }, signedIn: true, settingUp: false });
   setProfile({ email, verifiedEmail: email });
   return undefined;
 }
@@ -56,7 +62,7 @@ export async function logIn(email: string, password: string): Promise<string | u
 /** Forgot password, last step: the code was right, so the new password is set and you're in. */
 export function resetPassword(email: string, password: string) {
   const known = state.account?.email.toLowerCase() === email.toLowerCase() ? state.account : null;
-  save({ account: { userId: known?.userId ?? newUserId(), email, password }, signedIn: true });
+  save({ account: { userId: known?.userId ?? newUserId(), email, password }, signedIn: true, settingUp: false });
   setProfile({ email, verifiedEmail: email });
 }
 
@@ -77,10 +83,12 @@ export function deleteAccount() {
 }
 
 /**
- * Where the app opens after the splash: Home when logged in; Log in when there's an account but
- * you've logged out (you've seen the walkthrough); the walkthrough on a first run.
+ * Where the app opens after the splash: Home when logged in; back into set-up when the account was made
+ * but set-up wasn't finished; Log in when there's an account but you've logged out (you've seen the
+ * walkthrough); the walkthrough on a first run.
  */
-export const startRoute = (): 'home' | 'login' | 'onboarding' => (state.signedIn ? 'home' : state.account ? 'login' : 'onboarding');
+export const startRoute = (): 'home' | 'setup' | 'login' | 'onboarding' =>
+  state.signedIn ? (state.settingUp ? 'setup' : 'home') : state.account ? 'login' : 'onboarding';
 
 export function useAccount(): State {
   return useSyncExternalStore(

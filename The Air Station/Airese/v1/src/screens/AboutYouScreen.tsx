@@ -6,7 +6,7 @@ import { setProfile, useProfile, type Profile } from '../lib/profile';
 import { colors, space, useInsets } from '@ds/theme';
 
 /**
- * Onboarding, last step (after Your details): gender, age, height, weight and where you live, as a
+ * Set-up, last step (after Your details): gender, age, height, weight and where you live, as a
  * list to fill in one by one, all required. Headline with (i) (why we ask), one line saying all are needed.
  * Begin your journey → Home.
  */

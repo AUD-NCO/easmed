@@ -1,13 +1,13 @@
 /**
- * Email check, from the Verify button in the email field of Your details (onboarding, and Profile when
- * the email changes):
+ * Email check, from the Verify button in the email field of Create account (sign-up), and of Profile's Your details when
+ * the email changes:
  *
  *   1. Verify → the server emails a 6-digit code (template: public/email-code.html), and the
  *      Verify your email sheet opens (components/EmailCodeSheet): where the code went, how long it works.
  *   2. In their mail app the person taps Copy OTP: the code is copied and the app opens again
  *      (the button's link, {{app_link}} in the template), still on the sheet.
  *   3. Paste code. The right code → "Email verified", the sheet closes by itself and the email field
- *      shows Verified. Continue (onboarding) or Save (Profile) is dimmed until then.
+ *      shows Verified. Continue (Create account) or Save (Profile) is dimmed until then.
  *
  * Prototype: step 2 is drawn inside the phone (components/MailDemo), from "Demo: open the email" on the sheet.
  *

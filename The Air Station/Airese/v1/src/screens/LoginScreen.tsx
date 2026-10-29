@@ -65,7 +65,7 @@ export function LoginScreen({ onBack, onLoggedIn, onForgot, onSignUp, email: ini
 
         {/* One sentence, one line: the link sits in the text (same font and baseline) */}
         <AppText color="textMuted" style={styles.new}>
-          New to Airese? <InlineLink onPress={onSignUp}>Get started</InlineLink>
+          New to Airese? <InlineLink onPress={onSignUp}>Create an account</InlineLink>
         </AppText>
       </View>
     </DetailPage>

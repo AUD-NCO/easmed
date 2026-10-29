@@ -108,7 +108,7 @@ Splash, onboarding walkthrough, microphone and notification permissions, your de
 ## 4. App map and navigation
 
 ```
-Splash ─► Onboarding walkthrough ─► Microphone ─► Notifications ─► Your details ─► Home
+Splash ─► Onboarding walkthrough ─► Create account (or I already have an account ─► Log in ─► Home) ─► Microphone ─► Notifications ─► Your details ─► About you ─► Home
                                                                                    │
   Tabs: Home ◄──────────────────────────────────────────────────────────────► Reports
    │                                                                          │

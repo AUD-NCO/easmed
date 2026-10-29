@@ -2,5 +2,5 @@ import { router } from 'expo-router';
 import { OnboardingScreen } from '../screens/OnboardingScreen';
 
 export default function Onboarding() {
-  return <OnboardingScreen onContinue={() => router.push('/permissions/microphone')} onLogIn={() => router.push('/login')} />;
+  return <OnboardingScreen onContinue={() => router.push('/register')} onLogIn={() => router.push('/login')} />;
 }

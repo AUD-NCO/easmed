@@ -13,7 +13,7 @@ import { colors, alpha, motion, radius, space } from '@ds/theme';
 
 
 /**
- * Verify your email, after Verify in the email field (onboarding's and Profile's Your details).
+ * Verify your email, after Verify in the email field (Create account, and Profile's Your details).
  * Two steps, so the person isn't met with code boxes before they have a code:
  *   sent   a short bottom sheet: where the code went, go and copy it.
  *   enter  coming back to the app: the large sheet with the code boxes and

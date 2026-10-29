@@ -39,6 +39,7 @@ export default function RootLayout() {
         {/* Terms and Privacy, from the agreement on the details screen */}
         <Stack.Screen name="legal/[doc]" options={PUSH} />
         {/* Account: log in (pushed from the walkthrough) and its password reset */}
+        <Stack.Screen name="register" options={PUSH} />
         <Stack.Screen name="login" options={PUSH} />
         <Stack.Screen name="forgot-password" options={PUSH} />
         {/* Recording can't start (no space, or the recorder failed) */}

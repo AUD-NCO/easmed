@@ -34,7 +34,25 @@
   #page { display: none; flex: 1; min-width: 0; height: 100%; border: 0; background: var(--page); }
   body.paged .pane { display: none; }
   body.paged #page { display: block; }
-  .stage { display: flex; flex-direction: column; align-items: center; gap: 18px; transform-origin: center center; }
+  .stage { display: flex; align-items: flex-end; gap: 32px; transform-origin: center center; }
+  .device { display: flex; flex-direction: column; align-items: center; gap: 18px; }
+
+  /* Comments on the screen on show, beside the phone */
+  .comments { width: 300px; height: 898px; display: flex; flex-direction: column; padding: 20px; border: 1px solid var(--field-edge); border-radius: 20px; background: var(--field); }
+  .comments h2 { margin: 0; font-weight: 600; font-size: 16px; }
+  .comments h2 span { display: block; margin-top: 2px; font-size: 12px; font-weight: 400; color: var(--muted); }
+  .comments ol { flex: 1; min-height: 0; overflow-y: auto; list-style: none; margin: 16px 0; padding: 0; }
+  .comments li { padding: 12px 0; border-top: 1px solid var(--field-edge); font: 400 14px/1.5 Inter, system-ui, sans-serif; white-space: pre-wrap; overflow-wrap: anywhere; }
+  .comments li small { display: block; margin-bottom: 4px; font-size: 12px; color: var(--muted); white-space: normal; }
+  .comments li small b { font-weight: 600; color: var(--ink); }
+  .comments .empty { color: var(--muted); border: 0; }
+  .comments input, .comments textarea { width: 100%; padding: 10px 12px; border: 1px solid var(--field-edge); border-radius: 10px; background: var(--page); color: var(--ink); font: 400 14px/1.5 Inter, system-ui, sans-serif; }
+  .comments input { min-height: 44px; margin-bottom: 8px; }
+  .comments textarea { height: 96px; resize: none; }
+  .comments input:focus-visible, .comments textarea:focus-visible, .comments button:focus-visible { outline: 2px solid #9DB4FF; outline-offset: 1px; }
+  .comments button { width: 100%; min-height: 44px; margin-top: 8px; border: 0; border-radius: 10px; background: #9DB4FF; color: #0B1020; cursor: pointer; font: 600 14px Montserrat, system-ui, sans-serif; }
+  .comments button:disabled { opacity: .5; cursor: default; }
+  .comments .status { min-height: 18px; margin: 6px 0 0; font-size: 12px; color: var(--muted); }
   /* Under-phone note for the screen on show: what it does, and its route */
   .meta { width: 426px; min-height: 58px; text-align: center; }
   .meta p { margin: 0; font: 400 14px/1.5 Inter, system-ui, sans-serif; color: var(--ink); }
@@ -63,7 +81,8 @@
     body { display: block; }
     .pane { display: block; }
     .stage { transform: none !important; display: block; height: 100%; }
-    .nav, .meta, .statusbar, .island, .home, .phone::before, .phone::after { display: none; }
+    .device { display: block; height: 100%; }
+    .nav, .meta, .comments, .statusbar, .island, .home, .phone::before, .phone::after { display: none; }
     .phone { width: 100%; height: 100%; border-radius: 0; padding: 0; background: none; box-shadow: none; }
     .screen { width: 100%; height: 100%; border-radius: 0; }
   }
@@ -75,6 +94,7 @@
 </nav>
 <main class="pane">
 <div class="stage" id="stage">
+  <div class="device">
   <div class="meta" id="meta" aria-live="polite"><p></p><code></code></div>
   <div class="phone">
     <div class="screen">
@@ -88,6 +108,17 @@
       <div class="home"></div>
     </div>
   </div>
+  </div>
+  <aside class="comments" aria-labelledby="comments-title">
+    <h2 id="comments-title">Comments<span id="comments-screen"></span></h2>
+    <ol id="comment-list"></ol>
+    <form id="comment-form">
+      <input id="comment-name" placeholder="Your name" aria-label="Your name" autocomplete="name" required />
+      <textarea id="comment-text" placeholder="Add a comment on this screen" aria-label="Comment" required></textarea>
+      <button type="submit">Add comment</button>
+      <p class="status" id="comment-status" aria-live="polite"></p>
+    </form>
+  </aside>
 </div>
 </main>
 <iframe id="page" title="Page"></iframe>
@@ -99,7 +130,7 @@
     function fit() {
       if (window.matchMedia('(max-width: 500px)').matches) return;
       var pane = document.querySelector('.pane');
-      var s = Math.min(1, (pane.clientHeight - 24) / 990, (pane.clientWidth - 24) / 440);
+      var s = Math.min(1, (pane.clientHeight - 24) / 990, (pane.clientWidth - 24) / 780); // phone + comments
       document.getElementById('stage').style.transform = 'scale(' + s + ')';
     }
     fit(); window.addEventListener('resize', fit);
@@ -111,28 +142,29 @@
   (function () {
     var SCREENS = [
       { group: 'For the team', items: [
-        ['verdicts', 'Verdict copy', 'verdicts.html', 'The 15 verdict banners: five for each kind of night, taking turns from night to night. Review and finalise the copy.', 'New', 'page'] ] },
+        ['verdicts', 'Verdict copy', 'verdicts.html', 'The 15 verdict banners: five for each kind of night, taking turns from night to night. Review and finalise the copy.', '', 'page'] ] },
       { group: 'Getting started', items: [
-        ['splash', 'Splash', '/', 'App launch. The logo arrives, then falls away into Home (logged in), Log in (logged out) or the walkthrough (first run).'],
-        ['onboarding', 'Walkthrough', '/onboarding', 'Three pages. Swipe or tap the dashes; Get started on the last page. I already have an account (pinned to the bottom of every page) goes to Log in.'],
-        ['microphone', 'Microphone access', '/permissions/microphone', 'Asks for the mic, saying why first. Skip or Don’t Allow opens a second-chance sheet.'],
+        ['splash', 'Splash', '/', 'App launch. The logo arrives, then falls away into Home (logged in), Log in (logged out), set-up (account made, set-up not finished) or the walkthrough (first run).'],
+        ['onboarding', 'Walkthrough', '/onboarding', 'Three pages. Swipe or tap the dashes; Get started on the last page goes to Create account. I already have an account (pinned to the bottom of every page) goes to Log in.'],
+        ['register', 'Create account', '/register', 'From Get started. Email, password, Terms. Verify sends a code; Continue (off until verified) creates the account, then the permissions.'],
+        ['email-code', 'Email · your code', '/register?state=mail', 'The phone’s mail app, open on the Airese email. Copy OTP copies the code and goes back to the Verify your email sheet, where Paste code verifies it. Template for developers: public/email-code.html.'],
+        ['login', 'Log in', '/login', 'From I already have an account on the walkthrough, and where the app opens once you’ve logged out. Any email and an 8+ character password works in the demo. Goes straight Home. New to Airese? Create an account goes to Create account.'],
+        ['microphone', 'Microphone access', '/permissions/microphone', 'Set-up, after Create account. Asks for the mic, saying why first. Skip or Don’t Allow opens a second-chance sheet.'],
         ['notifications', 'Notifications', '/permissions/notifications', 'Asks for notifications. Same pattern as the microphone screen.'],
-        ['details', 'Your details', '/details', 'Name, phone, email, a password and agreeing to Terms and Privacy, all required. Continue creates the account. Verify (in the email field) sends a code and opens the Verify your email sheet; Continue is off until the email is verified.'],
-        ['email-code', 'Email · your code', '/details?state=mail', 'The phone’s mail app, open on the Airese email. Copy OTP copies the code and goes back to the Verify your email sheet, where Paste code verifies it. Template for developers: public/email-code.html.'],
-        ['about-you', 'About you', '/about-you', 'Gender, age, height, weight and where you live, all required. (i) says why. Begin your journey goes Home.'] ] },
+        ['details', 'Your details', '/details', 'Name and phone, both required. (i) says why we ask for the phone.'],
+        ['about-you', 'About you', '/about-you', 'Gender, age, height, weight and where you live, all required. (i) says why. Begin your journey finishes set-up and goes Home.'] ] },
       { group: 'App', items: [
         ['home', 'Home', '/home', 'Tap the dial to record. The banner shows the one most useful message.'],
         ['recording', 'Recording', '/recording', 'Shown all night. Tap the ring and confirm to stop. Stops by itself after 8 hours.'],
         ['reports', 'Reports', '/reports', 'The latest night’s report. The calendar (top right) picks another night.'],
         ['profile', 'Profile', '/profile', 'Details, notification settings, sleep centres, and deleting data.'] ] },
       { group: 'Account', items: [
-        ['login', 'Log in', '/login', 'From I already have an account on the walkthrough, and where the app opens once you’ve logged out. Any email and an 8+ character password works in the demo.', 'New'],
-        ['forgot-password', 'Forgot password', '/forgot-password', 'From Log in. Send code opens the same Verify your email sheet as sign-up (demo code 482913).', 'New'],
-        ['forgot-password-new', 'New password', '/forgot-password?state=new', 'After the code: a new password, then Save and log in goes Home.', 'New'],
-        ['log-out', 'Log out', '/profile?sheet=log-out', 'Profile → Log out. A quick check; recordings stay. Goes to Log in.', 'New'],
-        ['delete-recordings', 'Delete all recordings', '/profile?sheet=delete-recordings', 'Profile → Delete all recordings. Full sheet: can’t be undone, and three short reasons to keep them.', 'New'],
-        ['reports-empty', 'Reports · after deleting', '/reports?state=empty', 'The Reports tab once every recording is deleted. Record tonight goes Home.', 'New'],
-        ['delete-account', 'Delete account', '/profile?sheet=delete-account', 'Profile → Delete account. Same full sheet; deleting starts the app again.', 'New'] ] },
+        ['forgot-password', 'Forgot password', '/forgot-password', 'From Log in. Send code opens the same Verify your email sheet as sign-up (demo code 482913).'],
+        ['forgot-password-new', 'New password', '/forgot-password?state=new', 'After the code: a new password, then Save and log in goes Home.'],
+        ['log-out', 'Log out', '/profile?sheet=log-out', 'Profile → Log out. A quick check; recordings stay. Goes to Log in.'],
+        ['delete-recordings', 'Delete all recordings', '/profile?sheet=delete-recordings', 'Profile → Delete all recordings. Full sheet: can’t be undone, and three short reasons to keep them.'],
+        ['reports-empty', 'Reports · after deleting', '/reports?state=empty', 'The Reports tab once every recording is deleted. Record tonight goes Home.'],
+        ['delete-account', 'Delete account', '/profile?sheet=delete-account', 'Profile → Delete account. Same full sheet; deleting starts the app again.'] ] },
       { group: 'Sleep Diary', items: [
         ['notes-before', 'Bedtime check-in', '/night-notes', 'From Recording’s banner. Same as last night fills in last night’s choices in one tap (demo: Caffeine, Ate late).'],
         ['notes-remedies', 'Morning check-in', '/night-notes?night=latest', 'From the report’s banner. Same as last night fills in the remedies from the night before (demo: Side sleeping, Nasal strip).'] ] },
@@ -152,7 +184,7 @@
     ];
     var nav = document.getElementById('nav');
     var frame = document.getElementById('app');
-    var ROUTES = {}, NOTES = {}, PAGES = {}, buttons = {}, current = 'splash';
+    var ROUTES = {}, NOTES = {}, PAGES = {}, LABELS = {}, buttons = {}, current = 'splash';
     var page = document.getElementById('page');
     var meta = document.getElementById('meta');
 
@@ -160,7 +192,7 @@
       var h = document.createElement('h2'); h.textContent = section.group; nav.appendChild(h);
       var ul = document.createElement('ul'); nav.appendChild(ul);
       section.items.forEach(function (item) {
-        ROUTES[item[0]] = item[2]; NOTES[item[0]] = item[3]; if (item[5] === 'page') PAGES[item[0]] = true;
+        ROUTES[item[0]] = item[2]; NOTES[item[0]] = item[3]; LABELS[item[0]] = item[1]; if (item[5] === 'page') PAGES[item[0]] = true;
         var li = document.createElement('li'), btn = document.createElement('button');
         btn.type = 'button'; btn.textContent = item[1];
         if (item[4]) { var tag = document.createElement('span'); tag.className = 'tag'; tag.textContent = item[4]; btn.appendChild(tag); }
@@ -175,6 +207,9 @@
       buttons[key].setAttribute('aria-current', 'page'); current = key;
       meta.querySelector('p').textContent = NOTES[key];
       meta.querySelector('code').textContent = frame ? ROUTES[key] : '';
+      // Every screen has its own link: iphone.html#home
+      if (ready && location.hash.slice(1) !== key) history.replaceState(null, '', '#' + key);
+      showComments(key);
     }
     function go(key) {
       mark(key);
@@ -185,7 +220,16 @@
       if (frame) frame.src = ROUTES[key] + (ROUTES[key].indexOf('?') > -1 ? '&' : '?') + 'frame=iphone';
       else window.dispatchEvent(new CustomEvent('airese:jump', { detail: key }));
     }
+    var link = location.hash.slice(1); // opened from a link: that screen
+    var ready = !ROUTES[link]; // keep the link's hash until its screen is showing
     mark(current);
+    function openLink() { if (ROUTES[link] && link !== 'splash') go(link); ready = true; }
+    if (frame) openLink();
+    else window.addEventListener('airese:screen', function once() { window.removeEventListener('airese:screen', once); openLink(); }); // shared preview: once the app listens
+    window.addEventListener('hashchange', function () {
+      link = location.hash.slice(1);
+      if (ROUTES[link] && link !== current) go(link);
+    });
 
     window.addEventListener('airese:screen', function (e) { if (!PAGES[current]) mark(e.detail); });
     // Light screens standing in for other apps (mail, browser) ask for dark bars (src/lib/previewFrame.ts)
@@ -197,10 +241,58 @@
     if (frame) setInterval(function () {
       if (PAGES[current]) return; // the phone sits behind a page; don't let it take the nav back
       try {
-        var loc = frame.contentWindow.location, m = loc.search.match(/state=([a-z0-9-]+)/), path = loc.pathname + (m ? '?state=' + m[1] : '');
+        var loc = frame.contentWindow.location, m = loc.search.match(/(state|sheet)=([a-z0-9-]+)/), path = loc.pathname + (m ? '?' + m[1] + '=' + m[2] : '');
         for (var key in ROUTES) if (ROUTES[key] === path && current !== key) mark(key);
       } catch (err) {}
     }, 500);
+
+    // Comments: a thread for each screen, for the PM and the team. On localhost they're saved to
+    // docs/SCREEN-COMMENTS.json via the dev server (scripts/screen-comments.js); in the shared
+    // preview there's no server, so they stay in this browser.
+    function showComments(key) {
+      var list = document.getElementById('comment-list');
+      document.getElementById('comments-screen').textContent = LABELS[key];
+      list.textContent = '';
+      var all = (commentStore && commentStore[key]) || [];
+      if (!all.length) { var none = document.createElement('li'); none.className = 'empty'; none.textContent = 'No comments on this screen yet.'; list.appendChild(none); }
+      all.forEach(function (c) {
+        var li = document.createElement('li'), by = document.createElement('small'), who = document.createElement('b');
+        who.textContent = c.name; by.appendChild(who); by.appendChild(document.createTextNode(' · ' + c.when));
+        li.appendChild(by); li.appendChild(document.createTextNode(c.text)); list.appendChild(li);
+      });
+      list.scrollTop = list.scrollHeight;
+    }
+    var commentStore = {}, server = !!frame; // the shared preview has no dev server
+    var form = document.getElementById('comment-form'), nameField = document.getElementById('comment-name'), textField = document.getElementById('comment-text');
+    var status = document.getElementById('comment-status');
+    try { nameField.value = localStorage.getItem('airese:name') || ''; } catch (err) {}
+    function local() { try { return JSON.parse(localStorage.getItem('airese:comments') || '{}'); } catch (err) { return {}; } }
+    function load() {
+      if (!server) { commentStore = local(); showComments(current); return; }
+      fetch('/__comments').then(function (r) { return r.json(); }).then(function (data) { commentStore = data; showComments(current); })
+        .catch(function () { server = false; load(); });
+    }
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      var name = nameField.value.trim(), text = textField.value.trim();
+      if (!name || !text) return;
+      try { localStorage.setItem('airese:name', name); } catch (err) {}
+      var key = current, button = form.querySelector('button');
+      var done = function (data) { commentStore = data; textField.value = ''; button.disabled = false; status.textContent = server ? '' : 'Saved in this browser only.'; showComments(current); };
+      button.disabled = true;
+      if (!server) {
+        var data = local(), when = new Date().toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+        (data[key] = data[key] || []).push({ name: name, text: text, when: when });
+        try { localStorage.setItem('airese:comments', JSON.stringify(data)); } catch (err) {}
+        return done(data);
+      }
+      fetch('/__comments', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ screen: key, label: LABELS[key], name: name, text: text }) })
+        .then(function (r) { if (!r.ok) throw r; return r.json(); }).then(done)
+        .catch(function () { button.disabled = false; status.textContent = 'Couldn’t save. Is the dev server running?'; });
+    });
+    textField.addEventListener('keydown', function (e) { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) form.requestSubmit(); });
+    load();
+    setInterval(function () { if (server && document.activeElement !== textField) load(); }, 5000); // others' comments come in
   })();
 </script>
 </body>
