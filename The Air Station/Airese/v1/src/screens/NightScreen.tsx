@@ -28,7 +28,6 @@ import {
   PromptBody,
   ScoreTile,
   SnoringChart,
-  Toast,
 } from '../components';
 import { benchmarks, classify, zoneOf, type Benchmark } from '../lib/benchmarks';
 import { useClipPlayer } from '../lib/clipPlayer';
@@ -123,7 +122,6 @@ export function NightScreen({
   const [remedies, setRemedies] = useState(false);
   const [pausesInfo, setPausesInfo] = useState(false); // the star on Breathing pauses
   const [careSheet, setCareSheet] = useState(false);
-  const [toast, setToast] = useState<string | null>(null);
   const [heroBottom, setHeroBottom] = useState(0); // where the verdict card ends: the footer waits until it's scrolled past
   const player = useClipPlayer();
   const audioDeleted = useAudioDeleted(); // Profile → Delete all recordings: the report stays, the sound doesn't
@@ -342,9 +340,8 @@ export function NightScreen({
       <ExplainSheet content={explain ? EXPLAIN[explain] : null} onClose={() => setExplain(null)} />
       <RemediesSheet visible={remedies} onClose={() => setRemedies(false)} />
       <ExplainSheet content={pausesInfo ? PAUSES_INFO : null} onClose={() => setPausesInfo(false)} />
-      {/* Talk to our sleep care team: say what's shared, then Request a call back or Not now */}
-      <CareConfirmSheet visible={careSheet} onRequest={() => (setCareSheet(false), setToast('Call back requested'))} onClose={() => setCareSheet(false)} />
-      <Toast message={toast} onDone={() => setToast(null)} />
+      {/* Talk to our sleep care team: say what's shared, then Request a call back (confirms in the sheet) or Not now */}
+      <CareConfirmSheet visible={careSheet} onClose={() => setCareSheet(false)} />
     </>
   );
 }

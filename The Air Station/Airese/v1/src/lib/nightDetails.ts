@@ -257,31 +257,9 @@ export const breathingPerHour = (d: NightDetails) => Math.round((d.breathingEven
 /** Sound level in dB at a minute of the night (from the envelope). */
 export const dbAt = (d: NightDetails, minute: number) => Math.round(d.envelope[Math.min(d.envelope.length - 1, Math.max(0, Math.round(minute * SAMPLES_PER_MINUTE)))]);
 
-/** Minutes of snoring louder than a conversation (60 dB). */
-export const loudMinutes = (d: NightDetails) => Math.round(d.envelope.filter((db) => db >= 60).length / SAMPLES_PER_MINUTE);
-
 // ---------- Plain-language helpers ----------
 
 export const clockAt = (d: NightDetails, minute: number) => formatClock(fromMinutes(d.night.startMinutes + minute));
-
-/** "2 and 4 am": the two-hour window that held the most snoring. */
-export function busiestWindow(d: NightDetails) {
-  let best = 0;
-  let bestStart = 0;
-  for (let start = 0; start + 120 <= d.night.minutes; start += 15) {
-    const sum = d.segments.reduce((n, s) => n + Math.max(0, Math.min(s.end, start + 120) - Math.max(s.start, start)), 0);
-    if (sum > best) {
-      best = sum;
-      bestStart = start;
-    }
-  }
-  // Round the window's start to the nearest hour on the clock, then name the two-hour span.
-  const startClock = Math.round((d.night.startMinutes + bestStart) / 60) * 60;
-  const a = fromMinutes(startClock);
-  const b = fromMinutes(startClock + 120);
-  const p = (t: typeof a) => t.period.toLowerCase();
-  return p(a) === p(b) ? `${a.hour} and ${b.hour} ${p(b)}` : `${a.hour} ${p(a)} and ${b.hour} ${p(b)}`;
-}
 
 export type Trend = 'less' | 'same' | 'more';
 export const trend = (value: number, usual: number): Trend => (value < usual * 0.8 ? 'less' : value > usual * 1.2 ? 'more' : 'same');

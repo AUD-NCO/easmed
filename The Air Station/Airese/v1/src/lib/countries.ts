@@ -57,23 +57,3 @@ export const flag = (code: string) => String.fromCodePoint(...[...code.toUpperCa
 
 /** "SG" → "+65" */
 export const dialCode = (code: CountryCode) => `+${getCountryCallingCode(code)}`;
-
-/** Malaysia's 13 states and 3 federal territories, A to Z. */
-export const MY_STATES = [
-  'Johor',
-  'Kedah',
-  'Kelantan',
-  'Kuala Lumpur',
-  'Labuan',
-  'Melaka',
-  'Negeri Sembilan',
-  'Pahang',
-  'Penang',
-  'Perak',
-  'Perlis',
-  'Putrajaya',
-  'Sabah',
-  'Sarawak',
-  'Selangor',
-  'Terengganu',
-];
