@@ -7,14 +7,14 @@ import { nightState } from '../lib/nightDetails';
 import { usePermissionStatus } from '../lib/permissionStatus';
 import { setNotificationPref, useNotificationPrefs } from '../lib/profile';
 import { POOR_COPY, demoStop, stopCopy } from '../lib/recordingIssues';
-import { markRatingAsked, recordingsDeleted, shouldAskRating, useAnalysing, useNights, type Night } from '../lib/recordings';
+import { markRatingAsked, shouldAskRating, useAnalysing, useNights, type Night } from '../lib/recordings';
 import { MISSED_NIGHTS_NUDGE, calendarNights, dayKey, recordedOfRecent } from '../lib/reports';
 import { alpha, colors, radius, space, useInsets } from '@ds/theme';
 import { NightScreen } from './NightScreen';
 
 /**
  * Reports tab: opens on the most recent night's report (Recording Details). The calendar (top right)
- * drops down from the top with a month of nights, each ringed by its Sound Score; pick one to see
+ * drops down from the top with a month of nights, each ringed by its Snore Score; pick one to see
  * its report. No ring means nothing was recorded that night.
  * When several recent nights are missing, the calendar suggests a bedtime reminder (and asks for
  * notifications first if they're off).
@@ -22,9 +22,9 @@ import { NightScreen } from './NightScreen';
  * reason, how to solve): couldn't hear clearly → Record tonight; stopped early → See what was saved.
  * Straight after stopping: while the night is looked through, a sheet asks how the night was (1 to 5);
  * pick one or dismiss it. Every report has a banner for that night's Morning check-in (sleep remedies).
- * No nights (none yet, or all deleted from Profile): the empty state, NoReports.
+ * No nights yet (a first-time user): the empty state, NoReports.
  * `demoState`: the demo menu's Recording Details states, applied to the latest night (prototype only);
- * 'empty' shows the empty state after deleting.
+ * 'empty' shows the empty state: no night recorded yet (a first-time user).
  */
 export function ReportsScreen({ demoState, onRecordAgain, onOpenNotes }: { demoState?: string; onRecordAgain: () => void; onOpenNotes: (night: Night) => void }) {
   const all = useNights();
@@ -47,7 +47,7 @@ export function ReportsScreen({ demoState, onRecordAgain, onOpenNotes }: { demoS
   const night = (selected && map.get(selected)?.night) || latest;
   const notes = useNightNotes();
 
-  if (!night) return <NoReports deleted={demoState === 'empty' || recordingsDeleted()} onRecordAgain={onRecordAgain} />;
+  if (!night) return <NoReports />;
 
   const state = night === latest && analysing ? 'processing' : night === latest && demoState ? nightState(night, demoState) : nightState(night);
   // Only last night (the night that started yesterday) gets a tag; every other night shows just its date.
@@ -156,13 +156,13 @@ function MissedNights() {
   );
 }
 
-/** How the night was, 1 to 5: the moon filling up, with a word for each. */
+/** How the night was, 1 to 5: a simple face for each, from rough to great, with a word under it. */
 const RATINGS = [
-  { emoji: '🌑', name: 'Restless' },
-  { emoji: '🌒', name: 'Choppy' },
-  { emoji: '🌓', name: 'Okay' },
-  { emoji: '🌔', name: 'Rested' },
-  { emoji: '🌕', name: 'Dreamy' },
+  { emoji: '😣', name: 'Restless' },
+  { emoji: '😕', name: 'Choppy' },
+  { emoji: '😐', name: 'Okay' },
+  { emoji: '🙂', name: 'Rested' },
+  { emoji: '😌', name: 'Dreamy' },
 ];
 
 /** Straight after stopping: how the night was, 1 to 5. Pick one, or dismiss the sheet. */
@@ -191,11 +191,11 @@ function NightRating({ visible, onRate, onClose }: { visible: boolean; onRate: (
 const NONE: Night[] = [];
 
 /**
- * Reports with nothing in it: before the first recording, or after Delete all recordings. The tab's
- * title, then in the middle: the moon in soft rings, what's happened, the one thing to do (Record
- * tonight, to Home) and a tip for a good first night. After deleting it says so plainly: a fresh start.
+ * Reports with nothing in it: a first-time user, before their first recording. (Delete all recordings
+ * deletes the audio only, so the reports stay.) The tab's title, then in the middle: the moon in soft
+ * rings and what's coming. No button: recording starts from Home.
  */
-function NoReports({ deleted, onRecordAgain }: { deleted: boolean; onRecordAgain: () => void }) {
+function NoReports() {
   const insets = useInsets();
   return (
     <View style={[styles.root, { paddingTop: insets.top + PAGE_TITLE_TOP, paddingBottom: TAB_BAR_CLEARANCE }]}>
@@ -210,18 +210,11 @@ function NoReports({ deleted, onRecordAgain }: { deleted: boolean; onRecordAgain
           </View>
         </View>
         <AppText variant="headline" accessibilityRole="header" style={styles.center}>
-          {deleted ? 'Your recordings are deleted' : 'No reports yet'}
+          No reports yet
         </AppText>
         <AppText color="textMuted" style={[styles.center, { marginTop: space.sm }]}>
-          {deleted ? 'A fresh start. Record tonight and your new report will be here in the morning.' : 'Record tonight and your first report will be here in the morning.'}
+          Record tonight and your first report will be here in the morning.
         </AppText>
-        <Button label="Record tonight" icon="mic" onPress={onRecordAgain} style={{ marginTop: space.xl, alignSelf: 'stretch' }} />
-        <View style={styles.tip}>
-          <Icon name="lightbulb" size={20} color="textMuted" />
-          <AppText variant="small" color="textMuted" style={{ flex: 1 }}>
-            Put your phone near the bed, charging, screen down.
-          </AppText>
-        </View>
       </View>
     </View>
   );
@@ -239,7 +232,6 @@ const styles = StyleSheet.create({
   ringOuter: { width: 176, height: 176 },
   ringMid: { width: 132, height: 132, borderColor: alpha(colors.accent, 0.28) },
   moon: { width: 88, height: 88, borderRadius: 44, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.tintAccent },
-  tip: { flexDirection: 'row', alignItems: 'center', gap: space.sm, marginTop: space.xl },
   rates: { flexDirection: 'row', justifyContent: 'space-between', gap: space.xs, marginTop: space.xxl, marginBottom: space.xl },
   rate: { flex: 1, alignItems: 'center', gap: space.sm },
   rateDisc: { width: 56, height: 56, borderRadius: 28, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.background },

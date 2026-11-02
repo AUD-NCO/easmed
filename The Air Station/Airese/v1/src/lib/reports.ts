@@ -3,13 +3,13 @@ import type { Night } from './recordings';
 
 /**
  * Reports tab: what the calendar needs to know about each night.
- * Prototype: computed from the sample nights. Engineering: read each night's stored Sound Score.
+ * Prototype: computed from the sample nights. Engineering: read each night's stored Snore Score.
  */
 
 /** "2026-10-07": a night by the date it started (the same as a Night's id). */
 export const dayKey = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 
-/** A recorded night on the calendar: its Sound Score (0–100), or null when Airese couldn't hear clearly. */
+/** A recorded night on the calendar: its Snore Score (0–100), or null when Airese couldn't hear clearly. */
 export type CalendarNight = { night: Night; state: NightState; score: number | null };
 
 export function calendarNights(nights: Night[]): Map<string, CalendarNight> {

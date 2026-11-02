@@ -227,7 +227,7 @@ export function nightDetails(night: Night, state: NightState): NightDetails {
 }
 
 /**
- * Sound Score, 0–100, from two halves: how loud the snoring was (35 dB scores 0, 65 dB or more 50)
+ * Snore Score, 0–100, from two halves: how loud the snoring was (35 dB scores 0, 65 dB or more 50)
  * and how much of the night it filled (none scores 0, 40% or more 50). Lower is quieter.
  * PLACEHOLDER formula for the prototype: Engineering and Clinical to define the real one.
  */

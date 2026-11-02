@@ -16,14 +16,31 @@ const webSnapItem = Platform.OS === 'web' ? ({ scrollSnapAlign: 'center' } as ob
 
 // ---------- Wheel ----------
 
-const ROW = 48;
-const VISIBLE = 5; // rows on show; the middle one is the value
+export const ROW = 48;
+export const VISIBLE = 5; // rows on show; the middle one is the value
 
 /**
  * A scroll wheel (the iOS date picker feel) for picking one number from a range, e.g. a year.
  * Scroll it, tap a row, or use VoiceOver's swipe up / down (adjustable). The middle band marks the value.
+ * Wheels side by side (a date) turn off their own `band` and share one drawn behind them.
  */
-export function WheelPicker({ min, max, value, onChange, label, format = String }: { min: number; max: number; value: number; onChange: (v: number) => void; label: string; format?: (v: number) => string }) {
+export function WheelPicker({
+  min,
+  max,
+  value,
+  onChange,
+  label,
+  format = String,
+  band = true,
+}: {
+  min: number;
+  max: number;
+  value: number;
+  onChange: (v: number) => void;
+  label: string;
+  format?: (v: number) => string;
+  band?: boolean;
+}) {
   const ref = useRef<ScrollView>(null);
   const current = useRef(value);
   const items = Array.from({ length: max - min + 1 }, (_, i) => min + i);
@@ -52,7 +69,7 @@ export function WheelPicker({ min, max, value, onChange, label, format = String 
         scrollTo(v, true);
       }}
     >
-      <View style={styles.band} pointerEvents="none" />
+      {band && <View style={styles.band} pointerEvents="none" />}
       <ScrollView
         ref={ref}
         onLayout={() => scrollTo(value, false)}

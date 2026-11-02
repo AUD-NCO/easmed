@@ -10,7 +10,7 @@ export default function ForgotPassword() {
       demo={state === 'new'}
       onBack={() => (router.canGoBack() ? router.back() : router.replace('/login'))}
       onDone={() => {
-        router.dismissAll();
+        if (router.canDismiss()) router.dismissAll();
         router.replace('/home');
       }}
     />

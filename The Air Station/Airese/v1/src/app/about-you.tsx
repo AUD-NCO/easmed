@@ -7,7 +7,7 @@ export default function AboutYou() {
     <AboutYouScreen
       onDone={() => {
         finishSetup();
-        router.dismissAll();
+        if (router.canDismiss()) router.dismissAll();
         router.replace('/home');
       }}
     />

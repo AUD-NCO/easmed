@@ -20,7 +20,7 @@ const monthIndex = (d: Date) => d.getFullYear() * 12 + d.getMonth();
 /**
  * A month of nights, the standard way: month and year on top with ‹ › to step through months, and
  * tap the month name for a month-and-year grid to jump further. Weeks start on Sunday.
- * Each recorded night has a ring for its Sound Score (fuller is louder, through the loudness ramp);
+ * Each recorded night has a ring for its Snore Score (fuller is louder, through the loudness ramp);
  * a dashed ring where Airese couldn't hear clearly; no ring where nothing was recorded.
  * A small Moon dot by the ring: the night's Sleep Diary was filled in.
  * Only recorded nights can be picked; days still to come are dimmed. Months run from the first
@@ -145,7 +145,7 @@ function Days({ month, nights, selected, onPick, today, diary }: { month: Date; 
           const noted = !!n && !!diary?.has(n.night.id);
           const future = date > today && !isToday;
           const label = `${WEEKDAYS_LONG[date.getDay()]} ${day} ${MONTHS[month.getMonth()]}${
-            n ? (n.score == null ? ', recorded, couldn’t hear clearly' : `, Sound Score ${n.score}`) : ', no recording'
+            n ? (n.score == null ? ', recorded, couldn’t hear clearly' : `, Snore Score ${n.score}`) : ', no recording'
           }${noted ? ', Sleep Diary filled in' : ''}${isToday ? ', today' : ''}`;
           return (
             <Pressable

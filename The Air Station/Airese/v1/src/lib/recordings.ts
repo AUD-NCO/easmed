@@ -35,32 +35,40 @@ export function sampleNights(today = new Date()): Night[] {
 }
 
 /**
- * The nights recorded. Profile → Delete all recordings empties it for the rest of the session.
- * Engineering: delete the audio clips and analysis from the device, not just the list.
+ * Profile → Delete all recordings deletes the audio only. The nights stay, with their reports, insights
+ * and check-ins; their reports just no longer offer Listen or the moments' player.
+ * Engineering: delete the audio clips from the device; keep each night's analysis and notes.
  */
-let deleted: boolean = recall('recordingsDeleted', false);
-const listeners = new Set<() => void>();
+let audioDeleted: boolean = recall('audioDeleted', false);
+const audioListeners = new Set<() => void>();
 
 export function deleteAllRecordings() {
-  deleted = true;
-  remember('recordingsDeleted', true);
-  listeners.forEach((l) => l());
+  audioDeleted = true;
+  remember('audioDeleted', true);
+  audioListeners.forEach((l) => l());
 }
 
-/** True once Profile → Delete all recordings has run: Reports says so, rather than "No reports yet". */
-export const recordingsDeleted = () => deleted;
-
-/** Delete account starts over: the sample nights come back for the next demo run. */
+/** Delete account starts over: the sample audio comes back for the next demo run. */
 export function restoreSampleRecordings() {
-  deleted = false;
-  remember('recordingsDeleted', false);
-  listeners.forEach((l) => l());
+  audioDeleted = false;
+  remember('audioDeleted', false);
+  audioListeners.forEach((l) => l());
 }
 
-const EMPTY: Night[] = [];
+/** True once the audio has been deleted (Profile → Delete all recordings). */
+export function useAudioDeleted(): boolean {
+  return useSyncExternalStore(
+    (l) => {
+      audioListeners.add(l);
+      return () => audioListeners.delete(l);
+    },
+    () => audioDeleted,
+  );
+}
+
+const listeners = new Set<() => void>();
 let cache: { day: string; nights: Night[] } | null = null;
 function current(): Night[] {
-  if (deleted) return EMPTY;
   const day = new Date().toDateString();
   if (cache?.day !== day) cache = { day, nights: sampleNights() };
   return cache.nights;

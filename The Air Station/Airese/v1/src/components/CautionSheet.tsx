@@ -9,10 +9,12 @@ import { alpha, colors, radius, space, type } from '@ds/theme';
 export type Caution = {
   /** The sheet's title: what's about to happen ("Delete all recordings"). */
   title: string;
+  /** The question above the lead. Default: "This can’t be undone". */
+  heading?: string;
   /** One sentence: what goes, for good. */
   lead: string;
-  /** Short reasons to think twice: an icon, a few words, one line under them. Three at most. */
-  points: { icon: IconName; title: string; body: string }[];
+  /** Optional short reasons to think twice: an icon, a few words, one line under them. Three at most. */
+  points?: { icon: IconName; title: string; body: string }[];
   /** The safe way out, the bright button ("Keep my recordings"). */
   keep: string;
   /** The destructive action, quieter and in red ("Delete all recordings"). */
@@ -21,8 +23,8 @@ export type Caution = {
 
 /**
  * Before something that can't be undone (Profile → Delete all recordings, Delete account): a near
- * full-height sheet. An alert mark, "This can’t be undone", one sentence on what goes, then a few short
- * points on why it's worth keeping, and two answers: keep (bright, first) or delete (outlined in red).
+ * full-height sheet. An alert mark, a heading ("This can’t be undone"), one sentence on what goes (and
+ * what stays), optionally a few short points on why it's worth keeping, and two answers: keep (bright, first) or delete (outlined in red).
  * Calm, not scary: the facts, no pressure (BRAND: calm, useful, no invented urgency).
  */
 export function CautionSheet({ content, visible, onKeep, onConfirm }: { content: Caution; visible: boolean; onKeep: () => void; onConfirm: () => void }) {
@@ -33,32 +35,36 @@ export function CautionSheet({ content, visible, onKeep, onConfirm }: { content:
           <Icon name="warning" size={32} color="error" />
         </View>
         <AppText variant="headline" color="text" accessibilityRole="header">
-          This can’t be undone
+          {content.heading ?? 'This can’t be undone'}
         </AppText>
         <AppText color="text" style={{ marginTop: space.sm }}>
           {content.lead}
         </AppText>
 
-        <AppText variant="small" color="textMuted" style={styles.kicker} accessibilityRole="header">
-          Worth knowing first
-        </AppText>
-        <View style={styles.points}>
-          {content.points.map((p) => (
-            <View key={p.title} style={styles.point} accessible accessibilityLabel={`${p.title}. ${p.body}`}>
-              <View style={styles.pointIcon}>
-                <Icon name={p.icon} size={22} color="accent" />
-              </View>
-              <View style={{ flex: 1 }}>
-                <AppText color="text" style={styles.semibold}>
-                  {p.title}
-                </AppText>
-                <AppText variant="small" color="textMuted">
-                  {p.body}
-                </AppText>
-              </View>
+        {content.points?.length ? (
+          <>
+            <AppText variant="small" color="textMuted" style={styles.kicker} accessibilityRole="header">
+              Worth knowing first
+            </AppText>
+            <View style={styles.points}>
+              {content.points.map((p) => (
+                <View key={p.title} style={styles.point} accessible accessibilityLabel={`${p.title}. ${p.body}`}>
+                  <View style={styles.pointIcon}>
+                    <Icon name={p.icon} size={22} color="accent" />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <AppText color="text" style={styles.semibold}>
+                      {p.title}
+                    </AppText>
+                    <AppText variant="small" color="textMuted">
+                      {p.body}
+                    </AppText>
+                  </View>
+                </View>
+              ))}
             </View>
-          ))}
-        </View>
+          </>
+        ) : null}
 
         <Button label={content.keep} onPress={onKeep} style={{ marginTop: space.xxl }} />
         <Pressable onPress={onConfirm} accessibilityRole="button" accessibilityLabel={content.confirm} accessibilityHint="Can’t be undone" style={({ pressed }) => [styles.danger, pressed && { opacity: 0.8 }]}>

@@ -12,11 +12,11 @@ export default function Profile() {
       onOpenDetails={() => router.push('/profile-details')}
       onOpenCentres={() => router.push('/centres')}
       onLoggedOut={() => {
-        router.dismissAll();
+        if (router.canDismiss()) router.dismissAll();
         router.replace({ pathname: '/login', params: { out: '1' } });
       }}
       onAccountDeleted={() => {
-        router.dismissAll();
+        if (router.canDismiss()) router.dismissAll();
         router.replace('/');
       }}
     />

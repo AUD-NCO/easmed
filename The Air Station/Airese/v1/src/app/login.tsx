@@ -8,7 +8,7 @@ export default function Login() {
     <LoginScreen
       onBack={out ? undefined : () => (router.canGoBack() ? router.back() : router.replace('/onboarding'))}
       onLoggedIn={() => {
-        router.dismissAll();
+        if (router.canDismiss()) router.dismissAll();
         router.replace('/home');
       }}
       onForgot={(email) => router.push({ pathname: '/forgot-password', params: email ? { email } : {} })}

@@ -3,7 +3,9 @@ import { Animated, Platform, Pressable, StyleSheet, View } from 'react-native';
 import {
   AppText,
   BigNumber,
-  Button,
+  CARE_CTA,
+  CareRequestSheet,
+  RemediesSheet,
   ClipPlayer,
   ComparisonIndicator,
   DataCard,
@@ -16,8 +18,9 @@ import {
   CheckInBanner,
   type IconName,
   LargeSheet,
-  VERDICT_ACTION,
+  VerdictActions,
   VerdictCard,
+  type VerdictAction,
   type Mood,
   PAGE_SIDE,
   PrivacyFooter,
@@ -45,7 +48,7 @@ import {
   type NightState,
 } from '../lib/nightDetails';
 import { MIN_READABLE_MINUTES, stopTime, type ProblemCopy, type Stop } from '../lib/recordingIssues';
-import { formatNightDate, formatRecorded, formatSpan, type Night } from '../lib/recordings';
+import { formatNightDate, formatRecorded, formatSpan, useAudioDeleted, type Night } from '../lib/recordings';
 import { formatDuration } from '../lib/time';
 import { alpha, colors, motion, radius, space, type, useReducedMotion } from '@ds/theme';
 
@@ -56,7 +59,7 @@ import { alpha, colors, motion, radius, space, type, useReducedMotion } from '@d
  * every measure); the (i)s and the verdict's action open small sheets.
  *
  * Three layers, for three readers:
- *   glance   (everyone, at 6 am) Sound Score and breathing as plain levels · the verdict and its one next step
+ *   glance   (everyone, at 6 am) Snore Score and breathing as plain levels · the verdict and its one next step
  *   explore  your night in sound (the chart), then the moments to hear (up to 3: the two loudest
  *            snoring episodes and a breathing pause, with the pause and the breath after it marked);
  *            tapping a moment on the chart plays it · snoring time and sleep
@@ -113,9 +116,12 @@ export function NightScreen({
   const night = stopped ? { ...wholeNight, minutes: stopped.savedMinutes } : wholeNight;
   const readable = !stopped || stopped.savedMinutes >= MIN_READABLE_MINUTES;
   const [report, setReport] = useState(false); // the Night report sheet
-  const [explain, setExplain] = useState<ExplainKey | 'care' | 'remedy' | null>(null);
+  const [explain, setExplain] = useState<ExplainKey | null>(null);
+  const [remedies, setRemedies] = useState(false);
+  const [careSheet, setCareSheet] = useState(false);
   const [heroBottom, setHeroBottom] = useState(0); // where the verdict card ends: the footer waits until it's scrolled past
   const player = useClipPlayer();
+  const audioDeleted = useAudioDeleted(); // Profile → Delete all recordings: the report stays, the sound doesn't
   const d = nightDetails(night, state === 'processing' || state === 'stopped' ? 'steady' : state);
   // The moment in the player: a breathing pause if there was one (the clearest proof), else the first.
   const [selected, setSelected] = useState((d.featured.find((c) => c.type === 'Interrupted breathing') ?? d.featured[0])?.id);
@@ -135,14 +141,15 @@ export function NightScreen({
 
   // The night's one next step, in the verdict card and (once that's scrolled away) the sticky footer:
   // the same button in both places (label, icon, colour), so the page never offers two different actions.
-  // Ordinary night: keep tracking. Unusual: something to try tonight. Repeated pattern: book a call.
+  // Ordinary night: keep tracking. Unusual: talk to our sleep care team, with remedies to try tonight as a
+  // round button beside it. Repeated pattern: talk to our sleep care team.
   const mood: Mood = concern ? 'urgent' : state === 'unusual' ? 'watch' : 'calm';
-  const step = (leave: (then: () => void) => void) =>
-    concern
-      ? { label: 'Talk to a sleep team', icon: 'group' as const, onPress: () => setExplain('care') }
-      : state === 'unusual'
-        ? { label: 'Try using a remedy', onPress: () => setExplain('remedy') }
-        : { label: 'Keep tracking', onPress: () => (onRecordAgain ? onRecordAgain() : onBack && leave(onBack)) };
+  const step = (leave: (then: () => void) => void): VerdictAction =>
+    concern || state === 'unusual'
+      ? { label: CARE_CTA.label, icon: CARE_CTA.icon, onPress: () => setCareSheet(true) }
+      : { label: 'Keep tracking', onPress: () => (onRecordAgain ? onRecordAgain() : onBack && leave(onBack)) };
+
+  const secondary = state === 'unusual' ? { label: 'Use a remedy', icon: 'healing' as const, onPress: () => setRemedies(true) } : undefined;
 
   // Listen, from a score: down to the recording (the moment card) with that moment picked, and the card
   // lit up for a moment so the eye lands on it. Nothing plays until they press play there.
@@ -160,8 +167,9 @@ export function NightScreen({
       Animated.timing(glow, { toValue: 0, duration: motion.slow.duration, delay: motion.hold, easing: motion.slow.easeIn, useNativeDriver: motion.useNativeDriver }),
     ]).start();
   };
-  const loudSnore = d.featured.find((c) => c.type !== 'Interrupted breathing');
-  const pause = d.featured.find((c) => c.type === 'Interrupted breathing');
+  const moments = audioDeleted ? [] : d.featured;
+  const loudSnore = moments.find((c) => c.type !== 'Interrupted breathing');
+  const pause = moments.find((c) => c.type === 'Interrupted breathing');
 
   // Snoring is a score; breathing a plain level (its exact rate is in the Night report). Name and level only,
   // and under each, Listen: the way from the number to the sound behind it.
@@ -171,9 +179,9 @@ export function NightScreen({
         tone="snoring"
         fraction={sound.value / sound.max}
         value={sound.display}
-        name="Sound Score"
+        name="Snore Score"
         level={zoneOf(sound).word}
-        accessibilityLabel={`Sound Score: ${sound.display} out of 100, ${zoneOf(sound).word}`}
+        accessibilityLabel={`Snore Score: ${sound.display} out of 100, ${zoneOf(sound).word}`}
         ringSize={96}
         action={loudSnore && <ListenButton accessibilityLabel="Listen to your snoring" onPress={() => goListen(loudSnore, scrollTo)} />}
       />
@@ -193,10 +201,10 @@ export function NightScreen({
   // Two cards: the chart (the index to the audio: tap a moment to hear it), then the moment's player.
   const sound_ = (
     <>
-      <DataCard title="Your night in sound">
-        <SnoringChart d={d} mode="overview" moments={d.featured} selected={lead?.id} onSelect={pick} />
+      <DataCard title="Your night in sound" insight={audioDeleted ? 'The audio was deleted. The chart and scores stay.' : undefined}>
+        <SnoringChart d={d} mode="overview" moments={moments} selected={lead?.id} onSelect={pick} />
       </DataCard>
-      {lead && (
+      {lead && !audioDeleted && (
       <View onLayout={(e) => (playerY.current = e.nativeEvent.layout.y)}>
       <DataCard>
         <ClipPlayer clip={lead} time={clockAt(d, lead.at)} player={player} detail={`${CLIP_LABEL[lead.type]} · ${lead.seconds} sec`} />
@@ -240,8 +248,7 @@ export function NightScreen({
           !ready
             ? undefined
             : (leave) => {
-                const s = step(leave);
-                return <Button label={s.label} icon={s.icon} color={VERDICT_ACTION[mood]} onPress={s.onPress} />;
+                return <VerdictActions mood={mood} action={step(leave)} secondary={secondary} />;
               }
         }
         footerAfter={ready ? heroBottom : undefined} // hidden from the start; shows once the verdict card has scrolled away
@@ -277,6 +284,7 @@ export function NightScreen({
                   body={sum.body}
                   values={d.hourly.map((h) => h.minutes)} // the night behind the words: its snoring, hour by hour (the verdict is about this night only)
                   action={step(leave)}
+                  secondary={secondary}
                 />
               </View>
 
@@ -322,27 +330,12 @@ export function NightScreen({
       </LargeSheet>
 
       {/* Small sheets: one-line explanations */}
-      <ExplainSheet
-        content={explain === 'care' ? CARE : explain === 'remedy' ? REMEDY : explain ? EXPLAIN[explain] : null}
-        onClose={() => setExplain(null)}
-        // Callback flow (contact details, consent): design to come
-        action={explain === 'care' ? { label: 'Request a callback', onPress: () => setExplain(null) } : undefined}
-        dismissLabel={explain === 'care' ? 'Not now' : undefined}
-      />
+      <ExplainSheet content={explain ? EXPLAIN[explain] : null} onClose={() => setExplain(null)} />
+      <RemediesSheet visible={remedies} onClose={() => setRemedies(false)} />
+      <CareRequestSheet visible={careSheet} onClose={() => setCareSheet(false)} />
     </>
   );
 }
-
-const CARE = {
-  title: 'Talk to a sleep care team',
-  body: 'A sleep care team from The Air Station can go through your recent nights with you and suggest what to do next. It isn’t a diagnosis.',
-};
-
-// Over-the-counter things some people find help; not medical advice, and no product names.
-const REMEDY = {
-  title: 'Something to try tonight',
-  body: 'Nasal strips, sleeping on your side, or a humidifier help some people snore less. You can get them without a prescription. Try one tonight.',
-};
 
 const mark = (marks: Benchmark[], k: Benchmark['key']) => marks.find((b) => b.key === k)!;
 /** Where a score sits on its guide scale, 0 to 1. */

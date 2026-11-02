@@ -287,7 +287,7 @@ The most important screen: one night's results. It is the Reports tab's page (se
 #### Page template
 
 - **The calendar button** top right (section 5.9), the night's date as the title ("Tue, 6 Oct"), and, on two lines, "8 hr of recording" / "11:05 pm to 7:05 am". Last night (the night that started yesterday) also has a small Breath **Last night** tag at the end of the first line; other nights have none.
-- **A sticky footer** with one next step, shown once the verdict card has scrolled away. It is **the same button as the verdict card's** (label, icon and colour), so the page never offers two different actions: **Keep tracking** (Breath) on ordinary nights, **Try using a remedy** (Lamp) on an unusual night, **Book a call** (coral, call icon) only for a repeated pattern (it opens a sheet: "A sleep care team from The Air Station can go through your recent nights with you and suggest what to do next. It isn't a diagnosis." with **Request a callback** · **Not now**). Under it, "Powered by The Air Station".
+- **A sticky footer** with one next step, shown once the verdict card has scrolled away. It is **the same button as the verdict card's** (label, icon and colour), so the page never offers two different actions: **Keep tracking** (Breath) on ordinary nights, **Talk to our sleep care team** (Lamp) with a round outlined **Use a remedy** button beside it on an unusual night, and **Talk to our sleep care team** (coral) for a repeated pattern. "Talk to our sleep care team" registers the request in one tap and opens a thank-you sheet ("We'll call you on … within 3 working days."). "Use a remedy" opens a full-height **Remedies to try** sheet: the Morning check-in remedies by group, each with one plain line on what it does. Under it, "Powered by The Air Station".
 
 #### States
 
@@ -297,27 +297,27 @@ The most important screen: one night's results. It is the Reports tab's page (se
 | Couldn't hear clearly | Poor audio | The usual header, with the recording problem template in the middle (section 5.12). No cards. |
 | Stopped early | The recording stopped in the night | The usual header, with the recording problem template (section 5.12). **See what was saved** then shows the saved part: a "Partial recording · stopped at 2:14 am" note (Lamp icon, faint Lamp pill), the scores if 2 hours or more were saved (no trend line, never compared with your usual), and the night in sound. |
 | Ordinary | Close to usual | "A steadier night". Blue card, low calm graph, **Keep tracking**. |
-| Unusual | One night out of the ordinary | "More snoring than usual". Warm dusk card, climbing Lamp graph, **Try using a remedy**. |
+| Unusual | One night out of the ordinary | "More snoring than usual". Warm dusk card, climbing Lamp graph, **Talk to our sleep care team** + round **Use a remedy** button. |
 | Repeated pattern | The same thing on many recent nights | A headline that varies by night: "Time to get this checked", "This keeps happening", "Not just one night" or "Your breathing needs a look". Wine card, drawn Flare climb, **Book a call** (coral). The sticky footer repeats it. |
 
 #### Three levels of detail
 
 | Level | For | What |
 | --- | --- | --- |
-| Glance | Everyone, at 6 am | Sound Score and breathing pauses · the verdict and its one next step |
+| Glance | Everyone, at 6 am | Snore Score and breathing pauses · the verdict and its one next step |
 | Explore | The engaged user | Your night in sound (chart and clips) · snoring and sleep · recent nights · what it means |
 | Report | The curious, and doctors | The night report sheet: zoomable chart, every measure, how it's measured |
 
 #### The page, top to bottom (ordinary, unusual and pattern nights)
 
 1. **Two score tiles, side by side.** Each opens a sheet.
-   - **Sound Score:** a big ring with the number inside (e.g. 88), a level word (Low, Moderate, High) and the trend ("More than usual", "About usual", "Less than usual").
+   - **Snore Score:** a big ring with the number inside (e.g. 88), a level word (Low, Moderate, High) and the trend ("More than usual", "About usual", "Less than usual").
    - **Breathing pauses:** a ring with an icon, not a number. A plain level word (Rarely, Sometimes, Often) and the trend. The exact rate per hour is only in its sheet and the night report.
 2. **The verdict card.** Full-width words over the night's mood colours, with the week as a graph behind them (no dial).
    - A headline and one short, general line: no numbers or times, 120 characters at most, two lines at most. The numbers live in the cards around it. E.g. "A steadier night" / "Your breathing was steadier than on your recent nights."
    - **The graph** is real data: the last seven nights of snoring, tonight at the right edge. The shape is the data's; how high it reaches follows the verdict: low and nearly flat (ordinary, Breath line), climbing to mid-card (unusual, Lamp line). **Pattern** is drawn, not plotted: a zoomed-out picture of a pattern building up, one steady climb from bottom left to top right with small wobbles (Flare line on wine). The words carry the facts. Hidden from screen readers: the words say it. On load a tiny shine draws the line from left to right (glint preset); after a long rest it glides along the finished line again, now and then. Reduce Motion: the graph is simply there, no shine.
    - **The graph runs behind the words, within a readability budget:** behind the text, the fill (4%) and line (6 to 14%) are held so Moon body text stays at 7:1 or more at the card's brightest point (measured 9:1 or better). Below the text it fades up to full strength behind the button. The card's corner glow was softened to make room. The shine dims behind the words too.
-   - **One button,** coloured by the night: **Keep tracking** (Breath) · **Try using a remedy** (Lamp, the one warm light) · **Book a call** with a phone icon (coral `urgentAction`, the one button allowed a red tint; BRAND §4).
+   - **One button,** coloured by the night: **Keep tracking** (Breath) · **Talk to our sleep care team** (Lamp, the one warm light) with a round outlined **Use a remedy** button beside it · **Talk to our sleep care team** (coral `urgentAction`, the one button allowed a red tint; BRAND §4).
 3. **Your night in sound.** The chart and the clips in one card.
    - **Opening line,** e.g. "Louder than a conversation for 1 hr 30 min, mostly between 12 and 2 am."
    - **The chart:**
@@ -340,13 +340,13 @@ The most important screen: one night's results. It is the Reports tab's page (se
 
 | Sheet | Contents |
 | --- | --- |
-| Sound Score | "88 out of 100", the level and guide, what it's made of (loudness out of 50, snoring out of 50, each with a plain line), the guide scale, a plain explanation. |
+| Snore Score | "88 out of 100", the level and guide, what it's made of (loudness out of 50, snoring out of 50, each with a plain line), the guide scale, a plain explanation. |
 | Breathing pauses | Pauses an hour (e.g. "15.6 an hour"), how many in how much sleep, the guide scale, pauses by hour, your usual, "it doesn't diagnose anything". |
 | Snoring | Total time and share of the night, the full interactive chart, minutes by hour, intensity split (Light, Moderate, Loud, Very loud), a dB reference list (whisper 30, quiet room 40, conversation 60, vacuum cleaner 75), your usual. |
 | Sleep | Estimated sleep, asleep and restless line with restless times, the guide scale, how it's estimated. |
 | All clips | The night timeline with tappable clip rings, then every clip as a row with play/pause and a plain label. |
 | Your recent nights | The 7-night chart, tonight against your usual for snoring, breathing pauses and loudness. |
-| Night report | The full interactive chart; a table of every measure (recorded, asleep, snoring, above 60 dB, average, loudest, breathing pauses and rate, coughs, movements, restless, Sound Score and its parts); every score with its guide scale; how Airese measures; "not a diagnosis". |
+| Night report | The full interactive chart; a table of every measure (recorded, asleep, snoring, above 60 dB, average, loudest, breathing pauses and rate, coughs, movements, restless, Snore Score and its parts); every score with its guide scale; how Airese measures; "not a diagnosis". |
 
 #### The interactive chart (in sheets and the night report)
 
@@ -368,7 +368,7 @@ The second tab (it was "Recordings", a list of nights). It opens straight on **t
 - **Top right: a calendar button** (in place of the avatar; Profile stays on Home). It drops a **top sheet** down from the top: the bottom sheet's twin, closed by a tap outside, a drag up, or Android back.
 - **The calendar:** one month, weeks starting on Sunday.
   - **Header:** "October 2026 ⌄" with ‹ › for months. Tap the month name for a month grid with ‹ › for years; tap a month to go back to its days. Months run from the first recording to this month.
-  - **Each recorded night has a ring for its Sound Score**, through the loudness ramp, like the Sound Score tile (fuller is louder). A dashed ring: recorded, but Airese couldn't hear clearly. No ring: nothing recorded.
+  - **Each recorded night has a ring for its Snore Score**, through the loudness ramp, like the Snore Score tile (fuller is louder). A dashed ring: recorded, but Airese couldn't hear clearly. No ring: nothing recorded.
   - Only recorded nights can be picked; picking one closes the sheet and shows that night's report. The night on show is filled in Breath; today's date is in Breath; days still to come are dimmed.
 - **Missed nights:** when 4 or more of the last 14 nights have no recording (product to confirm), a calm note under the calendar: "You recorded 7 of the last 14 nights. A bedtime reminder can help." **Remind me at bedtime** asks for notifications if they're off, then turns the bedtime reminder on. Once both are on, the note goes.
 - **No recordings yet:** "Reports" / "Your first report appears here the morning after you record a night." **Record tonight** (to Home).
@@ -384,14 +384,14 @@ Account settings, opened from the avatar on Home. One short page of rows; anythi
 | Sleep care | **Talk to a sleep care team** (dials; shows hours) · **Our centres ›** ("Find The Air Station near you") |
 | Settings | **Bedtime reminder** (a switch; "Notifications are off" with **Turn on** while the permission is off) · **Microphone** ("On · needed to record your night", or "Off · Airese can't record without it" with **Turn on**) |
 | About | **How Airese works** · **Privacy policy** · **Terms of use** (each in a sheet). |
-| Your data | **Delete all recordings** ("12 nights on this phone"; greyed out when none) · **Erase everything and start again** ("Details, recordings, notes and settings"). |
+| Your data | **Delete all recordings** ("12 nights on this phone"; greyed out when none, and "Audio deleted. Reports stay." once done). No delete account in V1. |
 | Brand | The Airese logo in muted grey, "Powered by The Air Station", "Everything Airese keeps is on this phone.", the version. Quiet, at the end. |
 
 **Confirmations.** Both destructive actions confirm first.
 
 | Action | Sheet | After |
 | --- | --- | --- |
-| Delete all recordings | "Every night's recording and results are removed from this phone. Your details and settings stay. This can't be undone." | A toast: "✓ All recordings deleted". |
+| Delete all recordings | Heading "Are you sure you wish to delete? This can't be undone." Then: "We'll delete all audio recordings. Your Morning and Bedtime check-ins, reports and insights for each night stay as they are." **Keep my recordings** · **Delete all recordings**. | A toast: "✓ All recordings deleted". Only the audio goes: every report stays, without Listen or the moments' player ("The audio was deleted. The chart and scores stay."). Reports' empty state ("No reports yet") is only for a first-time user. |
 | Erase everything | "Your details, recordings, Night Notes and settings are removed from this phone, and Airese starts again from the beginning. This can't be undone." | The app returns to the splash. |
 
 **Your details (page):**
@@ -460,7 +460,7 @@ All ranges below are **placeholders for Clinical to confirm**. Words stay calm: 
 
 | Measure | Definition (prototype) | Levels |
 | --- | --- | --- |
-| **Sound Score** | 0 to 100, lower is quieter. Two halves: **loudness** (average snoring level; 35 dB scores 0, 65 dB or more scores 50) and **snoring** (share of the night; none scores 0, 40% or more scores 50). | Low (under 40), Moderate (40 to 59), High (60 and over) |
+| **Snore Score** | 0 to 100, lower is quieter. Two halves: **loudness** (average snoring level; 35 dB scores 0, 65 dB or more scores 50) and **snoring** (share of the night; none scores 0, 40% or more scores 50). | Low (under 40), Moderate (40 to 59), High (60 and over) |
 | **Breathing pauses** | Pauses per hour of sleep. A pause is counted when snoring stops for a moment and starts again with a louder breath. | Rarely (under 5), Sometimes (5 to 14.9), Often (15 and over) |
 | **Snoring time** | Total minutes Airese heard snoring; also as a share of the recording. | Light (under 10%), Moderate (10 to 25%), High (over 25%) |
 | **Loudness** | Average level while snoring and the loudest moment, in dB from the phone's microphone. Phones differ, so compare nights, not numbers. | Quiet (up to 45), Medium (to 55), Loud (over 55) |
@@ -545,7 +545,7 @@ Full detail in [BRAND.md](BRAND.md).
 - **Placeholders to replace:**
   - support and centre details: `src/lib/airStation.ts`;
   - guide ranges: `src/lib/benchmarks.ts`;
-  - Sound Score formula: `soundScoreParts` in `src/lib/nightDetails.ts`;
+  - Snore Score formula: `soundScoreParts` in `src/lib/nightDetails.ts`;
   - privacy policy and terms: `src/screens/ProfileScreen.tsx`.
 - **Browser preview:** `preview/index.tsx` mirrors the routes for review; `public/iphone.html` adds the iPhone frame, with every screen and state listed as links in a left pane, and a one-line note under the phone saying what the screen does (and its route, on localhost). It's published to GitHub Pages on every push to `main`.
 
@@ -583,7 +583,7 @@ Full detail in [BRAND.md](BRAND.md).
 | Question | Owner |
 | --- | --- |
 | Can a per-hour breathing figure be shown at all, and with which bands? | Clinical, Regulatory |
-| Sound Score formula and all guide ranges | Engineering, Clinical |
+| Snore Score formula and all guide ranges | Engineering, Clinical |
 | How accurate is pause detection (share of flagged pauses that are real, real ones missed)? | Engineering |
 | Clips only, or the whole night? (Decides "tap anywhere to hear".) | Engineering, Product |
 | Is "Only snoring is recorded" true? | Engineering |
@@ -607,7 +607,7 @@ Full detail in [BRAND.md](BRAND.md).
 | Key moments | The three clips the page leads with, spread across the night. |
 | Night report | The sheet with every measure and how it's measured; for the curious and for doctors. |
 | Night Notes | What may affect tonight's sleep (feeling, before bed, somewhere different, remedies). |
-| Sound Score | 0 to 100 summary of how loud and how much the user snored. Lower is quieter. |
+| Snore Score | 0 to 100 summary of how loud and how much the user snored. Lower is quieter. |
 | Sleep care team | The Air Station's team that can go through recent nights and suggest a next step. |
 | The Air Station | Easmed's sleep care service; "Powered by The Air Station". |
 | Usual | The user's own recent average. Never other people. |

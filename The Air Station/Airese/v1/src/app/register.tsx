@@ -17,7 +17,7 @@ export default function Register() {
       demo={state === 'mail' ? state : null}
       onBack={() => (router.canGoBack() ? router.back() : router.replace('/onboarding'))}
       onDone={() => {
-        router.dismissAll(); // the account is made: no way back to the walkthrough
+        if (router.canDismiss()) router.dismissAll(); // the account is made: no way back to the walkthrough
         router.replace('/permissions/microphone');
       }}
       onOpenLegal={(doc) => router.push({ pathname: '/legal/[doc]', params: { doc } })}

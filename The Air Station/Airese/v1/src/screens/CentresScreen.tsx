@@ -1,38 +1,43 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Linking, Pressable, StyleSheet, View } from 'react-native';
-import { AppText, DetailPage, Icon, Logo, PAGE_SIDE, type IconName } from '../components';
-import { CENTRES, SUPPORT, directionsUrl, type Centre } from '../lib/airStation';
+import { AppText, CARE_CTA, CareRequestSheet, DetailPage, Icon, Logo, PAGE_SIDE, type IconName } from '../components';
+import { CENTRES, directionsUrl, type Centre } from '../lib/airStation';
 import { alpha, colors, radius, space } from '@ds/theme';
 
 /**
  * Our centres (Profile → Our centres): where The Air Station's sleep care team sees people.
  * One card per centre: name and area, address, opening hours, then Call and Directions.
+ * Not sure which centre? Talk to our sleep care team (asks for a call back).
  * A quiet brand line at the end. Prototype: centre details are placeholders (lib/airStation.ts).
  */
 export function CentresScreen({ onBack }: { onBack: () => void }) {
+  const [careSheet, setCareSheet] = useState(false);
   return (
-    <DetailPage backLabel="Profile" title="Our centres" subtitle="The Air Station sleep care team" onBack={onBack}>
-      <View style={styles.body}>
-        <AppText color="textMuted">Talk to someone who can go through your recent nights with you and suggest what to do next.</AppText>
+    <>
+      <DetailPage backLabel="Profile" title="Our centres" subtitle="The Air Station sleep care team" onBack={onBack}>
+        <View style={styles.body}>
+          <AppText color="textMuted">Talk to someone who can go through your recent nights with you and suggest what to do next.</AppText>
 
-        {CENTRES.map((c) => (
-          <CentreCard key={c.id} c={c} />
-        ))}
+          {CENTRES.map((c) => (
+            <CentreCard key={c.id} c={c} />
+          ))}
 
-        <View style={styles.callAll}>
-          <AppText color="text">Not sure which centre?</AppText>
-          <AppText variant="small" color="textMuted">{`Call us, ${SUPPORT.hours.charAt(0).toLowerCase()}${SUPPORT.hours.slice(1)}.`}</AppText>
-          <Action icon="call" label="Call us" onPress={() => Linking.openURL(`tel:${SUPPORT.phone}`).catch(() => {})} style={{ marginTop: space.lg, alignSelf: 'flex-start' }} />
+          <View style={styles.callAll}>
+            <AppText color="text">Not sure which centre?</AppText>
+            <AppText variant="small" color="textMuted">Our sleep care team can help you choose.</AppText>
+            <Action icon={CARE_CTA.icon} label={CARE_CTA.label} onPress={() => setCareSheet(true)} style={{ marginTop: space.lg, alignSelf: 'flex-start' }} />
+          </View>
+
+          <View style={styles.brand} accessible accessibilityLabel="Airese, powered by The Air Station">
+            <Logo width={44} color="mist" />
+            <AppText variant="small" color="textMuted" style={{ marginTop: space.md }}>
+              Powered by The Air Station
+            </AppText>
+          </View>
         </View>
-
-        <View style={styles.brand} accessible accessibilityLabel="Airese, powered by The Air Station">
-          <Logo width={44} color="mist" />
-          <AppText variant="small" color="textMuted" style={{ marginTop: space.md }}>
-            Powered by The Air Station
-          </AppText>
-        </View>
-      </View>
-    </DetailPage>
+      </DetailPage>
+      <CareRequestSheet visible={careSheet} onClose={() => setCareSheet(false)} />
+    </>
   );
 }
 

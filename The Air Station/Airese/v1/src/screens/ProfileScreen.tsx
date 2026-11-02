@@ -1,29 +1,24 @@
 import React, { useEffect, useState } from 'react';
 import { Linking, Platform, Pressable, StyleSheet, View } from 'react-native';
 import Constants from 'expo-constants';
-import { AppText, BottomSheet, Button, CautionSheet, DetailPage, ExplainSheet, FormDivider, FormGroup, Icon, Logo, PAGE_SIDE, PermissionSheet, SettingRow, SettingSwitch, Toast, type Caution } from '../components';
+import { AppText, BottomSheet, Button, CARE_CTA, CareRequestSheet, CautionSheet, DetailPage, ExplainSheet, FormDivider, FormGroup, Icon, Logo, PAGE_SIDE, PermissionSheet, SettingRow, SettingSwitch, Toast, type Caution } from '../components';
 import { deleteAccount, logOut, useAccount } from '../lib/account';
-import { SUPPORT } from '../lib/airStation';
 import { EXPLAIN } from '../lib/nightDetails';
 import { usePermissionStatus } from '../lib/permissionStatus';
 import { ensureSampleProfile, initials, phoneDisplay, setNotificationPref, useNotificationPrefs, useProfile } from '../lib/profile';
-import { deleteAllRecordings, useNights } from '../lib/recordings';
+import { deleteAllRecordings, useAudioDeleted, useNights } from '../lib/recordings';
 import { alpha, colors, space } from '@ds/theme';
 
 export type ProfileSheet = 'delete-recordings' | 'delete-account' | 'log-out';
 type Confirm = Exclude<ProfileSheet, 'log-out'>;
 type About = 'how' | 'privacy' | 'terms';
 
-// Before deleting: what goes, and a few short reasons to keep it (CautionSheet)
+// Before deleting: what goes and what stays (CautionSheet)
 const CAUTION: Record<Confirm, Caution> = {
   'delete-recordings': {
     title: 'Delete all recordings',
-    lead: 'Every recording, report and Sleep Diary note will be deleted for good.',
-    points: [
-      { icon: 'group', title: 'A doctor can use them', body: 'Weeks of nights tell a sleep expert more than one.' },
-      { icon: 'trending_up', title: 'Patterns need past nights', body: 'Airese compares each night with your usual. You’d start from zero.' },
-      { icon: 'lock', title: 'They’re safe where they are', body: 'Private to you. Shared only if you choose.' },
-    ],
+    heading: 'Are you sure you wish to delete? This can’t be undone.',
+    lead: 'We’ll delete all audio recordings. Your Morning and Bedtime check-ins, reports and insights for each night stay as they are.',
     keep: 'Keep my recordings',
     confirm: 'Delete all recordings',
   },
@@ -55,11 +50,11 @@ const ABOUT: Record<About, { title: string; body: string }> = {
  * rows; anything with a form or switches opens one level down. Order follows what people come for:
  *
  *   you          initials (no photo), name, email · Edit details ›
- *   sleep care   Talk to a sleep care team (call) · Our centres ›   (same words as Recording Details)
+ *   sleep care   Talk to our sleep care team (asks for a call back) · Our centres ›   (same words and icon everywhere: CARE_CTA)
  *   settings     Bedtime reminder (a switch; "Turn on" while notifications are off) · Microphone ("Turn on" while it's off)
  *   about        How Airese works · Privacy policy · Terms of use
  *   account      Log out (your email under it; asks first)
- *   your data    Delete all recordings · Delete account (each a full sheet first: what goes, why keep it)
+ *   your data    Delete all recordings (a full sheet first: what goes, why keep it). No Delete account in V1.
  *   brand        the Airese logo, "Powered by The Air Station", where your data lives, the version: quiet, at the end
  *
  */
@@ -90,6 +85,7 @@ export function ProfileScreen({
   useEffect(ensureSampleProfile, []); // prototype: the demo nav can open Profile before onboarding
   const profile = useProfile();
   const nights = useNights();
+  const audioDeleted = useAudioDeleted();
   const prefs = useNotificationPrefs();
   const notificationsOn = usePermissionStatus('notifications') === 'granted';
   const micOn = usePermissionStatus('microphone') === 'granted';
@@ -102,6 +98,7 @@ export function ProfileScreen({
   const [logOutSheet, setLogOutSheet] = useState(demoSheet === 'log-out');
   const [about, setAbout] = useState<About | null>(null);
   const [toast, setToast] = useState<string | null>(null);
+  const [careSheet, setCareSheet] = useState(false);
   const name = `${profile.firstName} ${profile.lastName}`.trim();
   const contact = profile.phone ? phoneDisplay(profile) : profile.email;
   const version = Constants.expoConfig?.version ?? '';
@@ -149,7 +146,7 @@ export function ProfileScreen({
 
           {/* Sleep care: the way to a person, high up */}
           <FormGroup title="Sleep care">
-            <SettingRow icon="call" title="Talk to a sleep care team" detail={SUPPORT.hours} chevron onPress={() => Linking.openURL(`tel:${SUPPORT.phone}`).catch(() => {})} />
+            <SettingRow icon={CARE_CTA.icon} title={CARE_CTA.label} chevron onPress={() => setCareSheet(true)} />
             <FormDivider />
             <SettingRow icon="location_on" title="Our centres" detail="Find The Air Station near you" chevron onPress={onOpenCentres} />
           </FormGroup>
@@ -186,12 +183,11 @@ export function ProfileScreen({
             <SettingRow
               icon="delete"
               title="Delete all recordings"
-              detail={nights.length ? `${nights.length} nights on this phone` : 'No recordings on this phone'}
-              disabled={!nights.length}
+              detail={audioDeleted ? 'Audio deleted. Reports stay.' : nights.length ? `${nights.length} nights on this phone` : 'No recordings on this phone'}
+              disabled={audioDeleted || !nights.length}
               onPress={() => ask('delete-recordings')}
             />
-            <FormDivider />
-            <SettingRow icon="delete" title="Delete account" detail="Your account and everything in it" onPress={() => ask('delete-account')} />
+            {/* Delete account: not in V1 (the sheet and deleteAccount() stay for later) */}
           </FormGroup>
 
           {/* Brand: quiet, at the end */}
@@ -221,6 +217,7 @@ export function ProfileScreen({
         onNotNow={() => setNotificationsSheet(false)}
       />
       <ExplainSheet content={about ? ABOUT[about] : null} onClose={() => setAbout(null)} />
+      <CareRequestSheet visible={careSheet} onClose={() => setCareSheet(false)} />
       <ExplainSheet
         content={micOffSheet ? MIC_OFF : null}
         onClose={() => setMicOffSheet(false)}

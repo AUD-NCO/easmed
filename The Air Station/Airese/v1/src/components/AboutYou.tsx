@@ -3,11 +3,16 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { countryByCode, flag } from '../lib/countries';
 import {
   ageFrom,
+  birthDateLabel,
   CM_PER_IN,
+  daysIn,
   GENDER_LABEL,
   heightLabel,
   KG_PER_LB,
+  MONTHS,
+  parseDate,
   placeLabel,
+  toDate,
   weightLabel,
   type Gender,
   type Profile,
@@ -21,21 +26,21 @@ import { ExplainSheet } from '@ds/components/ExplainSheet';
 import { FormDivider, FormGroup, FormInput } from '@ds/components/Form';
 import { Icon, type IconName } from '@ds/components/Icon';
 import { InfoButton } from '@ds/components/InfoButton';
-import { RulerPicker, WheelPicker } from '@ds/components/Pickers';
+import { ROW, RulerPicker, VISIBLE, WheelPicker } from '@ds/components/Pickers';
 import { SegmentedControl } from '@ds/components/SegmentedControl';
 
 /** The (i) beside About you, in onboarding and Profile. */
 export const ABOUT_WHY = { title: 'Why we ask', body: 'This helps us understand your nights, and helps a doctor read your report if you share it.' };
 
-type Fields = Pick<Profile, 'gender' | 'birthYear' | 'heightCm' | 'weightKg' | 'units' | 'city' | 'region' | 'country' | 'postcode' | 'phoneCountry'>;
+type Fields = Pick<Profile, 'gender' | 'birthDate' | 'heightCm' | 'weightKg' | 'units' | 'city' | 'region' | 'country' | 'postcode' | 'phoneCountry'>;
 type Sheet = 'gender' | 'age' | 'height' | 'weight' | 'place' | null;
 export type AboutKey = Exclude<Sheet, null>;
 
-const ABOUT_LABEL: Record<AboutKey, string> = { gender: 'gender', age: 'age', height: 'height', weight: 'weight', place: 'where you live' };
+const ABOUT_LABEL: Record<AboutKey, string> = { gender: 'gender', age: 'date of birth', height: 'height', weight: 'weight', place: 'where you live' };
 
 /** The questions still unanswered, in tile order. "Prefer not to say" counts as an answer. */
 export function missingAbout(v: Fields): AboutKey[] {
-  const answered: Record<AboutKey, boolean> = { gender: !!v.gender, age: !!v.birthYear, height: !!v.heightCm, weight: !!v.weightKg, place: !!v.country };
+  const answered: Record<AboutKey, boolean> = { gender: !!v.gender, age: !!v.birthDate, height: !!v.heightCm, weight: !!v.weightKg, place: !!v.country };
   return (Object.keys(answered) as AboutKey[]).filter((k) => !answered[k]);
 }
 
@@ -58,7 +63,7 @@ export function AboutYou({ value, onChange, heading = true, missing = [], error 
   const [open, setOpen] = useState<Sheet>(null);
   const [why, setWhy] = useState(false);
   const close = () => setOpen(null);
-  const age = ageFrom(value.birthYear);
+  const age = ageFrom(value.birthDate);
 
   return (
     <View>
@@ -69,7 +74,14 @@ export function AboutYou({ value, onChange, heading = true, missing = [], error 
       >
         <Row icon="person" label="Gender" value={value.gender ? GENDER_LABEL[value.gender] : ''} onPress={() => setOpen('gender')} missing={missing.includes('gender')} />
         <FormDivider />
-        <Row icon="cake" label="Age" value={age != null ? `${age}` : ''} onPress={() => setOpen('age')} a11yValue={age != null ? `${age} years, born ${value.birthYear}` : undefined} missing={missing.includes('age')} />
+        <Row
+          icon="cake"
+          label="Date of birth"
+          value={birthDateLabel(value.birthDate)}
+          onPress={() => setOpen('age')}
+          a11yValue={age != null ? `${birthDateLabel(value.birthDate, true)}, ${age} years old` : undefined}
+          missing={missing.includes('age')}
+        />
         <FormDivider />
         <Row icon="height" label="Height" value={heightLabel(value.heightCm, value.units)} onPress={() => setOpen('height')} missing={missing.includes('height')} />
         <FormDivider />
@@ -80,7 +92,7 @@ export function AboutYou({ value, onChange, heading = true, missing = [], error 
       <ExplainSheet content={why ? ABOUT_WHY : null} onClose={() => setWhy(false)} />
 
       <GenderSheet visible={open === 'gender'} value={value.gender} onClose={close} onPick={(gender) => (onChange({ gender }), close())} />
-      <AgeSheet visible={open === 'age'} birthYear={value.birthYear} onClose={close} onDone={(birthYear) => (onChange({ birthYear }), close())} />
+      <DateOfBirthSheet visible={open === 'age'} birthDate={value.birthDate} onClose={close} onDone={(birthDate) => (onChange({ birthDate }), close())} />
       <MeasureSheet kind="height" visible={open === 'height'} metric={value.heightCm} units={value.units} onUnits={(units) => onChange({ units })} onClose={close} onDone={(heightCm) => (onChange({ heightCm }), close())} />
       <MeasureSheet kind="weight" visible={open === 'weight'} metric={value.weightKg} units={value.units} onUnits={(units) => onChange({ units })} onClose={close} onDone={(weightKg) => (onChange({ weightKg }), close())} />
       <PlaceSheet visible={open === 'place'} value={value} onClose={close} onDone={(p) => (onChange(p), close())} />
@@ -186,28 +198,53 @@ function GenderSheet({ visible, value, onPick, onClose }: { visible: boolean; va
   );
 }
 
-// ---------- Age (year of birth) ----------
+// ---------- Date of birth ----------
 
 const THIS_YEAR = new Date().getFullYear();
 const YEAR_MIN = 1920;
 const YEAR_MAX = THIS_YEAR - 13; // Airese is for adults and older teens
-const YEAR_START = THIS_YEAR - 40; // where the wheel starts before there's an answer
+const START = { year: THIS_YEAR - 40, month: 1, day: 1 }; // where the wheels start before there's an answer
 
-function AgeSheet({ visible, birthYear, onDone, onClose }: { visible: boolean; birthYear: string; onDone: (y: string) => void; onClose: () => void }) {
-  const [draft, setDraft] = useState(Number(birthYear) || YEAR_START);
+/**
+ * Day, month and year on three wheels in one sheet (the iOS date picker), in the order dates are
+ * written in Singapore and Malaysia. Same taps as a single wheel: open, scroll, Done. Months are
+ * named so 03/04 can't be misread. A day past the month's end (31 → February) comes back to the last day.
+ */
+function DateOfBirthSheet({ visible, birthDate, onDone, onClose }: { visible: boolean; birthDate: string; onDone: (d: string) => void; onClose: () => void }) {
+  const [draft, setDraft] = useState(parseDate(birthDate) ?? START);
   const [wasVisible, setWasVisible] = useState(visible);
   if (visible !== wasVisible) {
     setWasVisible(visible);
-    if (visible) setDraft(Number(birthYear) || YEAR_START);
+    if (visible) setDraft(parseDate(birthDate) ?? START);
   }
+  const lastDay = daysIn(draft.year, draft.month);
+  const change = (next: Partial<typeof draft>) =>
+    setDraft((d) => {
+      const n = { ...d, ...next };
+      return { ...n, day: Math.min(n.day, daysIn(n.year, n.month)) };
+    });
+  const iso = toDate(draft.year, draft.month, draft.day);
+
   return (
     <BottomSheet visible={visible} onClose={onClose} dragFrom="top" fit>
       <SheetHead title="When were you born?" why="Sleep and breathing change with age." />
-      <WheelPicker min={YEAR_MIN} max={YEAR_MAX} value={draft} onChange={setDraft} label="Year of birth" />
+      <View style={styles.dateWheels}>
+        <View style={styles.dateBand} pointerEvents="none" />
+        {/* keyed by the month's length so the wheel redraws at the clamped day */}
+        <View key={lastDay} style={{ flex: 2 }}>
+          <WheelPicker band={false} min={1} max={lastDay} value={draft.day} onChange={(day) => change({ day })} label="Day" />
+        </View>
+        <View style={{ flex: 4 }}>
+          <WheelPicker band={false} min={1} max={12} value={draft.month} onChange={(month) => change({ month })} label="Month" format={(m) => MONTHS[m - 1]} />
+        </View>
+        <View style={{ flex: 3 }}>
+          <WheelPicker band={false} min={YEAR_MIN} max={YEAR_MAX} value={draft.year} onChange={(year) => change({ year })} label="Year" />
+        </View>
+      </View>
       <AppText color="textMuted" style={{ textAlign: 'center', marginTop: space.md }} accessibilityLiveRegion="polite">
-        {THIS_YEAR - draft} years old
+        {ageFrom(iso)} years old
       </AppText>
-      <SheetActions onDone={() => onDone(String(draft))} onClear={birthYear ? () => onDone('') : undefined} />
+      <SheetActions onDone={() => onDone(iso)} onClear={birthDate ? () => onDone('') : undefined} />
     </BottomSheet>
   );
 }
@@ -422,5 +459,7 @@ const styles = StyleSheet.create({
   },
   placeOptionOn: { borderColor: colors.accent },
   flag: { fontSize: type.headline.fontSize, lineHeight: type.headline.lineHeight }, // emoji flag, sized from the type scale
+  dateWheels: { flexDirection: 'row' },
+  dateBand: { position: 'absolute', left: 0, right: 0, top: ROW * Math.floor(VISIBLE / 2), height: ROW, borderRadius: radius.md, backgroundColor: colors.background },
   back: { flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', minHeight: 44, marginTop: -space.md, marginLeft: -space.xs, marginBottom: space.xs },
 });

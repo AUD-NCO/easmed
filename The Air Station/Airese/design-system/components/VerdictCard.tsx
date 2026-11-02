@@ -1,10 +1,10 @@
 import React, { useEffect, useId, useRef, useState } from 'react';
-import { Animated, StyleSheet, View } from 'react-native';
+import { Animated, Pressable, StyleSheet, View } from 'react-native';
 import Svg, { Defs, LinearGradient, Path, Stop } from 'react-native-svg';
 import { colors, motion, radius, space, useReducedMotion, type ColorName } from '../theme';
 import { AppText } from './AppText';
 import { Button } from './Button';
-import { type IconName } from './Icon';
+import { Icon, type IconName } from './Icon';
 import { HeroBackground } from './InsightCard';
 
 export type Mood = 'calm' | 'watch' | 'urgent';
@@ -18,6 +18,31 @@ export const VERDICT_ACTION = {
   watch: 'lamp', // Lamp: the one warm light, for the action (Midnight on Lamp, 10:1)
   urgent: 'urgentAction', // coral: the one care action on a repeated pattern (BRAND §4); Midnight on it, 7.7:1
 } as const satisfies Record<Mood, ColorName>;
+
+export type VerdictAction = { label: string; icon?: IconName; onPress: () => void };
+
+/**
+ * The verdict's buttons, in the card and in the page's sticky footer (so the two always match): the
+ * one next step as a pill in the mood's colour, and optionally a second, smaller choice beside it as a
+ * round outlined icon button (e.g. the remedies). With a second button the pill drops its icon and
+ * tightens its padding so its label stays on one line.
+ */
+export function VerdictActions({ mood, action, secondary, style }: { mood: Mood; action: VerdictAction; secondary?: VerdictAction & { icon: IconName }; style?: object }) {
+  if (!secondary) return <Button label={action.label} icon={action.icon} color={VERDICT_ACTION[mood]} onPress={action.onPress} style={style} />;
+  return (
+    <View style={[styles.actions, style]}>
+      <Button label={action.label} color={VERDICT_ACTION[mood]} onPress={action.onPress} style={styles.paired} />
+      <Pressable
+        onPress={secondary.onPress}
+        accessibilityRole="button"
+        accessibilityLabel={secondary.label}
+        style={({ pressed }) => [styles.round, { borderColor: colors[VERDICT_ACTION[mood]] }, pressed && { opacity: 0.7 }]}
+      >
+        <Icon name={secondary.icon} size={24} color={VERDICT_ACTION[mood]} />
+      </Pressable>
+    </View>
+  );
+}
 
 /** The trend line's colour by mood. All UI colours from the palette (BRAND §4). */
 const LINE: Record<Mood, ColorName> = { calm: 'accent', watch: 'lamp', urgent: 'flare' };
@@ -39,13 +64,16 @@ export function VerdictCard({
   body,
   values,
   action,
+  secondary,
 }: {
   mood: Mood;
   title: string;
   body: string;
   /** Oldest first; the last value is tonight. */
   values: number[];
-  action: { label: string; icon?: IconName; onPress: () => void };
+  action: VerdictAction;
+  /** A second choice, as a round icon button beside the main one. */
+  secondary?: VerdictAction & { icon: IconName };
 }) {
   const [textBottom, setTextBottom] = useState(0); // where the words end: behind them the graph stays within the contrast budget
   return (
@@ -60,7 +88,7 @@ export function VerdictCard({
           {body}
         </AppText>
       </View>
-      <Button label={action.label} icon={action.icon} color={VERDICT_ACTION[mood]} onPress={action.onPress} style={styles.button} />
+      <VerdictActions mood={mood} action={action} secondary={secondary} style={styles.button} />
     </View>
   );
 }
@@ -212,4 +240,7 @@ const styles = StyleSheet.create({
   halo: { position: 'absolute', width: GLINT * 3, height: GLINT * 3, borderRadius: GLINT * 1.5, opacity: 0.35 },
   core: { width: GLINT, height: GLINT, borderRadius: GLINT / 2, backgroundColor: colors.text },
   button: { marginTop: space.xl },
+  actions: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
+  paired: { flex: 1, paddingHorizontal: space.lg },
+  round: { width: 48, height: 48, borderRadius: 24, borderWidth: 1.5, alignItems: 'center', justifyContent: 'center' },
 });

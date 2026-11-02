@@ -34,7 +34,7 @@ export function benchmarks(d: NightDetails): Benchmark[] {
   return [
     {
       key: 'sound',
-      name: 'Sound Score',
+      name: 'Snore Score',
       tone: 'snoring',
       value: d.soundScore,
       display: String(d.soundScore),

@@ -20,7 +20,7 @@ export type Profile = {
   email: string;
   verifiedEmail: string; // the address last confirmed with the 6-digit code (lib/emailCode.ts); verified when it equals `email`
   gender: Gender | '';
-  birthYear: string; // stored instead of age, which goes out of date; the UI shows the age
+  birthDate: string; // 'YYYY-MM-DD', stored instead of age, which goes out of date; the UI shows the age
   heightCm: string; // always stored metric; `units` only changes how it's shown
   weightKg: string;
   units: Units;
@@ -38,7 +38,7 @@ const EMPTY: Profile = {
   email: '',
   verifiedEmail: '',
   gender: '',
-  birthYear: '',
+  birthDate: '',
   heightCm: '',
   weightKg: '',
   units: 'metric',
@@ -69,7 +69,7 @@ const SAMPLE: Profile = {
   email: 'alex.tan@example.com',
   verifiedEmail: 'alex.tan@example.com',
   gender: 'male',
-  birthYear: '1984',
+  birthDate: '1984-03-12',
   heightCm: '175',
   weightKg: '78',
   country: 'Singapore',
@@ -96,12 +96,6 @@ export function initials({ firstName, lastName }: Profile) {
   return `${firstName.trim()[0] ?? ''}${lastName.trim()[0] ?? ''}`.toUpperCase();
 }
 
-/** Four digits, from 1900 to this year. */
-export function isValidYear(year: string) {
-  const y = Number(year);
-  return year.length === 4 && y >= 1900 && y <= new Date().getFullYear();
-}
-
 export const isValidEmail = (email: string) => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email.trim());
 
 /** A real number for that country (right length and leading digits). */
@@ -122,7 +116,36 @@ export function phoneDisplay({ phone, phoneCountry }: Pick<Profile, 'phone' | 'p
 
 // ---------- Age, height and weight ----------
 
-export const ageFrom = (birthYear: string) => (isValidYear(birthYear) ? new Date().getFullYear() - Number(birthYear) : undefined);
+export const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+
+/** Days in a month (1–12), leap years included. */
+export const daysIn = (year: number, month: number) => new Date(year, month, 0).getDate();
+
+/** "1984-03-12" → { year: 1984, month: 3, day: 12 }. Undefined when it isn't a real date. */
+export function parseDate(date: string) {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(date);
+  if (!m) return undefined;
+  const [year, month, day] = m.slice(1).map(Number);
+  return month >= 1 && month <= 12 && day >= 1 && day <= daysIn(year, month) ? { year, month, day } : undefined;
+}
+
+export const toDate = (year: number, month: number, day: number) => `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+
+/** Whole years since the date of birth, counting from the birthday itself. */
+export function ageFrom(birthDate: string, now = new Date()) {
+  const d = parseDate(birthDate);
+  if (!d) return undefined;
+  const hadBirthday = now.getMonth() + 1 > d.month || (now.getMonth() + 1 === d.month && now.getDate() >= d.day);
+  return now.getFullYear() - d.year - (hadBirthday ? 0 : 1);
+}
+
+/** "1984-03-12" → "12 Mar 1984" (short) or "12 March 1984". Empty when not set. */
+export function birthDateLabel(birthDate: string, long = false) {
+  const d = parseDate(birthDate);
+  if (!d) return '';
+  const month = MONTHS[d.month - 1];
+  return `${d.day} ${long ? month : month.slice(0, 3)} ${d.year}`;
+}
 
 export const CM_PER_IN = 2.54;
 export const KG_PER_LB = 0.45359237;
