@@ -42,6 +42,7 @@ export default function RootLayout() {
         <Stack.Screen name="register" options={PUSH} />
         <Stack.Screen name="login" options={PUSH} />
         <Stack.Screen name="forgot-password" options={PUSH} />
+        <Stack.Screen name="change-password" options={PUSH} />
         {/* Recording can't start (no space, or the recorder failed) */}
         <Stack.Screen name="recording-problem" />
         {/* Update prompt: no swipe-back, so the update can't be dismissed */}

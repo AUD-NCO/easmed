@@ -27,6 +27,24 @@ export function zoneOf(b: Benchmark) {
   return b.zones.find((z) => b.value <= z.upTo) ?? b.zones[b.zones.length - 1];
 }
 
+export type Tier = 'ordinary' | 'moderate' | 'severe';
+const TIERS: Tier[] = ['ordinary', 'moderate', 'severe'];
+
+/**
+ * The night's tier: the higher of its Snore Score band and its breathing pauses band (low, moderate,
+ * high → ordinary, moderate, severe). No adding up: two moderates are still moderate.
+ * The bands are the zones below (Snore Score 0–35, 36–70, 71–100; pauses under 5, 5–14.9, 15+ an hour):
+ * provisional, to be confirmed by Engineering and tuned with real data.
+ */
+export function classify(d: NightDetails): Tier {
+  const marks = benchmarks(d);
+  const band = (key: Benchmark['key']) => {
+    const b = marks.find((m) => m.key === key)!;
+    return b.zones.indexOf(zoneOf(b));
+  };
+  return TIERS[Math.max(band('sound'), band('breathing'))];
+}
+
 export function benchmarks(d: NightDetails): Benchmark[] {
   const hours = d.sleepMinutes / 60;
   const snoringPct = Math.round((d.snoringMinutes / d.night.minutes) * 100);
@@ -41,12 +59,13 @@ export function benchmarks(d: NightDetails): Benchmark[] {
       min: 0,
       max: 100,
       zones: [
-        { upTo: 39, word: 'Low' },
-        { upTo: 59, word: 'Moderate' },
+        // Provisional bands agreed with the team (Nov 2026): 0–35, 36–70, 71–100. To be tuned with real data.
+        { upTo: 35, word: 'Low' },
+        { upTo: 70, word: 'Moderate' },
         { upTo: 100, word: 'High' },
       ],
       higherIsBetter: false,
-      guide: 'Under 40 is a quiet night',
+      guide: '35 or under is a quiet night',
       explain: 'How loud your snoring was and how much of the night it filled, out of 100. Lower is quieter.',
     },
     {

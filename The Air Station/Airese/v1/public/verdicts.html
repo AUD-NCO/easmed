@@ -52,15 +52,15 @@
 <body>
 <main>
   <h1>Verdict copy</h1>
-  <p class="lede">The verdict on each night’s report is about that night only, never a comparison with other nights. Each kind of night has five versions, which take turns from night to night. The line under the headline must fit on one line. Under each card you can see whether it fits at the card’s real width. To change the copy, edit <code>v1/public/verdicts.json</code>. The app reads the same file.</p>
+  <p class="lede">The verdict on each night’s report is about that night only, never a comparison with other nights. Each kind of night has five versions, which take turns from night to night. The kind of night is the higher of its Snore Score band and its breathing pauses band. The line under the headline must fit on one line. Under each card you can see whether it fits at the card’s real width. To change the copy, edit <code>v1/public/verdicts.json</code>. The app reads the same file.</p>
   <div class="cols" id="cols"></div>
 </main>
 <script>
   var HEALING = 'M483-277 303-98q-17 19-43 19t-43-19L98-217q-19-17-18.5-42.5T98-303l178-179L98-662q-17-17-19.5-40.5T93-743l124-124q17.57-18 42.79-18Q285-885 303-867l180 180 179-180q18-18 43-17.5t43 17.5l119 119q17 18 17.5 43T867-662L688-482l179 179q18 17.57 18 42.79Q885-235 867-217L743-93q-17 17-40.5 14.5T662-98L483-277Zm28-251.21q11-11.21 11-27.79t-11-27.79Q500-595 483-595t-28 11.21q-11 11.21-11 27.79t11 27.79Q466-517 483-517t28-11.21ZM315-521l127-126-180-179-124 124 177 181Zm94 77q16.58 0 27.79-11T448-483q0-17-11.21-28T409-522q-16.58 0-27.79 11T370-483q0 17 11.21 28T409-444Zm102 62.79q11-11.21 11-27.79t-11-27.79Q500-448 483-448t-28 11.21q-11 11.21-11 27.79t11 27.79Q466-370 483-370t28-11.21ZM556-444q16.58 0 27.79-11T595-483q0-17-11.21-28T556-522q-16.58 0-27.79 11T517-483q0 17 11.21 28T556-444Zm-34 126 180 180 124-124-179-179-125 123ZM358-606Zm248 248Z'; // the Material "healing" icon, as in the app
   var KINDS = [
-    { key: 'calm', name: 'Ordinary night', when: 'Blue card. Snoring and breathing look ordinary.', action: 'Keep tracking' },
-    { key: 'watch', name: 'Unusual night', when: 'Warm card. A lot of snoring that night.', action: 'Talk to our sleep care team', secondary: 'Use a remedy' },
-    { key: 'urgent', name: 'Breathing paused often', when: 'Wine card. Breathing paused often that night.', action: 'Talk to our sleep care team' },
+    { key: 'calm', name: 'Ordinary night', when: 'Blue card. Snore Score 0–35 and breathing pauses Rarely.', action: 'Keep tracking' },
+    { key: 'watch', name: 'Moderate night', when: 'Warm card. The higher of the two is moderate: Snore Score 36–70, or breathing pauses Sometimes.', action: 'Talk to our sleep care team', secondary: 'Use a remedy' },
+    { key: 'urgent', name: 'Severe night', when: 'Wine card. The higher of the two is high: Snore Score 71+, or breathing pauses Often.', action: 'Talk to our sleep care team' },
   ];
   fetch('verdicts.json').then(function (r) { return r.json(); }).then(function (copy) {
     var cols = document.getElementById('cols');

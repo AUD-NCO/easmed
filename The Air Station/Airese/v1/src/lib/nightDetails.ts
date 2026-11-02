@@ -14,9 +14,11 @@ export type NightState =
   | 'processing' // analysis not finished: no cards yet
   | 'poor' // couldn't hear clearly: no scores
   | 'stopped' // recording stopped early: what was saved, and what it can still tell (lib/recordingIssues)
-  | 'steady' // ordinary night
-  | 'unusual' // one night out of the ordinary
-  | 'pattern'; // the same thing on many recent nights (ladder: pattern → suggest → act)
+  | 'ordinary' // sample profile: quiet snoring, few breathing pauses
+  | 'moderate' // sample profile: moderate snoring, some breathing pauses
+  | 'severe'; // sample profile: loud snoring, frequent breathing pauses
+// The verdict itself never trusts the profile: it's worked out from the night's numbers (classify, lib/benchmarks).
+
 
 export type Intensity = 'light' | 'moderate' | 'loud' | 'veryLoud';
 export type ClipType = 'Loud snoring' | 'Repeated snoring' | 'Light snoring' | 'Interrupted breathing';
@@ -44,7 +46,6 @@ export type NightDetails = {
   soundScore: number; // 0–100: loudness part + snoring part
   soundParts: { loudness: number; snoring: number }; // each 0–50
   baseline: { snoringMinutes: number; breathingEvents: number; averageDb: number };
-  patternNights?: { of: number; seen: number }; // e.g. 5 of the last 7
   awake: { start: number; end: number }[]; // stretches that sounded awake or restless
   recent: { day: string; snoringMinutes: number; tonight: boolean }[]; // last 7 nights, oldest first
   bins: number[]; // snoring loudness in 3-minute steps across the night, 0 (none) to 1 (very loud)
@@ -55,6 +56,8 @@ export type NightDetails = {
 };
 
 export const BIN_MINUTES = 3;
+/** How loud each profile's snoring stretches run (picks from light, moderate, loud, very loud): tuned so each lands in its Snore Score band. */
+const LOUDNESS: Record<'ordinary' | 'moderate' | 'severe', number> = { ordinary: 1.4, moderate: 3, severe: 4 };
 export const SAMPLE_SECONDS = 20;
 export const SAMPLES_PER_MINUTE = 60 / SAMPLE_SECONDS;
 const SEGMENT_DB: Record<Intensity, number> = { light: 47, moderate: 53, loud: 60, veryLoud: 67 };
@@ -77,25 +80,25 @@ const INTENSITIES: Intensity[] = ['light', 'moderate', 'loud', 'veryLoud'];
 export function nightDetails(night: Night, state: NightState): NightDetails {
   const rand = seeded(night.id + state);
   const between = (a: number, b: number) => a + rand() * (b - a);
-  const heavy = state === 'pattern' || state === 'unusual';
+  const heavy = state === 'severe' || state === 'moderate';
 
-  // Snoring: stretches laid out through the night with quiet gaps between. A repeated-pattern night
-  // snores for long stretches most of the night; an ordinary one in a few short bursts.
-  const shape = state === 'pattern' ? { count: 14, len: [12, 30], gap: [3, 14] } : heavy ? { count: 10, len: [8, 22], gap: [8, 30] } : { count: 6, len: [3, 9], gap: [20, 60] };
+  // Snoring: stretches laid out through the night with quiet gaps between. A severe night snores for
+  // long stretches most of the night; a moderate one in shorter ones; an ordinary one in a few short bursts.
+  const shape = state === 'severe' ? { count: 14, len: [12, 30], gap: [3, 14] } : state === 'moderate' ? { count: 8, len: [6, 16], gap: [15, 40] } : { count: 5, len: [3, 7], gap: [25, 70] };
   const segments: SnoreSegment[] = [];
   let at = between(15, 40);
   for (let i = 0; i < shape.count; i++) {
     const start = Math.round(at);
     const end = Math.min(night.minutes - 10, Math.round(at + between(shape.len[0], shape.len[1])));
     if (end - start < 3) break;
-    const level = Math.min(3, Math.floor(rand() * (heavy ? 4 : 2.6)));
+    const level = Math.min(3, Math.floor(rand() * (LOUDNESS[state as keyof typeof LOUDNESS] ?? LOUDNESS.ordinary)));
     segments.push({ start, end, intensity: INTENSITIES[level] });
     at = end + between(shape.gap[0], shape.gap[1]);
   }
   const snoringMinutes = segments.reduce((sum, s) => sum + (s.end - s.start), 0);
 
   // Breathing interruptions: only while snoring (longer stretches hold more). Counts give a realistic rate an hour.
-  const breathingCount = state === 'pattern' ? 118 : state === 'unusual' ? 52 : 11;
+  const breathingCount = state === 'severe' ? 118 : state === 'moderate' ? 52 : 11;
   const breathingEvents = Array.from({ length: breathingCount }, () => {
     let r = rand() * snoringMinutes;
     const s = segments.find((seg) => (r -= seg.end - seg.start) < 0) ?? segments[segments.length - 1];
@@ -138,13 +141,13 @@ export function nightDetails(night: Night, state: NightState): NightDetails {
     const start = Math.round(between(10, night.minutes - 30));
     return { start, end: start + Math.round(between(5, 14)) };
   }).sort((a, b) => a.start - b.start);
-  const baselineSnoring = state === 'steady' ? Math.round(snoringMinutes * between(1.3, 1.7)) : Math.round(snoringMinutes * between(0.45, 0.65));
+  const baselineSnoring = state === 'ordinary' ? Math.round(snoringMinutes * between(1.3, 1.7)) : Math.round(snoringMinutes * between(0.45, 0.65));
   const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
   const recent = Array.from({ length: 7 }, (_, i) => {
     const date = new Date(night.date.getFullYear(), night.date.getMonth(), night.date.getDate() - (6 - i));
     const tonight = i === 6;
-    // Earlier nights sit around the usual; in a pattern most of them run high too.
-    const level = state === 'pattern' && i % 3 !== 0 ? between(1.4, 1.9) : between(0.7, 1.3);
+    // Earlier nights sit around the usual.
+    const level = between(0.7, 1.3);
     return { day: DAYS[date.getDay()], snoringMinutes: tonight ? snoringMinutes : Math.round(baselineSnoring * level), tonight };
   });
   // Fine-grained loudness for the timeline: each snoring period, with a little natural variation.
@@ -193,7 +196,9 @@ export function nightDetails(night: Night, state: NightState): NightDetails {
 
   const earlier = recent.filter((r) => !r.tonight);
   const usualSnoring = Math.round(earlier.reduce((n, r) => n + r.snoringMinutes, 0) / earlier.length);
-  const soundParts = soundScoreParts(averageDb, snoringMinutes / night.minutes);
+  // Prototype: sample nights are seeded by date, so keep each profile's Snore Score inside its band
+  // (scaling both halves), or a demo night could tip a point over a band edge.
+  const soundParts = withinBand(soundScoreParts(averageDb, snoringMinutes / night.minutes), BAND[state as keyof typeof BAND]);
   return {
     night,
     state,
@@ -219,10 +224,9 @@ export function nightDetails(night: Night, state: NightState): NightDetails {
     soundParts,
     baseline: {
       snoringMinutes: usualSnoring,
-      breathingEvents: state === 'steady' ? breathingCount + 4 : state === 'unusual' ? Math.round(breathingCount * 0.4) : Math.round(breathingCount * 0.9),
+      breathingEvents: state === 'ordinary' ? breathingCount + 4 : state === 'moderate' ? Math.round(breathingCount * 0.4) : Math.round(breathingCount * 0.9),
       averageDb: Math.round(between(44, 50)),
     },
-    patternNights: state === 'pattern' ? { of: 7, seen: 5 } : undefined,
   };
 }
 
@@ -234,6 +238,17 @@ export function nightDetails(night: Night, state: NightState): NightDetails {
 export function soundScoreParts(averageDb: number, snoringShare: number) {
   const clamp = (n: number) => Math.round(Math.max(0, Math.min(50, n)));
   return { loudness: clamp(((averageDb - 35) / 30) * 50), snoring: clamp((snoringShare / 0.4) * 50) };
+}
+
+/** Prototype: the Snore Score range each sample profile is kept in (the agreed bands, lib/benchmarks). */
+const BAND: Record<'ordinary' | 'moderate' | 'severe', [number, number]> = { ordinary: [0, 35], moderate: [36, 70], severe: [71, 100] };
+
+function withinBand(parts: { loudness: number; snoring: number }, band?: [number, number]) {
+  const total = parts.loudness + parts.snoring;
+  if (!band || !total || (total >= band[0] && total <= band[1])) return parts;
+  const target = Math.min(band[1], Math.max(band[0], total));
+  const loudness = Math.round((parts.loudness * target) / total);
+  return { loudness, snoring: target - loudness };
 }
 
 /** Breathing interruptions per hour of sleep, to one decimal. */
@@ -280,8 +295,8 @@ export const trendWords: Record<Trend, string> = { less: 'Less than usual', same
 export const VERDICTS = verdictCopy as Record<'calm' | 'watch' | 'urgent', { headline: string; body: string }[]>;
 
 /** Headline and one short, general line under it (PRD §5): no numbers, one line. Plain, factual, calm. */
-export function summary(d: NightDetails): { headline: string; body: string } {
-  const set = VERDICTS[d.state === 'pattern' ? 'urgent' : d.state === 'unusual' ? 'watch' : 'calm'];
+export function summary(d: NightDetails, tier: 'ordinary' | 'moderate' | 'severe'): { headline: string; body: string } {
+  const set = VERDICTS[tier === 'severe' ? 'urgent' : tier === 'moderate' ? 'watch' : 'calm'];
   return set[d.night.date.getDate() % set.length];
 }
 
@@ -303,18 +318,17 @@ export const INTENSITY_LABEL: Record<Intensity, string> = { light: 'Light', mode
 
 
 /**
- * Prototype: what each sample night shows, for the Reports calendar and the report on show.
- * Mostly ordinary nights, with the odd unusual night
- * and a repeated pattern in the most recent week.
+ * Prototype: what each sample night is generated as, for the Reports calendar and the report on show.
+ * Mostly ordinary nights, with a few moderate and severe ones.
  */
 export function sampleState(night: Night, all: Night[]): NightState {
   const i = all.findIndex((n) => n.id === night.id);
-  if (i === 1 || i === 3) return 'pattern';
-  if (i === 4 || i === 6) return 'unusual'; // 4: one in the current month, so the calendar shows every kind
-  return 'steady';
+  if (i === 1 || i === 3) return 'severe';
+  if (i === 4 || i === 6) return 'moderate'; // 4: one in the current month, so the calendar shows every kind
+  return 'ordinary';
 }
 
-const STATES: NightState[] = ['processing', 'poor', 'steady', 'unusual', 'pattern'];
+const STATES: NightState[] = ['processing', 'poor', 'ordinary', 'moderate', 'severe'];
 
 /** The state to show: a demo override (?state=…) if valid, else the sample night's own. */
 export function nightState(night: Night, override?: string): NightState {

@@ -32,6 +32,7 @@ export function ScoreTile({
   onPress,
   accessibilityLabel,
   action,
+  badge,
   ringSize = 116,
 }: {
   tone: Exclude<DataTone, 'neutral'>;
@@ -46,6 +47,8 @@ export function ScoreTile({
   accessibilityLabel?: string;
   /** A small action at the foot of the tile (e.g. Listen); tiles side by side keep it level. */
   action?: React.ReactNode;
+  /** Something small in the top corner (e.g. a Spotlight); in place of the chevron. */
+  badge?: React.ReactNode;
   /** The ring's size; smaller when the tile carries an action, so the pair stays short. */
   ringSize?: number;
 }) {
@@ -59,7 +62,9 @@ export function ScoreTile({
       accessibilityLabel={accessibilityLabel ?? `${name}: ${value ? `${value}, ` : ''}${level}.${detail ? ` ${detail}` : ''}`}
       style={({ pressed }) => [styles.tile, pressed && styles.pressed]}
     >
-      {onPress ? (
+      {badge ? (
+        <View style={styles.badge}>{badge}</View>
+      ) : onPress ? (
         <View style={styles.more}>
           <Icon name="chevron_right" size={20} color="textMuted" />
         </View>
@@ -96,6 +101,7 @@ const styles = StyleSheet.create({
   tile: { flex: 1, alignItems: 'center', backgroundColor: colors.surface, borderRadius: radius.card, paddingHorizontal: space.md, paddingTop: space.xl, paddingBottom: space.lg },
   pressed: { opacity: 0.85 },
   more: { position: 'absolute', top: space.md, right: space.md },
+  badge: { position: 'absolute', top: space.sm, right: space.sm, zIndex: 1 },
   name: { marginTop: space.lg, fontFamily: type.heading.fontFamily, fontWeight: type.heading.fontWeight },
   level: { flexDirection: 'row', alignItems: 'center', gap: space.sm, minHeight: 28, paddingHorizontal: space.md, borderRadius: radius.pill, marginTop: space.sm },
   dot: { width: 8, height: 8, borderRadius: 4 },

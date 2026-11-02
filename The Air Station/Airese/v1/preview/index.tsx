@@ -29,6 +29,7 @@ import { CentresScreen } from '../src/screens/CentresScreen';
 import { EditDetailsScreen } from '../src/screens/EditDetailsScreen';
 import { deleteAccount, finishSetup, startRoute } from '../src/lib/account';
 import { LoginScreen } from '../src/screens/LoginScreen';
+import { ChangePasswordScreen } from '../src/screens/ChangePasswordScreen';
 import { ForgotPasswordScreen } from '../src/screens/ForgotPasswordScreen';
 import type { ProfileSheet } from '../src/screens/ProfileScreen';
 import { setDemoLastNightStopped, setDemoStartProblem, type StartProblem } from '../src/lib/recordingIssues';
@@ -43,7 +44,7 @@ function PreviewApp() {
   const [tab, setTab] = useState('home');
   const [recording, setRecording] = useState<{ startedAt: Date; from?: RecordOrigin; pausedAt?: Date }>(() => ({ startedAt: new Date() }));
   const [reportState, setReportState] = useState<string | undefined>(); // demo menu: last night's report in a given state
-  const [openProfile, setOpenProfile] = useState(false); // demo menu: Profile, over Home
+  const [openProfile, setOpenProfile] = useState<false | 'profile' | 'password'>(false); // demo menu: Profile (or Change password), over Home
   const [profileSheet, setProfileSheet] = useState<ProfileSheet>(); // demo menu: Profile, open on one of its sheets
   const [loggedOut, setLoggedOut] = useState(false); // Log in after logging out: no back
   const [resetDemo, setResetDemo] = useState(false); // demo menu: Forgot password's new-password step
@@ -71,7 +72,7 @@ function PreviewApp() {
       const sheet = ({ 'delete-recordings': 'delete-recordings', 'delete-account': 'delete-account', 'log-out': 'log-out' } as Record<string, ProfileSheet>)[key];
       setProfileSheet(sheet);
       if (sheet) key = 'profile';
-      setOpenProfile(key === 'profile');
+      setOpenProfile(key === 'profile' ? 'profile' : key === 'change-password' ? 'password' : false);
       setLoggedOut(false);
       setResetDemo(key === 'forgot-password-new');
       if (key === 'forgot-password-new') key = 'forgot-password';
@@ -95,7 +96,7 @@ function PreviewApp() {
         // Stopped five minutes ago, two and a half hours in
         setRecording({ startedAt: new Date(Date.now() - 150 * 60_000), pausedAt: new Date(Date.now() - 5 * 60_000) });
         setStep('recording');
-      } else if (key === 'profile') {
+      } else if (key === 'profile' || key === 'change-password') {
         setStep('home');
         setTab('home');
       } else if (key.startsWith('night-')) {
@@ -249,7 +250,7 @@ function HomeTabs({
   onTab: (key: string) => void;
   onStartRecording: (from: RecordOrigin) => void;
   reportState?: string;
-  initialProfile: boolean;
+  initialProfile: false | 'profile' | 'password';
   initialRemedies: boolean;
   onAccountDeleted: () => void;
   onLoggedOut: () => void;
@@ -257,7 +258,7 @@ function HomeTabs({
 }) {
   const latest = useNights()[0];
   const [notes, setNotes] = useState<Night | null>(initialRemedies ? latest : null); // a night's Night Notes, from its report
-  const [profile, setProfile] = useState<'profile' | 'details' | 'centres' | null>(initialProfile ? 'profile' : null);
+  const [profile, setProfile] = useState<'profile' | 'details' | 'centres' | 'password' | null>(initialProfile || null);
   return (
     <View style={{ flex: 1 }}>
       {tab === 'home' ? (
@@ -274,6 +275,7 @@ function HomeTabs({
           onBack={() => setProfile(null)}
           onOpenDetails={() => setProfile('details')}
           onOpenCentres={() => setProfile('centres')}
+          onOpenChangePassword={() => setProfile('password')}
           demoSheet={profileSheet}
           onLoggedOut={onLoggedOut}
           onAccountDeleted={() => {
@@ -284,6 +286,7 @@ function HomeTabs({
       )}
       {profile === 'details' && <EditDetailsScreen onBack={() => setProfile('profile')} />}
       {profile === 'centres' && <CentresScreen onBack={() => setProfile('profile')} />}
+      {profile === 'password' && <ChangePasswordScreen onBack={() => setProfile('profile')} onDone={() => setProfile('profile')} />}
     </View>
   );
 }

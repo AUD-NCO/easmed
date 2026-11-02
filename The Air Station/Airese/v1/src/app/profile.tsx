@@ -11,6 +11,7 @@ export default function Profile() {
       onBack={() => (router.canGoBack() ? router.back() : router.replace('/home'))}
       onOpenDetails={() => router.push('/profile-details')}
       onOpenCentres={() => router.push('/centres')}
+      onOpenChangePassword={() => router.push('/change-password')}
       onLoggedOut={() => {
         if (router.canDismiss()) router.dismissAll();
         router.replace({ pathname: '/login', params: { out: '1' } });

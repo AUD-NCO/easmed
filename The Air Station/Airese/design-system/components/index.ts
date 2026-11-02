@@ -37,6 +37,7 @@ export * from './Pickers';
 export * from './TipCarousel';
 export * from './TopSheet';
 export * from './VerdictCard';
+export * from './Spotlight';
 export * from './IconChoiceGrid';
 export * from './IconStack';
 export * from './CheckInBanner';

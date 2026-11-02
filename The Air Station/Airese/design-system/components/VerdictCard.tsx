@@ -65,6 +65,7 @@ export function VerdictCard({
   values,
   action,
   secondary,
+  drawnPattern = mood === 'urgent',
 }: {
   mood: Mood;
   title: string;
@@ -74,12 +75,14 @@ export function VerdictCard({
   action: VerdictAction;
   /** A second choice, as a round icon button beside the main one. */
   secondary?: VerdictAction & { icon: IconName };
+  /** Urgent cards draw a pattern building over many nights instead of plotting `values`. Off: plot the night's data, as the other moods do. */
+  drawnPattern?: boolean;
 }) {
   const [textBottom, setTextBottom] = useState(0); // where the words end: behind them the graph stays within the contrast budget
   return (
     <View style={styles.card}>
       <HeroBackground mood={mood} />
-      {textBottom > 0 && <TrendBackdrop values={values} mood={mood} color={colors[LINE[mood]]} textBottom={textBottom} />}
+      {textBottom > 0 && <TrendBackdrop values={values} mood={mood} drawnPattern={drawnPattern} color={colors[LINE[mood]]} textBottom={textBottom} />}
       <View onLayout={(e) => setTextBottom(e.nativeEvent.layout.y + e.nativeEvent.layout.height)}>
         <AppText variant="heading" color="text" accessibilityRole="header">
           {title}
@@ -125,7 +128,7 @@ const INK: Record<Mood, { fill: [number, number]; line: [number, number]; shine:
  * line now and then. Reduce Motion: the graph is simply there, no shine.
  * Width can't use the native driver, so both run on the JS driver (one small view each).
  */
-function TrendBackdrop({ values, mood, color, textBottom }: { values: number[]; mood: Mood; color: string; textBottom: number }) {
+function TrendBackdrop({ values, mood, drawnPattern, color, textBottom }: { values: number[]; mood: Mood; drawnPattern: boolean; color: string; textBottom: number }) {
   const id = useId().replace(/[^a-zA-Z0-9]/g, '');
   const reduced = useReducedMotion();
   const [size, setSize] = useState({ w: 0, h: 0 });
@@ -150,7 +153,7 @@ function TrendBackdrop({ values, mood, color, textBottom }: { values: number[]; 
     return () => run.stop();
   }, [measured, reduced, draw, pass]);
 
-  const series = mood === 'urgent' ? PATTERN_SHAPE : values;
+  const series = drawnPattern ? PATTERN_SHAPE : values;
   const { w, h } = size;
   const [low, high] = BAND[mood];
   const min = Math.min(...series);

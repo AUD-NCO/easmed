@@ -53,7 +53,7 @@ const ABOUT: Record<About, { title: string; body: string }> = {
  *   sleep care   Talk to our sleep care team (asks for a call back) · Our centres ›   (same words and icon everywhere: CARE_CTA)
  *   settings     Bedtime reminder (a switch; "Turn on" while notifications are off) · Microphone ("Turn on" while it's off)
  *   about        How Airese works · Privacy policy · Terms of use
- *   account      Log out (your email under it; asks first)
+ *   account      Change password › · Log out (your email under it; asks first)
  *   your data    Delete all recordings (a full sheet first: what goes, why keep it). No Delete account in V1.
  *   brand        the Airese logo, "Powered by The Air Station", where your data lives, the version: quiet, at the end
  *
@@ -68,6 +68,7 @@ export function ProfileScreen({
   onBack,
   onOpenDetails,
   onOpenCentres,
+  onOpenChangePassword,
   onLoggedOut,
   onAccountDeleted,
   demoSheet,
@@ -76,6 +77,7 @@ export function ProfileScreen({
   onBack: () => void;
   onOpenDetails: () => void;
   onOpenCentres: () => void;
+  onOpenChangePassword: () => void;
   onLoggedOut: () => void;
   /** After Delete account: the account and everything on the phone are gone; start again. */
   onAccountDeleted: () => void;
@@ -98,6 +100,13 @@ export function ProfileScreen({
   const [logOutSheet, setLogOutSheet] = useState(demoSheet === 'log-out');
   const [about, setAbout] = useState<About | null>(null);
   const [toast, setToast] = useState<string | null>(null);
+  // Back from Change password: say it worked (only for a change made while Profile is open)
+  const changedAt = account.passwordChangedAt;
+  const [seenChange, setSeenChange] = useState(changedAt);
+  if (changedAt !== seenChange) {
+    setSeenChange(changedAt);
+    if (changedAt) setToast('Password changed');
+  }
   const [careSheet, setCareSheet] = useState(false);
   const name = `${profile.firstName} ${profile.lastName}`.trim();
   const contact = profile.phone ? phoneDisplay(profile) : profile.email;
@@ -175,6 +184,8 @@ export function ProfileScreen({
 
           {/* Account */}
           <FormGroup title="Account">
+            <SettingRow icon="key" title="Change password" chevron onPress={onOpenChangePassword} />
+            <FormDivider />
             <SettingRow icon="logout" title="Log out" detail={account.account?.email || profile.email || undefined} onPress={() => setLogOutSheet(true)} />
           </FormGroup>
 

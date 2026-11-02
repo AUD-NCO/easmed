@@ -4,8 +4,9 @@ import {
   AppText,
   BigNumber,
   CARE_CTA,
-  CareRequestSheet,
+  CareConfirmSheet,
   RemediesSheet,
+  Spotlight,
   ClipPlayer,
   ComparisonIndicator,
   DataCard,
@@ -27,8 +28,9 @@ import {
   PromptBody,
   ScoreTile,
   SnoringChart,
+  Toast,
 } from '../components';
-import { benchmarks, zoneOf, type Benchmark } from '../lib/benchmarks';
+import { benchmarks, classify, zoneOf, type Benchmark } from '../lib/benchmarks';
 import { useClipPlayer } from '../lib/clipPlayer';
 import {
   EXPLAIN,
@@ -67,7 +69,8 @@ import { alpha, colors, motion, radius, space, type, useReducedMotion } from '@d
  * Snoring is a score (comparable, safe to track). Breathing is a plain level on the page; its exact
  * rate lives in its sheet and the report, pending Clinical. The sticky action follows the level of concern.
  * Colour by data: Ember snoring, Iris breathing, Dew sleep. Type: four sizes, regular and semibold.
- * States: processing, stopped early (what was saved), ordinary, unusual, repeated pattern.
+ * States: processing, stopped early (what was saved), and a ready night as ordinary, moderate or severe
+ * (classify: the higher of the Snore Score and breathing pauses bands).
  * A recording problem (couldn't hear clearly, stopped early): the usual header, and the problem in the
  * middle (PromptBody: image, problem, reason, how to solve, one button) in place of the cards.
  *
@@ -118,17 +121,19 @@ export function NightScreen({
   const [report, setReport] = useState(false); // the Night report sheet
   const [explain, setExplain] = useState<ExplainKey | null>(null);
   const [remedies, setRemedies] = useState(false);
+  const [pausesInfo, setPausesInfo] = useState(false); // the star on Breathing pauses
   const [careSheet, setCareSheet] = useState(false);
+  const [toast, setToast] = useState<string | null>(null);
   const [heroBottom, setHeroBottom] = useState(0); // where the verdict card ends: the footer waits until it's scrolled past
   const player = useClipPlayer();
   const audioDeleted = useAudioDeleted(); // Profile → Delete all recordings: the report stays, the sound doesn't
-  const d = nightDetails(night, state === 'processing' || state === 'stopped' ? 'steady' : state);
+  const d = nightDetails(night, state === 'processing' || state === 'stopped' ? 'ordinary' : state);
   // The moment in the player: a breathing pause if there was one (the clearest proof), else the first.
   const [selected, setSelected] = useState((d.featured.find((c) => c.type === 'Interrupted breathing') ?? d.featured[0])?.id);
 
   const ready = state !== 'processing' && state !== 'poor' && state !== 'stopped';
-  const concern = state === 'pattern';
-  const sum = summary(d);
+  const tier = classify(d); // the higher of the Snore Score and breathing pauses bands
+  const sum = summary(d, tier);
   const marks = benchmarks(d);
   const lead = d.featured.find((c) => c.id === selected) ?? d.featured[0];
   const sound = mark(marks, 'sound');
@@ -141,15 +146,15 @@ export function NightScreen({
 
   // The night's one next step, in the verdict card and (once that's scrolled away) the sticky footer:
   // the same button in both places (label, icon, colour), so the page never offers two different actions.
-  // Ordinary night: keep tracking. Unusual: talk to our sleep care team, with remedies to try tonight as a
-  // round button beside it. Repeated pattern: talk to our sleep care team.
-  const mood: Mood = concern ? 'urgent' : state === 'unusual' ? 'watch' : 'calm';
+  // Ordinary night: keep tracking. Moderate: talk to our sleep care team, with remedies to try tonight as a
+  // round button beside it. Severe: talk to our sleep care team.
+  const mood: Mood = tier === 'severe' ? 'urgent' : tier === 'moderate' ? 'watch' : 'calm';
   const step = (leave: (then: () => void) => void): VerdictAction =>
-    concern || state === 'unusual'
+    tier !== 'ordinary'
       ? { label: CARE_CTA.label, icon: CARE_CTA.icon, onPress: () => setCareSheet(true) }
       : { label: 'Keep tracking', onPress: () => (onRecordAgain ? onRecordAgain() : onBack && leave(onBack)) };
 
-  const secondary = state === 'unusual' ? { label: 'Use a remedy', icon: 'healing' as const, onPress: () => setRemedies(true) } : undefined;
+  const secondary = tier === 'moderate' ? { label: 'Use a remedy', icon: 'healing' as const, onPress: () => setRemedies(true) } : undefined;
 
   // Listen, from a score: down to the recording (the moment card) with that moment picked, and the card
   // lit up for a moment so the eye lands on it. Nothing plays until they press play there.
@@ -194,6 +199,7 @@ export function NightScreen({
         accessibilityLabel={`Breathing pauses: ${zoneOf(breathing).word}`}
         ringSize={96}
         action={pause && <ListenButton accessibilityLabel="Listen to a breathing pause" onPress={() => goListen(pause, scrollTo)} />}
+        badge={<Spotlight label="What’s a breathing pause?" onPress={() => setPausesInfo(true)} />}
       />
     </View>
   );
@@ -257,7 +263,7 @@ export function NightScreen({
         <View style={styles.body} onLayout={(e) => (bodyY.current = e.nativeEvent.layout.y)}>
           {problem && <PromptBody art={problem.copy.art} title={problem.copy.title} body={problem.copy.reason} fix={problem.copy.fix} cta={problem.cta} onCta={problem.onCta} />}
           {state === 'processing' && <Processing />}
-          {onAddNotes && <NotesNudge chosen={notesChosen} onPress={onAddNotes} />}
+          {onAddNotes && !ready && <NotesNudge chosen={notesChosen} onPress={onAddNotes} />}
 
           {stopped && !problem && (
             <>
@@ -285,8 +291,11 @@ export function NightScreen({
                   values={d.hourly.map((h) => h.minutes)} // the night behind the words: its snoring, hour by hour (the verdict is about this night only)
                   action={step(leave)}
                   secondary={secondary}
+                  drawnPattern={false} // the verdict is about this night only: plot its data, even when severe
                 />
               </View>
+
+              {onAddNotes && <NotesNudge chosen={notesChosen} onPress={onAddNotes} />}
 
               {sound_}
 
@@ -332,10 +341,19 @@ export function NightScreen({
       {/* Small sheets: one-line explanations */}
       <ExplainSheet content={explain ? EXPLAIN[explain] : null} onClose={() => setExplain(null)} />
       <RemediesSheet visible={remedies} onClose={() => setRemedies(false)} />
-      <CareRequestSheet visible={careSheet} onClose={() => setCareSheet(false)} />
+      <ExplainSheet content={pausesInfo ? PAUSES_INFO : null} onClose={() => setPausesInfo(false)} />
+      {/* Talk to our sleep care team: say what's shared, then Request a call back or Not now */}
+      <CareConfirmSheet visible={careSheet} onRequest={() => (setCareSheet(false), setToast('Call back requested'))} onClose={() => setCareSheet(false)} />
+      <Toast message={toast} onDone={() => setToast(null)} />
     </>
   );
 }
+
+// The star on Breathing pauses: what they are, and why Airese listens for them. Short, calm, not a diagnosis.
+const PAUSES_INFO = {
+  title: 'What’s a breathing pause?',
+  body: 'Your breathing stops for 10 seconds or more while you sleep, then starts again, often with a gasp or snort. You won’t notice it yourself, so it’s easy to miss.\n\nAirese listens for these all night, which most sleep apps don’t. If they happen often, it’s worth talking to our sleep care team.',
+};
 
 const mark = (marks: Benchmark[], k: Benchmark['key']) => marks.find((b) => b.key === k)!;
 /** Where a score sits on its guide scale, 0 to 1. */
@@ -447,44 +465,22 @@ function Block({ label, children }: { label: string; children: React.ReactNode }
 }
 
 /**
- * Every night's report: a small bright banner under the header, always there. Tap to add or change
- * the night's Morning check-in. One line, never taller: once filled in, the remedies show as a row
- * of overlapping icons that fade out towards the end (a habit: notes tagged to each night, to see patterns over time).
- * Arrives just after the report: it opens up, pushing the cards down, as it fades in (fast).
- * Reduce Motion: it fades in where it sits.
+ * Every night's report: a quiet row for the night's Morning check-in, under the verdict (above the cards
+ * while there's no verdict). Tap to add or change it. One line, never taller: once filled in, the
+ * remedies show as a row of overlapping icons that fade out towards the end (a habit: notes tagged to
+ * each night, to see patterns over time). No entrance animation; while it's empty, one soft shine sweeps
+ * across it once so it isn't missed.
  */
 function NotesNudge({ chosen, onPress }: { chosen: { icon: IconName; label: string }[]; onPress: () => void }) {
-  const reduced = useReducedMotion();
-  const open = useRef(new Animated.Value(0)).current;
-  const [height, setHeight] = useState(0);
-  useEffect(() => {
-    if (!height && !reduced) return; // measure first
-    // Height can't run on the native driver
-    Animated.timing(open, { toValue: 1, duration: motion.fast.duration, delay: motion.stagger, easing: motion.fast.easeOut, useNativeDriver: false }).start();
-  }, [height, reduced, open]);
-
-  const banner = (
-    <View style={!reduced && styles.nudgeMeasured} onLayout={(e) => setHeight(e.nativeEvent.layout.height)}>
-      <CheckInBanner
-        text={chosen.length ? 'Morning check-in' : 'Add your Morning check-in'}
-        icons={chosen.map((c) => c.icon)}
-        label={chosen.length ? `Morning check-in: ${chosen.map((c) => c.label).join(', ')}` : undefined}
-        onPress={onPress}
-      />
-    </View>
-  );
-  if (reduced) return <Animated.View style={{ opacity: open }}>{banner}</Animated.View>;
   return (
-    <Animated.View
-      style={{
-        height: open.interpolate({ inputRange: [0, 1], outputRange: [0, height] }),
-        marginBottom: open.interpolate({ inputRange: [0, 1], outputRange: [-space.lg, 0] }), // cancels the page's gap while closed
-        opacity: open,
-        overflow: 'hidden',
-      }}
-    >
-      {banner}
-    </Animated.View>
+    <CheckInBanner
+      quiet
+      shine={!chosen.length} // one sweep while it's still empty, so it isn't missed
+      text={chosen.length ? 'Morning check-in' : 'Add your Morning check-in'}
+      icons={chosen.map((c) => c.icon)}
+      label={chosen.length ? `Morning check-in: ${chosen.map((c) => c.label).join(', ')}` : undefined}
+      onPress={onPress}
+    />
   );
 }
 
@@ -556,7 +552,6 @@ const styles = StyleSheet.create({
   block: { backgroundColor: colors.surface, borderRadius: radius.card, padding: space.gutter },
   refRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: space.sm },
 
-  nudgeMeasured: { position: 'absolute', top: 0, left: 0, right: 0 }, // full height while its holder opens
   processing: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingBottom: space.xxl * 3 },
   progress: { width: 200, height: 4, borderRadius: 2, marginTop: space.xl, overflow: 'hidden', backgroundColor: alpha(colors.mist, 0.15) },
   glint: { width: 80, height: 4, borderRadius: 2, backgroundColor: colors.accent },

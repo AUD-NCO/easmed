@@ -6,12 +6,13 @@ import { recall, remember } from './session';
 
 /**
  * The Airese account (management decision, Oct 2026): a verified email and a password make a user in
- * the database, with its own user ID. Then: log in, forgot password, log out, delete account.
+ * the database, with its own user ID. Then: log in, forgot password, change password, log out, delete account.
  *
  *   create   Create account (Get started, on the walkthrough): email verified with a code (lib/emailCode.ts),
  *            a password, Continue. Then set-up: microphone, notifications, Your details, About you, Home
  *   log in   email and password (I already have an account, on the walkthrough; where the app opens once logged out)
  *   forgot   email → a 6-digit code (the same Verify your email sheet) → a new password → logged in
+ *   change   Profile → Change password: the current password and a new one (forgot it: a code to the verified email instead)
  *   log out  Profile. Recordings stay on the phone; logging in again brings everything back
  *   delete   Profile → Delete account: the account, details, recordings and notes, for good
  *
@@ -24,7 +25,7 @@ import { recall, remember } from './session';
 export const PASSWORD_MIN = 8;
 
 type Account = { userId: string; email: string; password: string };
-type State = { account: Account | null; signedIn: boolean; settingUp?: boolean }; // settingUp: made, set-up not finished
+type State = { account: Account | null; signedIn: boolean; settingUp?: boolean; passwordChangedAt?: number }; // settingUp: made, set-up not finished
 
 let state: State = recall<State>('account', { account: null, signedIn: false });
 const listeners = new Set<() => void>();
@@ -64,6 +65,11 @@ export function resetPassword(email: string, password: string) {
   const known = state.account?.email.toLowerCase() === email.toLowerCase() ? state.account : null;
   save({ account: { userId: known?.userId ?? newUserId(), email, password }, signedIn: true, settingUp: false });
   setProfile({ email, verifiedEmail: email });
+}
+
+/** Change password: the new password is saved; Profile says so (passwordChangedAt). */
+export function changePassword(email: string, password: string) {
+  save({ ...state, account: { userId: state.account?.userId ?? newUserId(), email: state.account?.email ?? email, password }, passwordChangedAt: Date.now() });
 }
 
 /** Log out: the account and what's on the phone stay; you log in again to get back in. */

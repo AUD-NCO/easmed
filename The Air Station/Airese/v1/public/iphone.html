@@ -162,15 +162,16 @@
       { group: 'Account', items: [
         ['forgot-password', 'Forgot password', '/forgot-password', 'From Log in. Send code opens the same Verify your email sheet as sign-up (demo code 482913).'],
         ['forgot-password-new', 'New password', '/forgot-password?state=new', 'After the code: a new password, then Save and log in goes Home.'],
+        ['change-password', 'Change password', '/change-password', 'Profile → Account → Change password. Current password, then a new one. Forgot it? A code to the verified email, then just the new password. Any input works in the demo. Save goes back to Profile with a toast.'],
         ['log-out', 'Log out', '/profile?sheet=log-out', 'Profile → Log out. A quick check; recordings stay. Goes to Log in.'],
         ['delete-recordings', 'Delete all recordings', '/profile?sheet=delete-recordings', 'Profile → Delete all recordings. Full sheet: are you sure, what’s deleted (the audio) and what stays (check-ins, reports, insights).'] ] },
       { group: 'Sleep Diary', items: [
         ['notes-before', 'Bedtime check-in', '/night-notes', 'From Recording’s banner. Same as last night fills in last night’s choices in one tap (demo: Caffeine, Ate late).'],
         ['notes-remedies', 'Morning check-in', '/night-notes?night=latest', 'From the report’s banner. Same as last night fills in the remedies from the night before (demo: Side sleeping, Nasal strip).'] ] },
       { group: 'Reports · last night', items: [
-        ['night-steady', 'Ordinary night', '/reports?state=steady', 'Blue verdict card. Next step: Keep tracking.'],
-        ['night-unusual', 'Unusual night', '/reports?state=unusual', 'Warm verdict card. Next step: Talk to our sleep care team, with a round remedies button beside it.'],
-        ['night-pattern', 'Repeated pattern', '/reports?state=pattern', 'Wine verdict card. Next step: Talk to our sleep care team (the one coral button).'],
+        ['night-ordinary', 'Ordinary night', '/reports?state=ordinary', 'Snore Score 0–35 and breathing pauses Rarely. Blue verdict card. Next step: Keep tracking.'],
+        ['night-moderate', 'Moderate night', '/reports?state=moderate', 'The higher of the two is moderate (Snore Score 36–70, or pauses Sometimes). Warm verdict card. Next step: Talk to our sleep care team, with a round remedies button beside it.'],
+        ['night-severe', 'Severe night', '/reports?state=severe', 'The higher of the two is high (Snore Score 71+, or pauses Often). Wine verdict card. Next step: Talk to our sleep care team (the one coral button).'],
         ['night-processing', 'Processing', '/reports?state=processing', 'Right after stopping: “Looking through your night”, then the report.'] ] },
       { group: 'Recording problems', items: [
         ['no-space', 'Not enough space', '/recording-problem?kind=space', 'On tapping record. Try again checks the space again (demo: it works and recording starts). × back to Home.'],
