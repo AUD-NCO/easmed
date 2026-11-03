@@ -13,8 +13,8 @@ const palette = {
   deep: '#19294E', // cards, sheets (deck had #131B2E; updated by design, Oct 2026)
   mist: '#B3BDD3', // muted text (deck had #93A0BB; lightened to pass WCAG AAA 7:1 on Midnight and Deep)
   moon: '#EEF1F7', // text
-  breath: '#9DB4FF', // accent: buttons, links
-  lamp: '#F4B65F', // the one warm light; use sparingly
+  breath: '#A1B5F5', // accent: buttons, links (softened Nov 2026: 15% less chroma, same lightness, was #9DB4FF)
+  lamp: '#EDB972', // the one warm light; use sparingly (softened Nov 2026: 15% less chroma, same lightness, was #F4B65F)
   // Data only (charts, data icons; never text, buttons or links). Added Oct 2026 for Recording Details.
   ember: '#FFAA5C', // snoring
   iris: '#B9A3FF', // breathing pauses
@@ -43,7 +43,7 @@ export const colors = {
   onAccent: palette.midnight, // text on accent (white on Breath is too low-contrast)
   error: '#FFA49B', // form-error text: a light tint of Flare (7.5:1 on Deep, 10:1 on Midnight; AAA)
   errorMark: palette.flare, // form-error ring and icon (not text: 4.6:1 on Deep, past the 3:1 for marks)
-  urgentAction: '#FF7F72', // the one care action on a repeated pattern (Book a call): Flare lightened; Midnight label 7.7:1 (AAA), 5.3:1 against the wine card
+  urgentAction: '#F4877B', // the one care action on a repeated pattern (Book a call): Flare lightened, then softened (Nov 2026: 15% less chroma, same lightness, was #FF7F72); Midnight label 7.8:1 (AAA), 5.3:1 against the wine card
   brand: '#2E3A5A', // Airese navy (logo, decks). Role in the dark UI still open: see BRAND.md §5
   white: '#FFFFFF', // logo on the splash gradient
   scrim: alpha(palette.night, 0.7), // Night at 70%: dims the screen behind sheets

@@ -16,7 +16,7 @@ export type Mood = 'calm' | 'watch' | 'urgent';
 export const VERDICT_ACTION = {
   calm: 'accent', // Breath
   watch: 'lamp', // Lamp: the one warm light, for the action (Midnight on Lamp, 10:1)
-  urgent: 'urgentAction', // coral: the one care action on a repeated pattern (BRAND §4); Midnight on it, 7.7:1
+  urgent: 'urgentAction', // coral: the one care action on a repeated pattern (BRAND §4); Midnight on it, 7.8:1
 } as const satisfies Record<Mood, ColorName>;
 
 export type VerdictAction = { label: string; icon?: IconName; onPress: () => void };

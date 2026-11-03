@@ -216,8 +216,8 @@ Easmed's medical B2B tools and Airese show the same data, but they're built diff
 | Deep | `#19294E` | Cards and sheets (deck had `#131B2E`; changed by design, Oct 2026) |
 | Mist | `#B3BDD3` | Secondary and muted text (deck had `#93A0BB`; lightened to pass WCAG AAA) |
 | Moon | `#EEF1F7` | Primary text |
-| Breath | `#9DB4FF` | Cool accent: breathing data, links |
-| Lamp | `#F4B65F` | **The one warm light.** Use sparingly for the key number or the action. |
+| Breath | `#A1B5F5` | Cool accent: breathing data, links |
+| Lamp | `#EDB972` | **The one warm light.** Use sparingly for the key number or the action. |
 
 **Data colours** (Oct 2026, for Recording Details): each kind of data has one colour, the same everywhere: charts, data icons, legends, score rings. Marks and icons only, never text, buttons or links.
 
@@ -239,7 +239,7 @@ Easmed's medical B2B tools and Airese show the same data, but they're built diff
 
 Lamp is the only warm UI colour. **One red, Flare `#FF5A4F`**, used for marks only: the loudest snoring in charts (`loudness.veryLoud`), the repeated-pattern graph line, and form-error marks (`errorMark`: the field ring and icon). Error text uses a light tint of it (`error` `#FFA49B`, 7.5:1 on Deep, 10:1 on Midnight) to keep AAA contrast. Never red for headlines, status marks or written results: the words stay calm.
 
-**One exception for buttons (Oct 2026): `urgentAction` `#FF7F72`**, Flare lightened to a coral, for the single care action on a repeated pattern (**Book a call** on the verdict card). It is the top of the escalation ladder, so the button carries the urgency and the words stay calm. Midnight label at 7.7:1 (AAA), 5.3:1 against the wine card. Nowhere else.
+**One exception for buttons (Oct 2026): `urgentAction` `#F4877B`**, Flare lightened to a coral, for the single care action on a repeated pattern (**Book a call** on the verdict card). It is the top of the escalation ladder, so the button carries the urgency and the words stay calm. Midnight label at 7.8:1 (AAA), 5.3:1 against the wine card. Nowhere else.
 
 ### Type
 
@@ -294,7 +294,7 @@ The design system targets **WCAG 2.2 Level AAA**. Every new screen must keep to 
 | Inactive page dash (Moon at 45%) | 4.1 : 1 | 3 |
 | Info icon, sheet handle | 7.6 : 1 or more | 3 |
 | Error red on Midnight / on Deep | 11.2 : 1 / 8.4 : 1 | 7 |
-| Midnight label on Book a call (`urgentAction`) | 7.7 : 1 | 7 |
+| Midnight label on Book a call (`urgentAction`) | 7.8 : 1 | 7 |
 | Book a call button against the wine card | 5.3 : 1 | 3 |
 
 ### Icons
@@ -356,5 +356,5 @@ Overlap steps instead of chaining them, so motion flows. Swipes and scrolls foll
 - **Navy `#2E3A5A`.** It's the logo and deck colour. Is it still used in the app, or only for marketing? (The app icon now uses the splash gradient, not Navy.)
 - **Monospace font** for data isn't named in the deck.
 - **Mood-board mockups** use reddish snore bars and an "up-arrow, more than your usual" badge. Both conflict with "no red / no scary warnings". Use Lamp in their place.
-- **Splash gradient blues.** The splash (Figma "iPhone 16 & 17 Pro - 1") fades from Midnight `#0B1020` (Figma had `#16131B`; changed so the splash hands over seamlessly to the Midnight app background) through `#1C3470` to `#225ED8`. These blues aren't in the deck palette; Breath `#9DB4FF` is the only blue there. They live in `gradients.splash` in `theme/tokens.ts`. Decide whether this blue joins the palette (for example as a brand blue) or stays splash-only.
+- **Splash gradient blues.** The splash (Figma "iPhone 16 & 17 Pro - 1") fades from Midnight `#0B1020` (Figma had `#16131B`; changed so the splash hands over seamlessly to the Midnight app background) through `#1C3470` to `#225ED8`. These blues aren't in the deck palette; Breath `#A1B5F5` is the only blue there. They live in `gradients.splash` in `theme/tokens.ts`. Decide whether this blue joins the palette (for example as a brand blue) or stays splash-only.
 - **Sign-off pending** on the four principles, the mood, and Engineering's confidence thresholds for the ladder.

@@ -35,13 +35,13 @@
   .card h3 { font: 600 20px/28px Montserrat, system-ui, sans-serif; margin: 0; position: relative; }
   .card p { font: 400 16px/24px Inter, system-ui, sans-serif; margin: 8px 0 0; position: relative; white-space: nowrap; }
   .card button { position: relative; margin-top: 20px; width: 100%; min-height: 48px; border: 0; border-radius: 999px; font: 400 16px/20px Montserrat, system-ui, sans-serif; color: #0B1020; display: flex; align-items: center; justify-content: center; gap: 8px; }
-  .calm button { background: #9DB4FF; }
-  .watch button { background: #F4B65F; }
-  .urgent button { background: #FF7F72; }
+  .calm button { background: #A1B5F5; }
+  .watch button { background: #EDB972; }
+  .urgent button { background: #F4877B; }
   /* Unusual night: the main button, and remedies as a round outlined button beside it */
   .card .actions { position: relative; display: flex; gap: 8px; margin-top: 20px; }
   .card .actions button { margin-top: 0; flex: 1; padding: 0 16px; }
-  .card .actions .round { flex: none; width: 48px; padding: 0; background: none; border: 1.5px solid #F4B65F; }
+  .card .actions .round { flex: none; width: 48px; padding: 0; background: none; border: 1.5px solid #EDB972; }
 
   .fit { font-size: 12px; margin: 6px 0 0; }
   .fit.ok { color: var(--ok); }
@@ -82,7 +82,7 @@
           var row = document.createElement('div');
           row.className = 'actions';
           row.appendChild(item.querySelector('button'));
-          row.insertAdjacentHTML('beforeend', '<button type="button" tabindex="-1" class="round" aria-label="' + k.secondary + '"><svg width="24" height="24" viewBox="0 -960 960 960"><path fill="#F4B65F" d="' + HEALING + '"/></svg></button>');
+          row.insertAdjacentHTML('beforeend', '<button type="button" tabindex="-1" class="round" aria-label="' + k.secondary + '"><svg width="24" height="24" viewBox="0 -960 960 960"><path fill="#EDB972" d="' + HEALING + '"/></svg></button>');
           item.querySelector('.card').appendChild(row);
         }
         stack.appendChild(item);

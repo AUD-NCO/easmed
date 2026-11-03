@@ -56,8 +56,8 @@ The swatch images on this page are written from `tokens.ts` every time the desig
 | ![](swatches/deep.svg) | Deep | `colors.deep` | `#19294E` | Cards, sheets, form groups |
 | ![](swatches/mist.svg) | Mist | `colors.mist` | `#B3BDD3` | Muted text (7:1+ on Midnight and Deep) |
 | ![](swatches/moon.svg) | Moon | `colors.moon` | `#EEF1F7` | Text, titles |
-| ![](swatches/breath.svg) | Breath | `colors.breath` | `#9DB4FF` | Accent: primary buttons, links, focus |
-| ![](swatches/lamp.svg) | Lamp | `colors.lamp` | `#F4B65F` | The one warm light: the remedy button on an unusual night, the "what it means" wash. Use sparingly. |
+| ![](swatches/breath.svg) | Breath | `colors.breath` | `#A1B5F5` | Accent: primary buttons, links, focus |
+| ![](swatches/lamp.svg) | Lamp | `colors.lamp` | `#EDB972` | The one warm light: the remedy button on an unusual night, the "what it means" wash. Use sparingly. |
 | ![](swatches/ember.svg) | Ember | `colors.ember` | `#FFAA5C` | Data: snoring |
 | ![](swatches/iris.svg) | Iris | `colors.iris` | `#B9A3FF` | Data: breathing pauses |
 | ![](swatches/dew.svg) | Dew | `colors.dew` | `#8EE3CF` | Data: sleep and rest |
@@ -77,7 +77,7 @@ The swatch images on this page are written from `tokens.ts` every time the desig
 | ![](swatches/scrim.svg) | Scrim | `colors.scrim` | Night at 70%, behind sheets |
 | ![](swatches/error.svg) | Error text | `colors.error` | `#FFA49B`, a light tint of Flare (7.5:1 on Deep, 10:1 on Midnight) |
 | ![](swatches/error-mark.svg) | Error mark | `colors.errorMark` | Flare: the field ring and icon, never text |
-| ![](swatches/urgent-action.svg) | Urgent action | `colors.urgentAction` | Coral `#FF7F72`, Flare lightened: **only** Book a call on a repeated pattern. Midnight label 7.7:1; 5.3:1 against the wine card |
+| ![](swatches/urgent-action.svg) | Urgent action | `colors.urgentAction` | Coral `#F4877B`, Flare lightened: **only** Book a call on a repeated pattern. Midnight label 7.8:1; 5.3:1 against the wine card |
 | ![](swatches/tint-accent.svg) | Breath wash | `colors.tintAccent` | Breath at 16%: profile tile badges, the selected gender tile, the missed-nights note, the Last night tag |
 | ![](swatches/brand.svg) | Airese navy | `colors.brand` | `#2E3A5A`: logo, decks |
 | ![](swatches/white.svg) | White | `colors.white` | `#FFFFFF`: logo on the splash, switch thumbs |
@@ -467,7 +467,7 @@ All in [`src/components/`](components/), imported from `'../components'`. Groupe
 
 Target: **WCAG 2.2 AAA.**
 
-- **Contrast:** 7:1 for text. Moon and Mist pass on Midnight and Deep; Midnight on Breath is 9.4:1, on Lamp 10:1, on `urgentAction` 7.7:1. Data colours and controls need 3:1. Text over a graph keeps 7:1 at its brightest point.
+- **Contrast:** 7:1 for text. Moon and Mist pass on Midnight and Deep; Midnight on Breath is 9.4:1, on Lamp 10:1, on `urgentAction` 7.8:1. Data colours and controls need 3:1. Text over a graph keeps 7:1 at its brightest point.
 - **Targets:** 44 pt minimum for every control.
 - **Text size:** nothing below 12 pt; scales to 200%.
 - **Colour is never the only cue:** words for levels, shapes for chart events, legends.

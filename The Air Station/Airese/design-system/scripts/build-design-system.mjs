@@ -319,7 +319,7 @@ const html = `<!doctype html>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Montserrat:wght@400;600&display=swap" rel="stylesheet">
 <style>
-  :root { --night:#05070F; --midnight:#0B1020; --deep:#19294E; --mist:#B3BDD3; --moon:#EEF1F7; --breath:#9DB4FF; --lamp:#F4B65F; --line:rgba(179,189,211,.18); }
+  :root { --night:#05070F; --midnight:#0B1020; --deep:#19294E; --mist:#B3BDD3; --moon:#EEF1F7; --breath:#A1B5F5; --lamp:#EDB972; --line:rgba(179,189,211,.18); }
   * { box-sizing: border-box; }
   html { scroll-behavior: smooth; }
   @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
