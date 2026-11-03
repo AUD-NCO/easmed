@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { Animated, Platform, Pressable, StyleSheet, View } from 'react-native';
+import Svg, { Rect } from 'react-native-svg';
 import { AppText } from '@ds/components/AppText';
 import { Button } from '@ds/components/Button';
 import { Icon, type IconName } from '@ds/components/Icon';
 import { HeroBackground } from '@ds/components/InsightCard';
+import { InfoButton } from '@ds/components/InfoButton';
 import { ScoreRing } from '@ds/components/ScoreRing';
 import { VERDICT_ACTION, VerdictActions, type Mood, type VerdictAction } from '@ds/components/VerdictCard';
 import { alpha, colors, dataInk, loudnessRamp, motion, radius, space, type, useReducedMotion } from '@ds/theme';
@@ -15,13 +17,13 @@ export const trioLayout = (param?: string | null): TrioLayout | undefined =>
   ({ trio: 'tall', wide: 'wide', loud: 'loud', mellow: 'mellow' } as Record<string, TrioLayout>)[param ?? ''];
 
 /**
- * Temporary layout variants, for comparing on public/report-layouts.html (?layout=trio or wide on Reports).
- * The top of a report as three boxes.
+ * The top of a report as three boxes. Layout Option 5 is the report's own design (the default).
+ * Options 2 to 4 are temporary layout variants, for comparing on public/report-layouts.html (?layout=trio, wide or loud on Reports).
  * Layout Option 2 (tall): Breathing pauses tall on the left, Snore Score over the verdict on the right.
  * Layout Option 3 (wide): Breathing pauses across the top, Snore Score and the verdict side by side below.
  * Layout Option 4 (loud): Breathing pauses as the hero, then Snore Score as a row, then a quiet verdict.
- * Layout Option 5 (mellow): the report's usual arrangement and sizes. Breathing pauses lit up and glowing, the verdict's mood colours softened.
- * To remove them: delete this file and the page, and the `trio` prop that reaches NightScreen.
+ * Layout Option 5 (mellow): the report's usual arrangement and sizes. Breathing pauses lit up, its ring breathing and a light running around its border as it arrives, the verdict's mood colours softened.
+ * To remove Options 2 to 4: delete their branches and components here, the page, and the `trio` prop that reaches NightScreen. Keep Option 5's.
  */
 export function ReportTrio({ layout, pauses, snore, verdict }: { layout: TrioLayout; pauses: React.ReactNode; snore: React.ReactNode; verdict: React.ReactNode }) {
   if (layout === 'mellow') {
@@ -231,58 +233,164 @@ export function QuietVerdict({ mood, title, body, action, secondary }: { mood: M
 /**
  * Layout Option 5: ScoreTile's measures on the blue card colours, the same at every level: the highlight
  * says "look here", not how bad it is (a severe night may be down to snoring alone).
- * Arrives with a flip, then a soft glow breathes behind it. Reduce Motion: it fades in and the glow holds still.
+ * Arrives with a flip. The ring breathes throughout (ambient), and once the flip settles a light runs
+ * around the card's border twice, then stops (glint). Reduce Motion: it fades in and all of it holds still.
  * Web preview: 'airese:replay' plays the arrival again (the page's tabs, as hidden reports load out of sight).
  */
-export function HighlightTile({ fraction, name, level, accessibilityLabel, action }: { fraction: number; name: string; level: string; accessibilityLabel: string; action?: React.ReactNode }) {
+export function HighlightTile({ fraction, name, level, accessibilityLabel, action, infoLabel, onInfo }: { fraction: number; name: string; level: string; accessibilityLabel: string; action?: React.ReactNode; infoLabel: string; onInfo: () => void }) {
   const reduced = useReducedMotion();
   const [arrive] = useState(() => new Animated.Value(0)); // 0 turned away, 1 facing
-  const [glow] = useState(() => new Animated.Value(1));
+  const [breath] = useState(() => new Animated.Value(0)); // 0 out, 1 in
+  const [shine] = useState(() => new Animated.Value(0)); // 0 → SHINE_LAPS: laps of the border
   useEffect(() => {
+    let shining: Animated.CompositeAnimation | undefined;
     const play = () => {
       arrive.setValue(0);
       Animated.timing(arrive, { toValue: 1, duration: motion.slow.duration, easing: motion.slow.easeOut, useNativeDriver: motion.useNativeDriver }).start();
+      shining?.stop();
+      shine.setValue(0);
+      if (reduced) return;
+      const { duration, easing } = motion.glint;
+      shining = Animated.sequence([
+        Animated.delay(motion.slow.duration), // once the flip has settled
+        Animated.timing(shine, { toValue: SHINE_LAPS, duration: duration * SHINE_LAPS, easing, useNativeDriver: false }), // one eased run, so it never pauses between laps
+      ]);
+      shining.start();
     };
     play();
-    const { duration, rest, easing } = motion.attention;
+    const { duration, easing } = motion.ambient;
     const breathing = Animated.loop(
       Animated.sequence([
-        Animated.timing(glow, { toValue: 0.45, duration: duration / 2, easing, useNativeDriver: motion.useNativeDriver }),
-        Animated.timing(glow, { toValue: 1, duration: duration / 2, easing, useNativeDriver: motion.useNativeDriver }),
-        Animated.delay(rest),
+        Animated.timing(breath, { toValue: 1, duration: duration / 2, easing, useNativeDriver: motion.useNativeDriver }),
+        Animated.timing(breath, { toValue: 0, duration: duration / 2, easing, useNativeDriver: motion.useNativeDriver }),
       ]),
     );
     if (!reduced) breathing.start();
-    if (Platform.OS !== 'web') return () => breathing.stop();
+    const stop = () => {
+      breathing.stop();
+      shining?.stop();
+    };
+    if (Platform.OS !== 'web') return stop;
     window.addEventListener('airese:replay', play);
     return () => {
-      breathing.stop();
+      stop();
       window.removeEventListener('airese:replay', play);
     };
-  }, [arrive, glow, reduced]);
+  }, [arrive, breath, shine, reduced]);
   const turn = reduced ? [] : [{ perspective: 800 }, { rotateY: arrive.interpolate({ inputRange: [0, 1], outputRange: ['90deg', '0deg'] }) }];
   return (
     <Animated.View style={[styles.lit, { opacity: arrive, transform: turn }]}>
-      <Animated.View style={[styles.glow, { opacity: glow }]} pointerEvents="none" />
       <View style={styles.litFill} pointerEvents="none">
         <HeroBackground mood="calm" />
       </View>
+      {!reduced && <BorderShine t={shine} />}
       <View accessible accessibilityLabel={accessibilityLabel} style={{ alignItems: 'center' }}>
-        <ScoreRing fraction={fraction} color={colors.dataBreathing} ramp={loudnessRamp} size={96} stroke={10}>
-          <Icon name="airwave" size={40} color="text" />
+        <View>
+          <Animated.View
+            pointerEvents="none"
+            style={[styles.halo, { opacity: breath, transform: [{ scale: breath.interpolate({ inputRange: [0, 1], outputRange: [1, 1.14] }) }] }]}
+          />
+          <Animated.View style={{ transform: [{ scale: breath.interpolate({ inputRange: [0, 1], outputRange: [1, 1.06] }) }] }}>
+            <ScoreRing fraction={fraction} color={colors.dataBreathing} ramp={loudnessRamp} size={96} stroke={10}>
+              <Icon name="airwave" size={40} color="text" />
+            </ScoreRing>
+          </Animated.View>
+        </View>
+        <AppText color="text" style={styles.name} numberOfLines={1}>
+          {name}
+        </AppText>
+        <LevelChip level={level} ink={dataInk('breathing', fraction)} />
+      </View>
+      {action ? <View style={styles.litAction}>{action}</View> : null}
+      <View style={styles.litInfo}>
+        <InfoButton size={20} label={infoLabel} onPress={onInfo} />
+      </View>
+    </Animated.View>
+  );
+}
+
+/** Layout Option 5: ScoreTile's snoring measures, with the same stronger level chip as the tile beside it. */
+export function MellowSnoreTile({ fraction, value, name, level, accessibilityLabel, action }: { fraction: number; value: string; name: string; level: string; accessibilityLabel: string; action?: React.ReactNode }) {
+  return (
+    <View style={styles.mellowSnore}>
+      <View accessible accessibilityLabel={accessibilityLabel} style={{ alignItems: 'center' }}>
+        <ScoreRing fraction={fraction} color={colors.dataSnoring} ramp={loudnessRamp} size={96} stroke={10}>
+          <AppText variant="title" color="text" numberOfLines={1}>
+            {value}
+          </AppText>
         </ScoreRing>
         <AppText color="text" style={styles.name} numberOfLines={1}>
           {name}
         </AppText>
-        <View style={styles.level}>
-          <View style={[styles.dot, { backgroundColor: dataInk('breathing', fraction) }]} />
-          <AppText variant="small" color="text">
-            {level}
-          </AppText>
-        </View>
+        <LevelChip level={level} ink={dataInk('snoring', fraction)} />
       </View>
       {action ? <View style={styles.litAction}>{action}</View> : null}
-    </Animated.View>
+    </View>
+  );
+}
+
+/** A level on a Moon wash with a fine edge: no new colour, only the dot the ring already ends in. Moon text 7:1+ on either card. */
+function LevelChip({ level, ink }: { level: string; ink: string }) {
+  return (
+    <View style={[styles.level, styles.levelStrong]}>
+      <View style={[styles.dot, { backgroundColor: ink }]} />
+      <AppText variant="small" color="text">
+        {level}
+      </AppText>
+    </View>
+  );
+}
+
+const SHINE_LAPS = 2;
+const SHINE_WIDTH = 2;
+// The light: see-through strokes stacked from one head, each longer and fainter than the last, so they add
+// up to a bright white point fading smoothly into a long Breath tail, with no steps or seams along the way.
+const SHINE_LAYERS = 24;
+const SHINE_TRAIL = Array.from({ length: SHINE_LAYERS }, (_, i) => {
+  const t = (SHINE_LAYERS - i) / SHINE_LAYERS; // longest first, so the white head sits on top
+  return { length: 0.012 + 0.34 * t * t, color: t > 0.4 ? colors.accent : colors.text, opacity: 0.02 + 0.3 * (1 - t) ** 2 };
+});
+
+/**
+ * A light running around the card's border as `t` goes 0 → SHINE_LAPS, fading in and out at the very ends.
+ * Progress drives plain SVG props (animated SVG elements leak native-only props on web; see ScoreRing).
+ */
+function BorderShine({ t }: { t: Animated.Value }) {
+  const [box, setBox] = useState({ width: 0, height: 0 });
+  const [p, setP] = useState(0);
+  useEffect(() => {
+    const id = t.addListener(({ value }) => setP(value));
+    return () => t.removeListener(id);
+  }, [t]);
+  const width = box.width - SHINE_WIDTH;
+  const height = box.height - SHINE_WIDTH;
+  const r = radius.card - SHINE_WIDTH / 2;
+  const around = 2 * (width + height - 4 * r) + 2 * Math.PI * r;
+  const fade = Math.sin((Math.min(1, p / 0.25, (SHINE_LAPS - p) / 0.25) * Math.PI) / 2);
+  return (
+    <View style={styles.litShine} pointerEvents="none" onLayout={(e) => setBox(e.nativeEvent.layout)}>
+      {box.width > 0 && p > 0 && p < SHINE_LAPS && (
+        <Svg width={box.width} height={box.height}>
+          {SHINE_TRAIL.map(({ length, color, opacity }) => (
+            <Rect
+              key={length}
+              x={SHINE_WIDTH / 2}
+              y={SHINE_WIDTH / 2}
+              width={width}
+              height={height}
+              rx={r}
+              ry={r}
+              fill="none"
+              stroke={color}
+              strokeWidth={SHINE_WIDTH}
+              strokeOpacity={opacity * fade}
+              strokeDasharray={`${around * length} ${around * (1 - length)}`}
+              strokeDashoffset={around * (length - p)}
+            />
+          ))}
+        </Svg>
+      )}
+    </View>
   );
 }
 
@@ -307,8 +415,11 @@ export function MellowVerdict({ mood, title, body, action, secondary }: { mood: 
 const styles = StyleSheet.create({
   stack: { gap: space.md },
   lit: { flex: 1, alignItems: 'center', borderRadius: radius.card, paddingHorizontal: space.md, paddingTop: space.xl, paddingBottom: space.lg },
-  glow: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, borderRadius: radius.card, backgroundColor: colors.surface, shadowColor: colors.accent, shadowOpacity: 0.75, shadowRadius: 18, shadowOffset: { width: 0, height: 0 } },
-  litFill: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, overflow: 'hidden', borderRadius: radius.card },
+  litFill: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, overflow: 'hidden', borderRadius: radius.card, borderWidth: 1, borderColor: alpha(colors.accent, 0.24) },
+  litShine: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 },
+  halo: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, borderRadius: 48, backgroundColor: alpha(colors.accent, 0.1) },
+  mellowSnore: { flex: 1, alignItems: 'center', backgroundColor: colors.surface, borderRadius: radius.card, paddingHorizontal: space.md, paddingTop: space.xl, paddingBottom: space.lg },
+  litInfo: { position: 'absolute', top: space.md, right: space.md },
   litAction: { alignSelf: 'stretch', marginTop: 'auto', paddingTop: space.lg },
   mellow: { overflow: 'hidden', backgroundColor: colors.surface, borderRadius: radius.xl, padding: space.xl },
   mellowMood: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, opacity: 0.55 },
@@ -330,6 +441,7 @@ const styles = StyleSheet.create({
   tallBody: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: space.lg },
   name: { marginTop: space.lg, fontFamily: type.heading.fontFamily, fontWeight: type.heading.fontWeight },
   level: { flexDirection: 'row', alignItems: 'center', gap: space.sm, minHeight: 28, paddingHorizontal: space.md, borderRadius: radius.pill, marginTop: space.sm, backgroundColor: alpha(colors.moon, 0.08) },
+  levelStrong: { backgroundColor: alpha(colors.moon, 0.14), borderWidth: 1, borderColor: alpha(colors.moon, 0.2) },
   dot: { width: 8, height: 8, borderRadius: 4 },
   verdict: { flexGrow: 1, overflow: 'hidden', borderRadius: radius.xl, padding: space.lg },
   actions: { marginTop: 'auto', paddingTop: space.lg, gap: space.xs },

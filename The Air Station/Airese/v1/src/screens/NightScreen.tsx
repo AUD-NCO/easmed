@@ -6,7 +6,6 @@ import {
   CARE_CTA,
   CareConfirmSheet,
   RemediesSheet,
-  Spotlight,
   ClipPlayer,
   ComparisonIndicator,
   DataCard,
@@ -20,7 +19,6 @@ import {
   type IconName,
   LargeSheet,
   VerdictActions,
-  VerdictCard,
   type VerdictAction,
   type Mood,
   PAGE_SIDE,
@@ -29,7 +27,7 @@ import {
   ScoreTile,
   SnoringChart,
 } from '../components';
-import { CompactVerdict, HighlightTile, LoudPauses, MellowVerdict, QuietVerdict, ReportTrio, SnoreRow, TallScoreTile, type TrioLayout } from '../components/ReportTrio';
+import { CompactVerdict, HighlightTile, LoudPauses, MellowSnoreTile, MellowVerdict, QuietVerdict, ReportTrio, SnoreRow, TallScoreTile, type TrioLayout } from '../components/ReportTrio';
 import { benchmarks, classify, zoneOf, type Benchmark } from '../lib/benchmarks';
 import { useClipPlayer } from '../lib/clipPlayer';
 import {
@@ -90,9 +88,9 @@ export function NightScreen({
   tag,
   onAddNotes,
   notesChosen = [],
-  trio,
+  trio = 'mellow',
 }: {
-  /** Temporary layout variants: the scores and verdict as three boxes (ReportTrio). */
+  /** The scores and verdict: the report's own design, or a temporary layout variant to compare (ReportTrio). */
   trio?: TrioLayout;
   night: Night;
   state: NightState;
@@ -124,7 +122,7 @@ export function NightScreen({
   const [report, setReport] = useState(false); // the Night report sheet
   const [explain, setExplain] = useState<ExplainKey | null>(null);
   const [remedies, setRemedies] = useState(false);
-  const [pausesInfo, setPausesInfo] = useState(false); // the star on Breathing pauses
+  const [pausesInfo, setPausesInfo] = useState(false); // the (i) on Breathing pauses
   const [careSheet, setCareSheet] = useState(false);
   const [heroBottom, setHeroBottom] = useState(0); // where the verdict card ends: the footer waits until it's scrolled past
   const player = useClipPlayer();
@@ -180,29 +178,31 @@ export function NightScreen({
 
   // Snoring is a score; breathing a plain level (its exact rate is in the Night report). Name and level only,
   // and under each, Listen: the way from the number to the sound behind it.
+  const snoreTile = (scrollTo: (y: number) => void) => (
+    <MellowSnoreTile
+      fraction={sound.value / sound.max}
+      value={sound.display}
+      name="Snore Score"
+      level={zoneOf(sound).word}
+      accessibilityLabel={`Snore Score: ${sound.display} out of 100, ${zoneOf(sound).word}`}
+      action={loudSnore && <ListenButton accessibilityLabel="Listen to your snoring" onPress={() => goListen(loudSnore, scrollTo)} />}
+    />
+  );
+  const pausesTile = (scrollTo: (y: number) => void) => (
+    <HighlightTile
+      fraction={breathing.value / breathing.max}
+      name="Breathing pauses"
+      level={zoneOf(breathing).word}
+      accessibilityLabel={`Breathing pauses: ${zoneOf(breathing).word}`}
+      action={pause && <ListenButton filled accessibilityLabel="Listen to a breathing pause" onPress={() => goListen(pause, scrollTo)} />}
+      infoLabel="What’s a breathing pause?"
+      onInfo={() => setPausesInfo(true)}
+    />
+  );
   const scores = (scrollTo: (y: number) => void) => (
     <View style={styles.pair}>
-      <ScoreTile
-        tone="snoring"
-        fraction={sound.value / sound.max}
-        value={sound.display}
-        name="Snore Score"
-        level={zoneOf(sound).word}
-        accessibilityLabel={`Snore Score: ${sound.display} out of 100, ${zoneOf(sound).word}`}
-        ringSize={96}
-        action={loudSnore && <ListenButton accessibilityLabel="Listen to your snoring" onPress={() => goListen(loudSnore, scrollTo)} />}
-      />
-      <ScoreTile
-        tone="breathing"
-        fraction={breathing.value / breathing.max}
-        icon="airwave"
-        name="Breathing pauses"
-        level={zoneOf(breathing).word}
-        accessibilityLabel={`Breathing pauses: ${zoneOf(breathing).word}`}
-        ringSize={96}
-        action={pause && <ListenButton accessibilityLabel="Listen to a breathing pause" onPress={() => goListen(pause, scrollTo)} />}
-        badge={<Spotlight label="What’s a breathing pause?" onPress={() => setPausesInfo(true)} />}
-      />
+      {snoreTile(scrollTo)}
+      {pausesTile(scrollTo)}
     </View>
   );
 
@@ -265,7 +265,7 @@ export function NightScreen({
         <View style={styles.body} onLayout={(e) => (bodyY.current = e.nativeEvent.layout.y)}>
           {problem && <PromptBody art={problem.copy.art} title={problem.copy.title} body={problem.copy.reason} fix={problem.copy.fix} cta={problem.cta} onCta={problem.onCta} />}
           {state === 'processing' && <Processing />}
-          {onAddNotes && !ready && <NotesNudge chosen={notesChosen} onPress={onAddNotes} />}
+          {onAddNotes && !ready && <NotesNudge still={trio === 'mellow'} chosen={notesChosen} onPress={onAddNotes} />}
 
           {stopped && !problem && (
             <>
@@ -282,108 +282,70 @@ export function NightScreen({
 
           {ready && (
             <>
-              {trio ? (
-                // Temporary layout variant: see ReportTrio
-                <View onLayout={(e) => setHeroBottom(e.nativeEvent.layout.y + e.nativeEvent.layout.height)}>
-                  {trio === 'mellow' ? (
-                    <ReportTrio
-                      layout={trio}
-                      snore={
-                        <ScoreTile
-                          tone="snoring"
-                          fraction={sound.value / sound.max}
-                          value={sound.display}
-                          name="Snore Score"
-                          level={zoneOf(sound).word}
-                          accessibilityLabel={`Snore Score: ${sound.display} out of 100, ${zoneOf(sound).word}`}
-                          ringSize={96}
-                          action={loudSnore && <ListenButton accessibilityLabel="Listen to your snoring" onPress={() => goListen(loudSnore, scrollTo)} />}
-                        />
-                      }
-                      pauses={
-                        <HighlightTile
-                          fraction={breathing.value / breathing.max}
-                          name="Breathing pauses"
-                          level={zoneOf(breathing).word}
-                          accessibilityLabel={`Breathing pauses: ${zoneOf(breathing).word}`}
-                          action={pause && <ListenButton accessibilityLabel="Listen to a breathing pause" onPress={() => goListen(pause, scrollTo)} />}
-                        />
-                      }
-                      verdict={<MellowVerdict mood={mood} title={sum.headline} body={sum.body} action={step(leave)} secondary={secondary} />}
-                    />
-                  ) : trio === 'loud' ? (
-                    <ReportTrio
-                      layout={trio}
-                      pauses={
-                        <LoudPauses
-                          fraction={breathing.value / breathing.max}
-                          name="Breathing pauses"
-                          level={zoneOf(breathing).word}
-                          accessibilityLabel={`Breathing pauses: ${zoneOf(breathing).word}`}
-                          action={pause && <ListenButton accessibilityLabel="Listen to a breathing pause" onPress={() => goListen(pause, scrollTo)} />}
-                        />
-                      }
-                      snore={
-                        <SnoreRow
-                          fraction={sound.value / sound.max}
-                          value={sound.display}
-                          name="Snore Score"
-                          level={zoneOf(sound).word}
-                          accessibilityLabel={`Snore Score: ${sound.display} out of 100, ${zoneOf(sound).word}`}
-                          action={loudSnore && <ListenButton accessibilityLabel="Listen to your snoring" onPress={() => goListen(loudSnore, scrollTo)} />}
-                        />
-                      }
-                      verdict={<QuietVerdict mood={mood} title={sum.headline} body={sum.body} action={step(leave)} secondary={secondary} />}
-                    />
-                  ) : (
-                    <ReportTrio
-                      layout={trio}
-                      pauses={
-                        <TallScoreTile
-                          layout={trio}
-                          fraction={breathing.value / breathing.max}
-                          name="Breathing pauses"
-                          level={zoneOf(breathing).word}
-                          accessibilityLabel={`Breathing pauses: ${zoneOf(breathing).word}`}
-                          action={pause && <ListenButton accessibilityLabel="Listen to a breathing pause" onPress={() => goListen(pause, scrollTo)} />}
-                        />
-                      }
-                      snore={
-                        <ScoreTile
-                          tone="snoring"
-                          fraction={sound.value / sound.max}
-                          value={sound.display}
-                          name="Snore Score"
-                          level={zoneOf(sound).word}
-                          accessibilityLabel={`Snore Score: ${sound.display} out of 100, ${zoneOf(sound).word}`}
-                          ringSize={96}
-                          action={loudSnore && <ListenButton accessibilityLabel="Listen to your snoring" onPress={() => goListen(loudSnore, scrollTo)} />}
-                        />
-                      }
-                      verdict={<CompactVerdict mood={mood} title={sum.headline} body={sum.body} action={step(leave)} secondary={secondary} />}
-                    />
-                  )}
-                </View>
-              ) : (
-                <>
-                  {scores(scrollTo)}
+              {/* The scores and the verdict: see ReportTrio */}
+              <View onLayout={(e) => setHeroBottom(e.nativeEvent.layout.y + e.nativeEvent.layout.height)}>
+                {trio === 'mellow' ? (
+                  <ReportTrio
+                    layout={trio}
+                    snore={snoreTile(scrollTo)}
+                    pauses={pausesTile(scrollTo)}
+                    verdict={<MellowVerdict mood={mood} title={sum.headline} body={sum.body} action={step(leave)} secondary={secondary} />}
+                  />
+                ) : trio === 'loud' ? (
+                  <ReportTrio
+                    layout={trio}
+                    pauses={
+                      <LoudPauses
+                        fraction={breathing.value / breathing.max}
+                        name="Breathing pauses"
+                        level={zoneOf(breathing).word}
+                        accessibilityLabel={`Breathing pauses: ${zoneOf(breathing).word}`}
+                        action={pause && <ListenButton accessibilityLabel="Listen to a breathing pause" onPress={() => goListen(pause, scrollTo)} />}
+                      />
+                    }
+                    snore={
+                      <SnoreRow
+                        fraction={sound.value / sound.max}
+                        value={sound.display}
+                        name="Snore Score"
+                        level={zoneOf(sound).word}
+                        accessibilityLabel={`Snore Score: ${sound.display} out of 100, ${zoneOf(sound).word}`}
+                        action={loudSnore && <ListenButton accessibilityLabel="Listen to your snoring" onPress={() => goListen(loudSnore, scrollTo)} />}
+                      />
+                    }
+                    verdict={<QuietVerdict mood={mood} title={sum.headline} body={sum.body} action={step(leave)} secondary={secondary} />}
+                  />
+                ) : (
+                  <ReportTrio
+                    layout={trio}
+                    pauses={
+                      <TallScoreTile
+                        layout={trio}
+                        fraction={breathing.value / breathing.max}
+                        name="Breathing pauses"
+                        level={zoneOf(breathing).word}
+                        accessibilityLabel={`Breathing pauses: ${zoneOf(breathing).word}`}
+                        action={pause && <ListenButton accessibilityLabel="Listen to a breathing pause" onPress={() => goListen(pause, scrollTo)} />}
+                      />
+                    }
+                    snore={
+                      <ScoreTile
+                        tone="snoring"
+                        fraction={sound.value / sound.max}
+                        value={sound.display}
+                        name="Snore Score"
+                        level={zoneOf(sound).word}
+                        accessibilityLabel={`Snore Score: ${sound.display} out of 100, ${zoneOf(sound).word}`}
+                        ringSize={96}
+                        action={loudSnore && <ListenButton accessibilityLabel="Listen to your snoring" onPress={() => goListen(loudSnore, scrollTo)} />}
+                      />
+                    }
+                    verdict={<CompactVerdict mood={mood} title={sum.headline} body={sum.body} action={step(leave)} secondary={secondary} />}
+                  />
+                )}
+              </View>
 
-                  {/* The verdict: the words, the night's one next step, and the week as a graph behind them */}
-                  <View onLayout={(e) => setHeroBottom(e.nativeEvent.layout.y + e.nativeEvent.layout.height)}>
-                    <VerdictCard
-                      mood={mood}
-                      title={sum.headline}
-                      body={sum.body}
-                      values={d.hourly.map((h) => h.minutes)} // the night behind the words: its snoring, hour by hour (the verdict is about this night only)
-                      action={step(leave)}
-                      secondary={secondary}
-                      drawnPattern={false} // the verdict is about this night only: plot its data, even when severe
-                    />
-                  </View>
-                </>
-              )}
-
-              {onAddNotes && <NotesNudge chosen={notesChosen} onPress={onAddNotes} />}
+              {onAddNotes && <NotesNudge still={trio === 'mellow'} chosen={notesChosen} onPress={onAddNotes} />}
 
               {sound_}
 
@@ -436,7 +398,7 @@ export function NightScreen({
   );
 }
 
-// The star on Breathing pauses: what they are, and why Airese listens for them. Short, calm, not a diagnosis.
+// The (i) on Breathing pauses: what they are, and why Airese listens for them. Short, calm, not a diagnosis.
 const PAUSES_INFO = {
   title: 'What’s a breathing pause?',
   body: 'Your breathing stops for 10 seconds or more while you sleep, then starts again, often with a gasp or snort. You won’t notice it yourself, so it’s easy to miss.\n\nAirese listens for these all night, which most sleep apps don’t. If they happen often, it’s worth talking to our sleep care team.',
@@ -556,13 +518,13 @@ function Block({ label, children }: { label: string; children: React.ReactNode }
  * while there's no verdict). Tap to add or change it. One line, never taller: once filled in, the
  * remedies show as a row of overlapping icons that fade out towards the end (a habit: notes tagged to
  * each night, to see patterns over time). No entrance animation; while it's empty, one soft shine sweeps
- * across it once so it isn't missed.
+ * across it once so it isn't missed (`still`: no shine, the report's own design).
  */
-function NotesNudge({ chosen, onPress }: { chosen: { icon: IconName; label: string }[]; onPress: () => void }) {
+function NotesNudge({ chosen, onPress, still = false }: { chosen: { icon: IconName; label: string }[]; onPress: () => void; still?: boolean }) {
   return (
     <CheckInBanner
       quiet
-      shine={!chosen.length} // one sweep while it's still empty, so it isn't missed
+      shine={!still && !chosen.length} // one sweep while it's still empty, so it isn't missed
       text={chosen.length ? 'Morning check-in' : 'Add your Morning check-in'}
       icons={chosen.map((c) => c.icon)}
       label={chosen.length ? `Morning check-in: ${chosen.map((c) => c.label).join(', ')}` : undefined}

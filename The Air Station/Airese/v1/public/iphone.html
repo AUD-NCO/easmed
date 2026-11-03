@@ -138,12 +138,6 @@
   // To add a screen: one line here (key, label, route). A 'page' item (6th entry) opens full width instead of in the phone.
   (function () {
     var SCREENS = [
-      { group: 'For the team', items: [
-        ['verdicts', 'Verdict copy', 'verdicts.html', 'The 15 verdict banners: five for each kind of night, taking turns from night to night. Review and finalise the copy.', '', 'page'],
-        ['report-layout', 'Layout Option 2', 'report-layouts.html', 'Temporary layout variant: Ordinary, Moderate and Severe reports, one at a time, with Breathing pauses tall on the left, Snore Score over the verdict on the right.', 'New', 'page'],
-        ['report-layout-3', 'Layout Option 3', 'report-layouts.html?layout=wide', 'Temporary layout variant: Ordinary, Moderate and Severe reports, one at a time, with Breathing pauses across the top, Snore Score and the verdict side by side below.', 'New', 'page'],
-        ['report-layout-4', 'Layout Option 4', 'report-layouts.html?layout=loud', 'Temporary layout variant: Ordinary, Moderate and Severe reports, one at a time, with Breathing pauses as the loud hero, Snore Score as a short row, and the verdict played down.', 'New', 'page'],
-        ['report-layout-5', 'Layout Option 5', 'report-layouts.html?layout=mellow', 'Temporary layout variant: Ordinary, Moderate and Severe reports, one at a time. The usual arrangement and card sizes, with Breathing pauses lit up and glowing, and the verdict’s mood colours softened.', 'New', 'page'] ] },
       { group: 'Getting started', items: [
         ['splash', 'Splash', '/', 'App launch. The logo arrives, then falls away into Home (logged in), Log in (logged out), set-up (account made, set-up not finished) or the walkthrough (first run).'],
         ['onboarding', 'Walkthrough', '/onboarding', 'Three pages. Swipe or tap the dashes; Get started on the last page goes to Create account. I already have an account (pinned to the bottom of every page) goes to Log in.'],
@@ -182,6 +176,12 @@
         ['recording-paused', 'Paused · app closed', '/recording?state=paused', 'Back in Airese after another app closed it. Carry on recording continues the same night; × stops for the night.'] ] },
       { group: 'Prompts', items: [
         ['update', 'App update', '/update', 'Forced update: no Skip, no swipe back. Update now opens the store.'] ] },
+      { group: 'For the team', items: [
+        ['verdicts', 'Verdict copy', 'verdicts.html', 'The 15 verdict banners: five for each kind of night, taking turns from night to night. Review and finalise the copy.', '', 'page'],
+        ['report-layout', 'Layout Option 2', 'report-layouts.html', 'Temporary layout variant: Ordinary, Moderate and Severe reports, one at a time, with Breathing pauses tall on the left, Snore Score over the verdict on the right.', 'New', 'page'],
+        ['report-layout-3', 'Layout Option 3', 'report-layouts.html?layout=wide', 'Temporary layout variant: Ordinary, Moderate and Severe reports, one at a time, with Breathing pauses across the top, Snore Score and the verdict side by side below.', 'New', 'page'],
+        ['report-layout-4', 'Layout Option 4', 'report-layouts.html?layout=loud', 'Temporary layout variant: Ordinary, Moderate and Severe reports, one at a time, with Breathing pauses as the loud hero, Snore Score as a short row, and the verdict played down.', 'New', 'page'],
+        ['report-layout-5', 'Layout Option 5', 'report-layouts.html?layout=mellow', 'Temporary layout variant: Ordinary, Moderate and Severe reports, one at a time. The usual arrangement and card sizes, with Breathing pauses lit up, its ring breathing and a light running around its border as it arrives, and the verdict’s mood colours softened.', 'New', 'page'] ] },
     ];
     var nav = document.getElementById('nav');
     var frame = document.getElementById('app');
