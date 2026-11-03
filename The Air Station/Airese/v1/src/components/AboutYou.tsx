@@ -338,19 +338,25 @@ function MeasureSheet({
 type Place = Pick<Profile, 'city' | 'region' | 'country' | 'postcode'>;
 type Step = 'country' | 'malaysia';
 
+/** The ten places most people in Malaysia will pick. Anywhere else is a postcode. */
+const MY_PLACES = ['Kuala Lumpur', 'Petaling Jaya', 'Shah Alam', 'Subang Jaya', 'Klang', 'Johor Bahru', 'Penang', 'Ipoh', 'Kota Kinabalu', 'Kuching'];
+
 /**
- * Singapore is one tap (it's a city-state). Malaysia: the 5-digit postcode, and done.
- * V1 is for Singapore and Malaysia only (no "Somewhere else" for now). Before there's an answer, the
- * phone's country is suggested first.
+ * Singapore is one tap (it's a city-state). Malaysia: pick one of the ten popular places, or enter the
+ * 5-digit postcode if it's somewhere else. Picking a place clears the postcode, and typing clears the place.
+ * V1 is for Singapore and Malaysia only (no "Somewhere else" country for now). Before there's an answer,
+ * the phone's country is suggested first.
  */
 function PlaceSheet({ visible, value, onDone, onClose }: { visible: boolean; value: Fields; onDone: (p: Place) => void; onClose: () => void }) {
   const [step, setStep] = useState<Step>('country');
+  const [city, setCity] = useState(value.city);
   const [postcode, setPostcode] = useState(value.postcode);
   const [error, setError] = useState('');
   const [wasVisible, setWasVisible] = useState(visible);
   if (visible !== wasVisible) {
     setWasVisible(visible);
     if (visible) {
+      setCity(value.country === 'Malaysia' ? value.city : '');
       setPostcode(value.country === 'Malaysia' ? value.postcode : '');
       setError('');
       setStep('country');
@@ -391,14 +397,38 @@ function PlaceSheet({ visible, value, onDone, onClose }: { visible: boolean; val
       {step === 'malaysia' && (
         <>
           <BackLink onPress={() => setStep('country')} />
-          <SheetHead title="What’s your postcode?" why="Five digits, e.g. 47400." />
-          <FormGroup title="Postcode" onSheet error={error}>
+          <SheetHead title="Where in Malaysia?" why="Pick the closest, or enter your postcode." />
+          <View style={styles.places} accessibilityRole="radiogroup" accessibilityLabel="Place in Malaysia">
+            {MY_PLACES.map((p) => {
+              const on = city === p;
+              return (
+                <Pressable
+                  key={p}
+                  onPress={() => {
+                    setCity(p);
+                    setPostcode('');
+                    setError('');
+                  }}
+                  accessibilityRole="radio"
+                  accessibilityState={{ selected: on }}
+                  accessibilityLabel={p}
+                  style={({ pressed }) => [styles.place, on && styles.placeOn, pressed && { opacity: 0.8 }]}
+                >
+                  <AppText variant="small" color={on ? 'onAccent' : 'text'}>
+                    {p}
+                  </AppText>
+                </Pressable>
+              );
+            })}
+          </View>
+          <FormGroup title="Somewhere else? Enter postcode" onSheet error={error} style={{ marginTop: space.xl }}>
             <FormInput
               placeholder="e.g. 47400"
               accessibilityLabel="Postcode"
               value={postcode}
               onChangeText={(t) => {
                 setPostcode(t.replace(/\D/g, '').slice(0, 5));
+                setCity('');
                 setError('');
               }}
               keyboardType="number-pad"
@@ -408,7 +438,13 @@ function PlaceSheet({ visible, value, onDone, onClose }: { visible: boolean; val
               returnKeyType="done"
             />
           </FormGroup>
-          <SheetActions onDone={() => (postcode.length === 5 ? onDone({ ...NONE, country: 'Malaysia', postcode }) : setError('Enter your 5-digit postcode.'))} />
+          <SheetActions
+            onDone={() => {
+              if (city) onDone({ ...NONE, country: 'Malaysia', city });
+              else if (postcode.length === 5) onDone({ ...NONE, country: 'Malaysia', postcode });
+              else setError(postcode ? 'Enter your 5-digit postcode.' : 'Pick a place or enter your postcode.');
+            }}
+          />
         </>
       )}
     </BottomSheet>
@@ -459,6 +495,9 @@ const styles = StyleSheet.create({
   },
   placeOptionOn: { borderColor: colors.accent },
   flag: { fontSize: type.headline.fontSize, lineHeight: type.headline.lineHeight }, // emoji flag, sized from the type scale
+  places: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
+  place: { minHeight: 44, justifyContent: 'center', paddingHorizontal: space.md, borderRadius: radius.pill, borderWidth: 1, borderColor: colors.divider, backgroundColor: colors.background },
+  placeOn: { borderColor: colors.accent, backgroundColor: colors.accent },
   dateWheels: { flexDirection: 'row' },
   dateBand: { position: 'absolute', left: 0, right: 0, top: ROW * Math.floor(VISIBLE / 2), height: ROW, borderRadius: radius.md, backgroundColor: colors.background },
   back: { flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', minHeight: 44, marginTop: -space.md, marginLeft: -space.xs, marginBottom: space.xs },

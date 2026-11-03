@@ -193,7 +193,7 @@ The last onboarding step: "Great! One last thing…" It's one short screen, not 
 | · Gender | Three icon tiles (Male, Female, Transgender), plus a quieter "Prefer not to say". Tapping one saves it and closes the sheet. |
 | · Age | A year-of-birth wheel that shows "40 years old" as it turns. Line under the title: "Sleep and breathing change with age." The year is stored, because an age goes out of date. The tile shows the age. |
 | · Height, weight | A ruler you drag, with − / + buttons and a number you can type. cm / ft·in and kg / lb switch; centimetres and kilograms by default. Line under the title: "With your weight (height), this gives your BMI. It helps us find insights relevant to you." Always stored in metric. |
-| · Where you live | Singapore: one tap. Malaysia: pick one of the 16 states and federal territories, then type your town or city. Elsewhere: free text. The phone's country is suggested first. |
+| · Where you live | Singapore: one tap. Malaysia: pick one of ten popular places (Kuala Lumpur, Petaling Jaya, Shah Alam, Subang Jaya, Klang, Johor Bahru, Penang, Ipoh, Kota Kinabalu, Kuching), or enter a 5-digit postcode if it's somewhere else. The phone's country is suggested first. |
 | Terms | **Required.** A checkbox above the button: "I agree to the Terms and Conditions and Privacy Policy." Both are links that open an in-app page (a placeholder for now). If it isn't ticked: "Tick the box to agree before you begin." The button stays enabled. |
 
 - Native grouped form (iOS Settings style).
