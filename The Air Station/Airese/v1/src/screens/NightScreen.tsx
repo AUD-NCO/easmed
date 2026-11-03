@@ -29,6 +29,7 @@ import {
   ScoreTile,
   SnoringChart,
 } from '../components';
+import { CompactVerdict, HighlightTile, LoudPauses, MellowVerdict, QuietVerdict, ReportTrio, SnoreRow, TallScoreTile, type TrioLayout } from '../components/ReportTrio';
 import { benchmarks, classify, zoneOf, type Benchmark } from '../lib/benchmarks';
 import { useClipPlayer } from '../lib/clipPlayer';
 import {
@@ -89,7 +90,10 @@ export function NightScreen({
   tag,
   onAddNotes,
   notesChosen = [],
+  trio,
 }: {
+  /** Temporary layout variants: the scores and verdict as three boxes (ReportTrio). */
+  trio?: TrioLayout;
   night: Night;
   state: NightState;
   /** Stopped early: how and when (state 'stopped'). */
@@ -278,20 +282,106 @@ export function NightScreen({
 
           {ready && (
             <>
-              {scores(scrollTo)}
+              {trio ? (
+                // Temporary layout variant: see ReportTrio
+                <View onLayout={(e) => setHeroBottom(e.nativeEvent.layout.y + e.nativeEvent.layout.height)}>
+                  {trio === 'mellow' ? (
+                    <ReportTrio
+                      layout={trio}
+                      snore={
+                        <ScoreTile
+                          tone="snoring"
+                          fraction={sound.value / sound.max}
+                          value={sound.display}
+                          name="Snore Score"
+                          level={zoneOf(sound).word}
+                          accessibilityLabel={`Snore Score: ${sound.display} out of 100, ${zoneOf(sound).word}`}
+                          ringSize={96}
+                          action={loudSnore && <ListenButton accessibilityLabel="Listen to your snoring" onPress={() => goListen(loudSnore, scrollTo)} />}
+                        />
+                      }
+                      pauses={
+                        <HighlightTile
+                          fraction={breathing.value / breathing.max}
+                          name="Breathing pauses"
+                          level={zoneOf(breathing).word}
+                          accessibilityLabel={`Breathing pauses: ${zoneOf(breathing).word}`}
+                          action={pause && <ListenButton accessibilityLabel="Listen to a breathing pause" onPress={() => goListen(pause, scrollTo)} />}
+                        />
+                      }
+                      verdict={<MellowVerdict mood={mood} title={sum.headline} body={sum.body} action={step(leave)} secondary={secondary} />}
+                    />
+                  ) : trio === 'loud' ? (
+                    <ReportTrio
+                      layout={trio}
+                      pauses={
+                        <LoudPauses
+                          fraction={breathing.value / breathing.max}
+                          name="Breathing pauses"
+                          level={zoneOf(breathing).word}
+                          accessibilityLabel={`Breathing pauses: ${zoneOf(breathing).word}`}
+                          action={pause && <ListenButton accessibilityLabel="Listen to a breathing pause" onPress={() => goListen(pause, scrollTo)} />}
+                        />
+                      }
+                      snore={
+                        <SnoreRow
+                          fraction={sound.value / sound.max}
+                          value={sound.display}
+                          name="Snore Score"
+                          level={zoneOf(sound).word}
+                          accessibilityLabel={`Snore Score: ${sound.display} out of 100, ${zoneOf(sound).word}`}
+                          action={loudSnore && <ListenButton accessibilityLabel="Listen to your snoring" onPress={() => goListen(loudSnore, scrollTo)} />}
+                        />
+                      }
+                      verdict={<QuietVerdict mood={mood} title={sum.headline} body={sum.body} action={step(leave)} secondary={secondary} />}
+                    />
+                  ) : (
+                    <ReportTrio
+                      layout={trio}
+                      pauses={
+                        <TallScoreTile
+                          layout={trio}
+                          fraction={breathing.value / breathing.max}
+                          name="Breathing pauses"
+                          level={zoneOf(breathing).word}
+                          accessibilityLabel={`Breathing pauses: ${zoneOf(breathing).word}`}
+                          action={pause && <ListenButton accessibilityLabel="Listen to a breathing pause" onPress={() => goListen(pause, scrollTo)} />}
+                        />
+                      }
+                      snore={
+                        <ScoreTile
+                          tone="snoring"
+                          fraction={sound.value / sound.max}
+                          value={sound.display}
+                          name="Snore Score"
+                          level={zoneOf(sound).word}
+                          accessibilityLabel={`Snore Score: ${sound.display} out of 100, ${zoneOf(sound).word}`}
+                          ringSize={96}
+                          action={loudSnore && <ListenButton accessibilityLabel="Listen to your snoring" onPress={() => goListen(loudSnore, scrollTo)} />}
+                        />
+                      }
+                      verdict={<CompactVerdict mood={mood} title={sum.headline} body={sum.body} action={step(leave)} secondary={secondary} />}
+                    />
+                  )}
+                </View>
+              ) : (
+                <>
+                  {scores(scrollTo)}
 
-              {/* The verdict: the words, the night's one next step, and the week as a graph behind them */}
-              <View onLayout={(e) => setHeroBottom(e.nativeEvent.layout.y + e.nativeEvent.layout.height)}>
-                <VerdictCard
-                  mood={mood}
-                  title={sum.headline}
-                  body={sum.body}
-                  values={d.hourly.map((h) => h.minutes)} // the night behind the words: its snoring, hour by hour (the verdict is about this night only)
-                  action={step(leave)}
-                  secondary={secondary}
-                  drawnPattern={false} // the verdict is about this night only: plot its data, even when severe
-                />
-              </View>
+                  {/* The verdict: the words, the night's one next step, and the week as a graph behind them */}
+                  <View onLayout={(e) => setHeroBottom(e.nativeEvent.layout.y + e.nativeEvent.layout.height)}>
+                    <VerdictCard
+                      mood={mood}
+                      title={sum.headline}
+                      body={sum.body}
+                      values={d.hourly.map((h) => h.minutes)} // the night behind the words: its snoring, hour by hour (the verdict is about this night only)
+                      action={step(leave)}
+                      secondary={secondary}
+                      drawnPattern={false} // the verdict is about this night only: plot its data, even when severe
+                    />
+                  </View>
+                </>
+              )}
 
               {onAddNotes && <NotesNudge chosen={notesChosen} onPress={onAddNotes} />}
 

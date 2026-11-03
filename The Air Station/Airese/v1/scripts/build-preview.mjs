@@ -75,6 +75,16 @@ document.addEventListener('click', function (e) {
 });
 </script>`;
 writeFileSync(join(out, 'email-code.html'), readFileSync(join(root, 'public', 'email-code.html'), 'utf8').replace('</body>', () => `${copyOtp}\n</body>`));
+// Temporary: the layout options page (left pane: For the team). No router here, so its phones load report-screen.html,
+// the app alone, which shows one report when it's given ?layout= (preview/index.tsx).
+writeFileSync(
+  join(out, 'report-layouts.html'),
+  readFileSync(join(root, 'public/report-layouts.html'), 'utf8').replace("'/reports?state='", "'report-screen.html?state='"),
+);
+writeFileSync(
+  join(out, 'report-screen.html'),
+  `<!doctype html><html lang="en"><head><meta charset="utf-8" /><title>Airese report</title><style>html, body { margin: 0; height: 100%; background: #0B1020; }</style></head><body><div id="root" style="position:absolute;inset:0;display:flex;flex-direction:column;overflow:hidden"></div><script>window.__AIRESE_PREVIEW_INSETS__ = { top: 62, bottom: 34, left: 0, right: 0 };</script><script>${bundle}</script></body></html>`,
+);
 // The verdict copy review page (left pane: For the team), and the copy it shares with the app
 for (const f of ['verdicts.html', 'verdicts.json']) writeFileSync(join(out, f), readFileSync(join(root, 'public', f), 'utf8'));
 rmSync(tmp, { recursive: true, force: true });

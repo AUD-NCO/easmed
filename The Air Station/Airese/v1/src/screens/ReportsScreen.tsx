@@ -11,6 +11,7 @@ import { markRatingAsked, shouldAskRating, useAnalysing, useNights, type Night }
 import { MISSED_NIGHTS_NUDGE, calendarNights, dayKey, recordedOfRecent } from '../lib/reports';
 import { alpha, colors, radius, space, useInsets } from '@ds/theme';
 import { NightScreen } from './NightScreen';
+import type { TrioLayout } from '../components/ReportTrio';
 
 /**
  * Reports tab: opens on the most recent night's report (Recording Details). The calendar (top right)
@@ -26,7 +27,7 @@ import { NightScreen } from './NightScreen';
  * `demoState`: the demo menu's Recording Details states, applied to the latest night (prototype only);
  * 'empty' shows the empty state: no night recorded yet (a first-time user).
  */
-export function ReportsScreen({ demoState, onRecordAgain, onOpenNotes }: { demoState?: string; onRecordAgain: () => void; onOpenNotes: (night: Night) => void }) {
+export function ReportsScreen({ demoState, trio, onRecordAgain, onOpenNotes }: { demoState?: string; trio?: TrioLayout; onRecordAgain: () => void; onOpenNotes: (night: Night) => void }) {
   const all = useNights();
   const nights = demoState === 'empty' ? NONE : all;
   const map = useMemo(() => calendarNights(nights), [nights]);
@@ -86,6 +87,7 @@ export function ReportsScreen({ demoState, onRecordAgain, onOpenNotes }: { demoS
         problem={problem ?? undefined}
         bottomInset={TAB_BAR_CLEARANCE}
         tag={tag}
+        trio={trio}
         onRecordAgain={onRecordAgain}
         trailing={calendarButton}
         onAddNotes={state !== 'processing' && !problem ? () => onOpenNotes(night) : undefined}

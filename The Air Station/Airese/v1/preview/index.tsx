@@ -9,6 +9,7 @@ import { View } from 'react-native';
 import { registerRootComponent } from 'expo';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { HOME_TABS, SystemAlertHost, TabBar } from '../src/components';
+import { trioLayout } from '../src/components/ReportTrio';
 import { DetailsScreen } from '../src/screens/DetailsScreen';
 import { RegisterScreen } from '../src/screens/RegisterScreen';
 import { AboutYouScreen } from '../src/screens/AboutYouScreen';
@@ -291,4 +292,19 @@ function HomeTabs({
   );
 }
 
-registerRootComponent(PreviewApp);
+// Temporary: one report in a layout option, for the phones on report-layouts.html (report-screen.html in the build).
+function LayoutReport({ state, layout }: { state: string; layout: string }) {
+  return (
+    <SafeAreaProvider>
+      <View style={{ flex: 1 }}>
+        <ReportsScreen demoState={state} trio={trioLayout(layout)} onRecordAgain={() => {}} onOpenNotes={() => {}} />
+        <TabBar items={HOME_TABS} selected="reports" onSelect={() => {}} />
+        <SystemAlertHost />
+      </View>
+    </SafeAreaProvider>
+  );
+}
+
+const params = new URLSearchParams(window.location.search);
+const layoutParam = params.get('layout');
+registerRootComponent(layoutParam ? () => <LayoutReport state={params.get('state') ?? 'ordinary'} layout={layoutParam} /> : PreviewApp);
