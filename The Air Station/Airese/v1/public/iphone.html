@@ -26,8 +26,8 @@
     font: 400 14px/1.4 Montserrat, system-ui, sans-serif; color: var(--ink); }
   .nav button:hover { background: var(--page); }
   .nav button[aria-current="page"] { background: var(--page); font-weight: 600; }
-  .nav .tag { margin-left: 8px; padding: 1px 8px; border-radius: 999px; background: #9DB4FF; color: #0B1020; font-size: 12px; font-weight: 600; vertical-align: 1px; }
-  .nav button:focus-visible { outline: 2px solid #9DB4FF; outline-offset: -2px; }
+  .nav .tag { margin-left: 8px; padding: 1px 8px; border-radius: 999px; background: #A1B5F5; color: #0B1020; font-size: 12px; font-weight: 600; vertical-align: 1px; }
+  .nav button:focus-visible { outline: 2px solid #A1B5F5; outline-offset: -2px; }
 
   .pane { flex: 1; min-width: 0; height: 100%; display: flex; align-items: center; justify-content: center; overflow: hidden; }
   /* A full page from the nav (not a screen in the phone) */
@@ -49,8 +49,8 @@
   .comments input, .comments textarea { width: 100%; padding: 10px 12px; border: 1px solid var(--field-edge); border-radius: 10px; background: var(--page); color: var(--ink); font: 400 14px/1.5 Inter, system-ui, sans-serif; }
   .comments input { min-height: 44px; margin-bottom: 8px; }
   .comments textarea { height: 96px; resize: none; }
-  .comments input:focus-visible, .comments textarea:focus-visible, .comments button:focus-visible { outline: 2px solid #9DB4FF; outline-offset: 1px; }
-  .comments button { width: 100%; min-height: 44px; margin-top: 8px; border: 0; border-radius: 10px; background: #9DB4FF; color: #0B1020; cursor: pointer; font: 600 14px Montserrat, system-ui, sans-serif; }
+  .comments input:focus-visible, .comments textarea:focus-visible, .comments button:focus-visible { outline: 2px solid #A1B5F5; outline-offset: 1px; }
+  .comments button { width: 100%; min-height: 44px; margin-top: 8px; border: 0; border-radius: 10px; background: #A1B5F5; color: #0B1020; cursor: pointer; font: 600 14px Montserrat, system-ui, sans-serif; }
   .comments button:disabled { opacity: .5; cursor: default; }
   .comments .status { min-height: 18px; margin: 6px 0 0; font-size: 12px; color: var(--muted); }
   /* Under-phone note for the screen on show: what it does, and its route */
@@ -109,6 +109,7 @@
     </div>
   </div>
   </div>
+  <!-- Comments beside the phone: hidden for now, nobody is using them. To bring them back, uncomment this, the script block below, showComments(key) in mark(), and use 780 in fit().
   <aside class="comments" aria-labelledby="comments-title">
     <h2 id="comments-title">Comments<span id="comments-screen"></span></h2>
     <ol id="comment-list"></ol>
@@ -119,6 +120,7 @@
       <p class="status" id="comment-status" aria-live="polite"></p>
     </form>
   </aside>
+  -->
 </div>
 </main>
 <iframe id="page" title="Page"></iframe>
@@ -130,7 +132,7 @@
     function fit() {
       if (window.matchMedia('(max-width: 500px)').matches) return;
       var pane = document.querySelector('.pane');
-      var s = Math.min(1, (pane.clientHeight - 24) / 990, (pane.clientWidth - 24) / 780); // phone + comments
+      var s = Math.min(1, (pane.clientHeight - 24) / 990, (pane.clientWidth - 24) / 426); // the phone (780 with the comments beside it)
       document.getElementById('stage').style.transform = 'scale(' + s + ')';
     }
     fit(); window.addEventListener('resize', fit);
@@ -209,12 +211,12 @@
       meta.querySelector('code').textContent = frame ? ROUTES[key] : '';
       // Every screen has its own link: iphone.html#home
       if (ready && location.hash.slice(1) !== key) history.replaceState(null, '', '#' + key);
-      showComments(key);
+      // showComments(key); // comments hidden for now
     }
     function go(key) {
       mark(key);
       document.body.classList.toggle('paged', !!PAGES[key]);
-      if (PAGES[key]) { if (!page.getAttribute('src')) page.src = ROUTES[key]; return; } // relative, so it works on localhost and in the shared preview
+      if (PAGES[key]) { if (page.getAttribute('src') !== ROUTES[key]) page.src = ROUTES[key]; return; } // relative, so it works on localhost and in the shared preview
       document.querySelector('.statusbar').style.color = ''; // white bars again, until a light screen asks
       document.querySelector('.home').style.background = '';
       if (frame) frame.src = ROUTES[key] + (ROUTES[key].indexOf('?') > -1 ? '&' : '?') + 'frame=iphone';
@@ -246,6 +248,7 @@
       } catch (err) {}
     }, 500);
 
+    /* Comments: hidden for now, nobody is using them (see the note above the aside).
     // Comments: a thread for each screen, for the PM and the team. On localhost they're saved to
     // docs/SCREEN-COMMENTS.json via the dev server (scripts/screen-comments.js); in the shared
     // preview there's no server, so they stay in this browser.
@@ -293,6 +296,7 @@
     textField.addEventListener('keydown', function (e) { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) form.requestSubmit(); });
     load();
     setInterval(function () { if (server && document.activeElement !== textField) load(); }, 5000); // others' comments come in
+    */
   })();
 </script>
 </body>
