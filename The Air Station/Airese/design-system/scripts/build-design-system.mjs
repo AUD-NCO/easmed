@@ -194,7 +194,7 @@ const BLURB = {
   "HighlightTile": "v1. Breathing pauses on the report: the same blue card at every level, arriving with a flip, its ring breathing, with an (i) in the corner.",
   "MellowSnoreTile": "v1. Snore Score on the report, beside Breathing pauses: a ring with the number, a level chip and Listen.",
   "MellowVerdict": "v1. The night's verdict on the report: headline, a sentence and one button by mood, on softened mood colours with no graph.",
-  "ListenButton": "v1. Goes from a score to the sound behind it. On a severe night, on Breathing pauses, a light runs around its border and a small sound wave moves, then both rest.",
+  "ListenButton": "v1. Goes from a score to the sound behind it. On a severe night, on Breathing pauses, two lights run around its border and a small sound wave moves, then both rest.",
   "BorderShine": "v1. A light that runs around a border: a bright head fading into a long Breath tail.",
   "FlipLine": "v1. One muted line that takes turns between a few (Reports: length of recording, then its times).",
   "CautionSheet": "v1. Before something that can't be undone: what goes, what stays, then keep or delete. Calm, not scary."

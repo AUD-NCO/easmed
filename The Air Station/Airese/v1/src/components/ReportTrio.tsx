@@ -350,44 +350,52 @@ const SHINE_TRAIL = Array.from({ length: SHINE_LAYERS }, (_, i) => {
   const t = (SHINE_LAYERS - i) / SHINE_LAYERS; // longest first, so the white head sits on top
   return { length: 0.012 + 0.34 * t * t, color: t > 0.4 ? colors.accent : colors.text, opacity: 0.02 + 0.3 * (1 - t) ** 2 };
 });
+// `loud`: the same crisp stacking, but brighter along a longer tail.
+const LOUD_WIDTH = 2.7;
+const LOUD_TRAIL = Array.from({ length: SHINE_LAYERS }, (_, i) => {
+  const t = (SHINE_LAYERS - i) / SHINE_LAYERS;
+  return { length: 0.02 + 0.4 * t * t, color: t > 0.5 ? colors.accent : colors.text, opacity: 0.12 + 0.4 * (1 - t) ** 2 };
+});
 
 /**
  * A light running around a border as `t` goes 0 → `laps`, fading in and out at the very ends. `corner`: the border's radius.
+ * `loud`: two lights on opposite sides, thicker and brighter, still with hard edges (no blur).
  * Progress drives plain SVG props (animated SVG elements leak native-only props on web; see ScoreRing).
  */
-export function BorderShine({ t, corner = radius.card, laps = SHINE_LAPS }: { t: Animated.Value; corner?: number; laps?: number }) {
+export function BorderShine({ t, corner = radius.card, laps = SHINE_LAPS, loud = false }: { t: Animated.Value; corner?: number; laps?: number; loud?: boolean }) {
   const [box, setBox] = useState({ width: 0, height: 0 });
   const [p, setP] = useState(0);
   useEffect(() => {
     const id = t.addListener(({ value }) => setP(value));
     return () => t.removeListener(id);
   }, [t]);
-  const width = box.width - SHINE_WIDTH;
-  const height = box.height - SHINE_WIDTH;
-  const r = corner - SHINE_WIDTH / 2;
+  const stroke = loud ? LOUD_WIDTH : SHINE_WIDTH;
+  const width = box.width - stroke;
+  const height = box.height - stroke;
+  const r = corner - stroke / 2;
   const around = 2 * (width + height - 4 * r) + 2 * Math.PI * r;
-  const fade = Math.sin((Math.min(1, p / 0.25, (laps - p) / 0.25) * Math.PI) / 2);
+  const fade = Math.sin((Math.min(1, p / (loud ? 0.1 : 0.25), (laps - p) / (loud ? 0.1 : 0.25)) * Math.PI) / 2);
   return (
     <View style={styles.litShine} pointerEvents="none" onLayout={(e) => setBox(e.nativeEvent.layout)}>
       {box.width > 0 && p > 0 && p < laps && (
         <Svg width={box.width} height={box.height}>
-          {SHINE_TRAIL.map(({ length, color, opacity }) => (
+          {(loud ? [0, 0.5] : [0]).flatMap((ahead) => (loud ? LOUD_TRAIL : SHINE_TRAIL).map(({ length, color, opacity }) => (
             <Rect
-              key={length}
-              x={SHINE_WIDTH / 2}
-              y={SHINE_WIDTH / 2}
+              key={`${ahead}-${length}`}
+              x={stroke / 2}
+              y={stroke / 2}
               width={width}
               height={height}
               rx={r}
               ry={r}
               fill="none"
               stroke={color}
-              strokeWidth={SHINE_WIDTH}
+              strokeWidth={stroke}
               strokeOpacity={opacity * fade}
               strokeDasharray={`${around * length} ${around * (1 - length)}`}
-              strokeDashoffset={around * (length - p)}
+              strokeDashoffset={around * (length - p - ahead)}
             />
-          ))}
+          )))}
         </Svg>
       )}
     </View>

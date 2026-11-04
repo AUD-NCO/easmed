@@ -178,9 +178,11 @@ export function NightScreen({
 
   // Snoring is a score; breathing a plain level (its exact rate is in the Night report). Name and level only,
   // and under each, Listen: the way from the number to the sound behind it.
+  // The report's rings stop short of closing, so a very high score doesn't read as a full circle or a glitch. The number still says it exactly.
+  const ringFill = (fraction: number) => (trio ? fraction : Math.min(fraction, 0.92));
   const snoreTile = (scrollTo: (y: number) => void) => (
     <MellowSnoreTile
-      fraction={sound.value / sound.max}
+      fraction={ringFill(sound.value / sound.max)}
       value={sound.display}
       name="Snore Score"
       level={zoneOf(sound).word}
@@ -190,7 +192,7 @@ export function NightScreen({
   );
   const pausesTile = (scrollTo: (y: number) => void) => (
     <HighlightTile
-      fraction={breathing.value / breathing.max}
+      fraction={ringFill(breathing.value / breathing.max)}
       name="Breathing pauses"
       level={zoneOf(breathing).word}
       accessibilityLabel={`Breathing pauses: ${zoneOf(breathing).word}`}

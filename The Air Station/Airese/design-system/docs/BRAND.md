@@ -330,7 +330,7 @@ Also: `ambient` (9 s sine loop, for background breathing), `attention` (1.8 s la
 | Verdict card, repeated pattern: the glow breathing | attention |
 | v1 report, Breathing pauses tile: the flip on arrival | slow |
 | v1 report, Breathing pauses tile: the ring breathing | ambient |
-| v1 report, severe night, Listen: the light around its border and the sound wave | attention |
+| v1 report, severe night, Listen: the lights around its border and the sound wave | attention |
 
 Overlap steps instead of chaining them, so motion flows. Swipes and scrolls follow the finger, with no easing. Respect the system Reduce Motion setting.
 

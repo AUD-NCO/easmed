@@ -10,13 +10,13 @@ import { BorderShine } from './ReportTrio';
  * here: it takes you down to the recording (the moment card), with that moment picked and ready.
  * A Breath play disc, so it's the brightest thing on the tile; Moon label on a light Moon wash (9:1+).
  * `filled` (Layout Option 5): a Breath wash instead (Moon label 7:1+), still well short of a solid button. The same size.
- * `attention` (a severe night): once the card has settled, a light runs around the border while a small sound wave
+ * `attention` (a severe night): once the card has settled, two lights run around the border while a small sound wave
  * moves beside the label; then both rest, the wave flat, like a breathing pause, and it starts again (the attention
  * preset). Reduce Motion: the wave lies flat and nothing moves.
  */
 export function ListenButton({ onPress, accessibilityLabel, filled = false, attention = false }: { onPress: () => void; accessibilityLabel: string; filled?: boolean; attention?: boolean }) {
   const reduced = useReducedMotion();
-  const [t] = useState(() => new Animated.Value(0)); // 0 → 1: one lap of the light, one burst of the wave
+  const [t] = useState(() => new Animated.Value(0)); // 0 → 1: one lap of the lights, one burst of the wave
   useEffect(() => {
     if (!attention || reduced) return;
     const { duration, rest, easing } = motion.attention;
@@ -48,7 +48,7 @@ export function ListenButton({ onPress, accessibilityLabel, filled = false, atte
           ))}
         </View>
       )}
-      {attention && !reduced && <BorderShine t={t} corner={22} laps={1} />}
+      {attention && !reduced && <BorderShine t={t} corner={22} laps={1} loud />}
     </Pressable>
   );
 }
