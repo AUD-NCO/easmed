@@ -190,7 +190,14 @@ const BLURB = {
   "ComparisonIndicator": "Trend arrow with words: more, about or less than usual.",
   "ClipPlayer": "Large clip player: waveform with pause and loud-breath marks, scrubber, play/pause.",
   "AudioSnippet": "Compact clip row with play/pause and a small waveform.",
-  "PrivacyFooter": "“Private by default” page footer: a large lock and one line."
+  "PrivacyFooter": "“Private by default” page footer: a large lock and one line.",
+  "HighlightTile": "v1. Breathing pauses on the report: the same blue card at every level, arriving with a flip, its ring breathing, with an (i) in the corner.",
+  "MellowSnoreTile": "v1. Snore Score on the report, beside Breathing pauses: a ring with the number, a level chip and Listen.",
+  "MellowVerdict": "v1. The night's verdict on the report: headline, a sentence and one button by mood, on softened mood colours with no graph.",
+  "ListenButton": "v1. Goes from a score to the sound behind it. On a severe night, on Breathing pauses, a light runs around its border and a small sound wave moves, then both rest.",
+  "BorderShine": "v1. A light that runs around a border: a bright head fading into a long Breath tail.",
+  "FlipLine": "v1. One muted line that takes turns between a few (Reports: length of recording, then its times).",
+  "CautionSheet": "v1. Before something that can't be undone: what goes, what stays, then keep or delete. Calm, not scary."
 };
 
 const GROUPS = [
@@ -199,15 +206,17 @@ const GROUPS = [
   ['Buttons and controls', [['Button'], ['IconButton'], ['InfoButton'], ['Avatar'], ['ToggleChip', 'ToggleChip'], ['ChipGroup', 'ToggleChip'], ['InlineLink', 'Checkbox'], ['IconChoiceGrid'], ['IconStack'], ['SettingSwitch', 'SettingRows'], ['SegmentedControl']]],
   ['Forms and rows', [['FormGroup', 'Form'], ['FormTitle', 'Form'], ['FormInput', 'Form'], ['FormDivider', 'Form'], ['PhoneField'], ['CountrySheet', 'PhoneField'], ['Checkbox'], ['WheelPicker', 'Pickers'], ['RulerPicker', 'Pickers'], ['AboutYou'], ['SettingRow', 'SettingRows']]],
   ['Cards', [['Card'], ['CheckInBanner'], ['VerdictCard'], ['VerdictActions', 'VerdictCard'], ['InsightCard'], ['HeroBackground', 'InsightCard'], ['DataCard'], ['BigNumber', 'DataCard'], ['ScoreSummary'], ['ScoreTile'], ['Spotlight']]],
-  ['Sheets and feedback', [['BottomSheet'], ['TopSheet'], ['ExplainSheet'], ['LargeSheet'], ['CareRequestSheet', 'CareRequest'], ['CareConfirmSheet', 'CareRequest'], ['RemediesSheet'], ['EmailCodeSheet'], ['MailDemo'], ['PermissionSheet'], ['Toast'], ['SystemAlertHost']]],
+  ['Sheets and feedback', [['BottomSheet'], ['TopSheet'], ['ExplainSheet'], ['LargeSheet'], ['CareRequestSheet', 'CareRequest'], ['CareConfirmSheet', 'CareRequest'], ['RemediesSheet'], ['CautionSheet'], ['EmailCodeSheet'], ['MailDemo'], ['PermissionSheet'], ['Toast'], ['SystemAlertHost']]],
   ['Recording', [['RecordDial'], ['ListeningRing'], ['TipCarousel']]],
-  ['Reports', [['MonthCalendar']]],
+  ['Reports', [['MonthCalendar'], ['FlipLine'], ['HighlightTile', 'ReportTrio'], ['MellowSnoreTile', 'ReportTrio'], ['MellowVerdict', 'ReportTrio'], ['ListenButton'], ['BorderShine', 'ReportTrio']]],
   ['Data visualisation', [['SnoringChart'], ['NightTimeline'], ['ScoreRing'], ['RampFill'], ['BenchmarkScale'], ['HourlyBars'], ['LoudnessBars'], ['RecentNightsChart'], ['ComparisonIndicator']]],
   ['Audio', [['ClipPlayer'], ['AudioSnippet']]],
   ['Recording Details parts', [['PrivacyFooter']]],
 ];
 // Every exported component shows: anything not placed in GROUPS lands in "Other" (place it properly)
-const listed = new Set(GROUPS.flatMap(([, items]) => items.map(([name]) => name)));
+// Not on the page: v1's temporary report layouts (Options 2 to 4), and a review tool that isn't product UI
+const NOT_ON_PAGE = ['ReportTrio', 'TallScoreTile', 'CompactVerdict', 'LoudPauses', 'SnoreRow', 'QuietVerdict', 'ReviewNote'];
+const listed = new Set([...GROUPS.flatMap(([, items]) => items.map(([name]) => name)), ...NOT_ON_PAGE]);
 const unlisted = Object.entries(sources)
   .filter(([f]) => /(design-system|src)\/components\/[^/]+\.tsx$/.test(f))
   .flatMap(([f, src]) => [...src.matchAll(/export function ([A-Z]\w+)/g)].map((m) => [m[1], basename(f, '.tsx')]))

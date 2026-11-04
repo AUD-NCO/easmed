@@ -88,9 +88,9 @@ export function NightScreen({
   tag,
   onAddNotes,
   notesChosen = [],
-  trio = 'mellow',
+  trio,
 }: {
-  /** The scores and verdict: the report's own design, or a temporary layout variant to compare (ReportTrio). */
+  /** Temporary layout variants of the scores and verdict, to compare (ReportTrio). Left out: the report's own design. */
   trio?: TrioLayout;
   night: Night;
   state: NightState;
@@ -194,7 +194,8 @@ export function NightScreen({
       name="Breathing pauses"
       level={zoneOf(breathing).word}
       accessibilityLabel={`Breathing pauses: ${zoneOf(breathing).word}`}
-      action={pause && <ListenButton filled accessibilityLabel="Listen to a breathing pause" onPress={() => goListen(pause, scrollTo)} />}
+      action={pause && <ListenButton filled={trio === 'mellow'} attention={!trio && ready && mood === 'urgent'} accessibilityLabel="Listen to a breathing pause" onPress={() => goListen(pause, scrollTo)} />}
+      shine={trio === 'mellow'}
       infoLabel="What’s a breathing pause?"
       onInfo={() => setPausesInfo(true)}
     />
@@ -265,7 +266,7 @@ export function NightScreen({
         <View style={styles.body} onLayout={(e) => (bodyY.current = e.nativeEvent.layout.y)}>
           {problem && <PromptBody art={problem.copy.art} title={problem.copy.title} body={problem.copy.reason} fix={problem.copy.fix} cta={problem.cta} onCta={problem.onCta} />}
           {state === 'processing' && <Processing />}
-          {onAddNotes && !ready && <NotesNudge still={trio === 'mellow'} chosen={notesChosen} onPress={onAddNotes} />}
+          {onAddNotes && !ready && <NotesNudge still={!trio || trio === 'mellow'} chosen={notesChosen} onPress={onAddNotes} />}
 
           {stopped && !problem && (
             <>
@@ -284,9 +285,9 @@ export function NightScreen({
             <>
               {/* The scores and the verdict: see ReportTrio */}
               <View onLayout={(e) => setHeroBottom(e.nativeEvent.layout.y + e.nativeEvent.layout.height)}>
-                {trio === 'mellow' ? (
+                {!trio || trio === 'mellow' ? (
                   <ReportTrio
-                    layout={trio}
+                    layout="mellow"
                     snore={snoreTile(scrollTo)}
                     pauses={pausesTile(scrollTo)}
                     verdict={<MellowVerdict mood={mood} title={sum.headline} body={sum.body} action={step(leave)} secondary={secondary} />}
@@ -345,7 +346,7 @@ export function NightScreen({
                 )}
               </View>
 
-              {onAddNotes && <NotesNudge still={trio === 'mellow'} chosen={notesChosen} onPress={onAddNotes} />}
+              {onAddNotes && <NotesNudge still={!trio || trio === 'mellow'} chosen={notesChosen} onPress={onAddNotes} />}
 
               {sound_}
 

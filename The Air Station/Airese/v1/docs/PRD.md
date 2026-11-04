@@ -296,9 +296,9 @@ The most important screen: one night's results. It is the Reports tab's page (se
 | Processing | Straight after stopping | "Looking through your night" / "Finding the moments worth showing you." with a soft progress shimmer. No empty cards. |
 | Couldn't hear clearly | Poor audio | The usual header, with the recording problem template in the middle (section 5.12). No cards. |
 | Stopped early | The recording stopped in the night | The usual header, with the recording problem template (section 5.12). **See what was saved** then shows the saved part: a "Partial recording · stopped at 2:14 am" note (Lamp icon, faint Lamp pill), the scores if 2 hours or more were saved (no trend line, never compared with your usual), and the night in sound. |
-| Ordinary | Snore Score 0–35 **and** breathing pauses Rarely (under 5 an hour) | "A steadier night". Blue card, low calm graph, **Keep tracking**. |
-| Moderate | The higher of the two is moderate: Snore Score 36–70, or breathing pauses Sometimes (5 to 14.9 an hour) | Warm dusk card, the night's snoring plotted in Lamp, **Talk to our sleep care team** + round **Use a remedy** button. |
-| Severe | The higher of the two is high: Snore Score 71–100, or breathing pauses Often (15+ an hour) | Wine card, the night's snoring plotted in Flare, **Talk to our sleep care team** (coral). The sticky footer repeats it. |
+| Ordinary | Snore Score 0–35 **and** breathing pauses Rarely (under 5 an hour) | "A steadier night". Blue card, **Keep tracking**. |
+| Moderate | The higher of the two is moderate: Snore Score 36–70, or breathing pauses Sometimes (5 to 14.9 an hour) | Warm dusk card, **Talk to our sleep care team** + round **Use a remedy** button. |
+| Severe | The higher of the two is high: Snore Score 71–100, or breathing pauses Often (15+ an hour) | Wine card, **Talk to our sleep care team** (coral). The sticky footer repeats it. |
 
 **How the kind of night is decided:** take the higher of the Snore Score band (low, moderate, high) and the breathing pauses band (rarely, sometimes, often). No adding up: two moderates are moderate. The bands are provisional (agreed Nov 2026), to be confirmed by Engineering and tuned with real data (`classify` in `src/lib/benchmarks.ts`). The verdict is about that night only. **Open:** Moderate and Severe copy needs variants by cause (snoring, breathing pauses, or both); today's Severe copy assumes breathing pauses.
 
@@ -312,16 +312,16 @@ The most important screen: one night's results. It is the Reports tab's page (se
 
 #### The page, top to bottom (ordinary, moderate and severe nights)
 
-1. **Two score tiles, side by side.** Each opens a sheet.
-   - **Snore Score:** a big ring with the number inside (e.g. 88), a level word (Low, Moderate, High) and the trend ("More than usual", "About usual", "Less than usual").
-   - **Breathing pauses:** a ring with an icon, not a number. A plain level word (Rarely, Sometimes, Often) and the trend. The exact rate per hour is only in its sheet and the night report.
-     A small **star** (Lamp) in the tile's corner marks it as something most sleep apps don't do; a soft halo swells and fades now and then (still with Reduce Motion). Tap: **"What's a breathing pause?"** in a short sheet: breathing stops for 10 seconds or more, then starts again; you won't notice it yourself; Airese listens for these all night; if they happen often, talk to our sleep care team.
-2. **The verdict card.** Full-width words over the night's mood colours, with the week as a graph behind them (no dial).
+1. **Two score tiles, side by side.** The same two on a partial recording that can still be scored. Each has **Listen** at its foot, which goes down to the recording with that moment picked.
+   - **Snore Score:** a big ring with the number inside (e.g. 88) and a level word (Low, Moderate, High) in a chip.
+   - **Breathing pauses:** a ring with an icon, not a number, and a plain level word (Rarely, Sometimes, Often) in the same chip. On the blue card colours at every level: the highlight says "look here", not how bad it is. The exact rate per hour is in the night report.
+     It arrives with a flip, then its ring slowly breathes (slow, ambient presets). A small **(i)** in the top-right corner opens **"What's a breathing pause?"** in a short sheet: breathing stops for 10 seconds or more, then starts again; you won't notice it yourself; Airese listens for these all night; if they happen often, talk to our sleep care team.
+   - **Severe nights only:** the Breathing pauses Listen button draws the eye. A light runs around its border while a small sound wave moves beside the label, then both rest, the wave flat, like a breathing pause, and it starts again (attention preset). The button is otherwise the same on every night.
+   - **Reduce Motion:** the tile fades in, and the ring, the light and the wave hold still.
+2. **The verdict card.** Full-width words over the night's mood colours, softened. No graph and no dial.
    - A headline and one short, general line: no numbers or times, 120 characters at most, two lines at most. The numbers live in the cards around it. E.g. "A steadier night" / "Your breathing was steadier than on your recent nights."
-   - **The graph** is real data: the last seven nights of snoring, tonight at the right edge. The shape is the data's; how high it reaches follows the verdict: low and nearly flat (ordinary, Breath line), climbing to mid-card (moderate, Lamp line), filling the card (severe, Flare line on wine). Always the night's own data, never a drawn pattern across nights. The words carry the facts. Hidden from screen readers: the words say it. On load a tiny shine draws the line from left to right (glint preset); after a long rest it glides along the finished line again, now and then. Reduce Motion: the graph is simply there, no shine.
-   - **The graph runs behind the words, within a readability budget:** behind the text, the fill (4%) and line (6 to 14%) are held so Moon body text stays at 7:1 or more at the card's brightest point (measured 9:1 or better). Below the text it fades up to full strength behind the button. The card's corner glow was softened to make room. The shine dims behind the words too.
    - **One button,** coloured by the night: **Keep tracking** (Breath) · **Talk to our sleep care team** (Lamp, the one warm light) with a round outlined **Use a remedy** button beside it · **Talk to our sleep care team** (coral `urgentAction`, the one button allowed a red tint; BRAND §4).
-   - **Under the verdict: the Morning check-in,** a quiet row on the card surface ("Add your Morning check-in" ›, or the chosen remedies as icons). No entrance animation; it doesn't compete with the verdict.
+   - **Under the verdict: the Morning check-in,** a quiet row on the card surface ("Add your Morning check-in" ›, or the chosen remedies as icons). No entrance animation and no shine; it doesn't compete with the verdict.
 3. **Your night in sound.** The chart and the clips in one card.
    - **Opening line,** e.g. "Louder than a conversation for 1 hr 30 min, mostly between 12 and 2 am."
    - **The chart:**

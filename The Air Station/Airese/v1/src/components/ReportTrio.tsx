@@ -17,7 +17,7 @@ export const trioLayout = (param?: string | null): TrioLayout | undefined =>
   ({ trio: 'tall', wide: 'wide', loud: 'loud', mellow: 'mellow' } as Record<string, TrioLayout>)[param ?? ''];
 
 /**
- * The top of a report as three boxes. Layout Option 5 is the report's own design (the default).
+ * The top of a report as three boxes. The report's own design builds on Layout Option 5, without the card's shine.
  * Options 2 to 4 are temporary layout variants, for comparing on public/report-layouts.html (?layout=trio, wide or loud on Reports).
  * Layout Option 2 (tall): Breathing pauses tall on the left, Snore Score over the verdict on the right.
  * Layout Option 3 (wide): Breathing pauses across the top, Snore Score and the verdict side by side below.
@@ -231,13 +231,13 @@ export function QuietVerdict({ mood, title, body, action, secondary }: { mood: M
 }
 
 /**
- * Layout Option 5: ScoreTile's measures on the blue card colours, the same at every level: the highlight
+ * The report's Breathing pauses tile (and Layout Option 5's): ScoreTile's measures on the blue card colours, the same at every level: the highlight
  * says "look here", not how bad it is (a severe night may be down to snoring alone).
- * Arrives with a flip. The ring breathes throughout (ambient), and once the flip settles a light runs
- * around the card's border twice, then stops (glint). Reduce Motion: it fades in and all of it holds still.
+ * Arrives with a flip. The ring breathes throughout (ambient). With `shine` (Layout Option 5), once the flip settles
+ * a light runs around the card's border twice, then stops (glint). Reduce Motion: it fades in and all of it holds still.
  * Web preview: 'airese:replay' plays the arrival again (the page's tabs, as hidden reports load out of sight).
  */
-export function HighlightTile({ fraction, name, level, accessibilityLabel, action, infoLabel, onInfo }: { fraction: number; name: string; level: string; accessibilityLabel: string; action?: React.ReactNode; infoLabel: string; onInfo: () => void }) {
+export function HighlightTile({ fraction, name, level, accessibilityLabel, action, infoLabel, onInfo, shine: shines = false }: { fraction: number; name: string; level: string; accessibilityLabel: string; action?: React.ReactNode; infoLabel: string; onInfo: () => void; shine?: boolean }) {
   const reduced = useReducedMotion();
   const [arrive] = useState(() => new Animated.Value(0)); // 0 turned away, 1 facing
   const [breath] = useState(() => new Animated.Value(0)); // 0 out, 1 in
@@ -249,7 +249,7 @@ export function HighlightTile({ fraction, name, level, accessibilityLabel, actio
       Animated.timing(arrive, { toValue: 1, duration: motion.slow.duration, easing: motion.slow.easeOut, useNativeDriver: motion.useNativeDriver }).start();
       shining?.stop();
       shine.setValue(0);
-      if (reduced) return;
+      if (reduced || !shines) return;
       const { duration, easing } = motion.glint;
       shining = Animated.sequence([
         Animated.delay(motion.slow.duration), // once the flip has settled
@@ -276,14 +276,14 @@ export function HighlightTile({ fraction, name, level, accessibilityLabel, actio
       stop();
       window.removeEventListener('airese:replay', play);
     };
-  }, [arrive, breath, shine, reduced]);
+  }, [arrive, breath, shine, shines, reduced]);
   const turn = reduced ? [] : [{ perspective: 800 }, { rotateY: arrive.interpolate({ inputRange: [0, 1], outputRange: ['90deg', '0deg'] }) }];
   return (
     <Animated.View style={[styles.lit, { opacity: arrive, transform: turn }]}>
       <View style={styles.litFill} pointerEvents="none">
         <HeroBackground mood="calm" />
       </View>
-      {!reduced && <BorderShine t={shine} />}
+      {!reduced && shines && <BorderShine t={shine} />}
       <View accessible accessibilityLabel={accessibilityLabel} style={{ alignItems: 'center' }}>
         <View>
           <Animated.View
@@ -309,7 +309,7 @@ export function HighlightTile({ fraction, name, level, accessibilityLabel, actio
   );
 }
 
-/** Layout Option 5: ScoreTile's snoring measures, with the same stronger level chip as the tile beside it. */
+/** The report's Snore Score tile (and Layout Option 5's): ScoreTile's snoring measures, with the same stronger level chip as the tile beside it. */
 export function MellowSnoreTile({ fraction, value, name, level, accessibilityLabel, action }: { fraction: number; value: string; name: string; level: string; accessibilityLabel: string; action?: React.ReactNode }) {
   return (
     <View style={styles.mellowSnore}>
@@ -352,10 +352,10 @@ const SHINE_TRAIL = Array.from({ length: SHINE_LAYERS }, (_, i) => {
 });
 
 /**
- * A light running around the card's border as `t` goes 0 → SHINE_LAPS, fading in and out at the very ends.
+ * A light running around a border as `t` goes 0 → `laps`, fading in and out at the very ends. `corner`: the border's radius.
  * Progress drives plain SVG props (animated SVG elements leak native-only props on web; see ScoreRing).
  */
-function BorderShine({ t }: { t: Animated.Value }) {
+export function BorderShine({ t, corner = radius.card, laps = SHINE_LAPS }: { t: Animated.Value; corner?: number; laps?: number }) {
   const [box, setBox] = useState({ width: 0, height: 0 });
   const [p, setP] = useState(0);
   useEffect(() => {
@@ -364,12 +364,12 @@ function BorderShine({ t }: { t: Animated.Value }) {
   }, [t]);
   const width = box.width - SHINE_WIDTH;
   const height = box.height - SHINE_WIDTH;
-  const r = radius.card - SHINE_WIDTH / 2;
+  const r = corner - SHINE_WIDTH / 2;
   const around = 2 * (width + height - 4 * r) + 2 * Math.PI * r;
-  const fade = Math.sin((Math.min(1, p / 0.25, (SHINE_LAPS - p) / 0.25) * Math.PI) / 2);
+  const fade = Math.sin((Math.min(1, p / 0.25, (laps - p) / 0.25) * Math.PI) / 2);
   return (
     <View style={styles.litShine} pointerEvents="none" onLayout={(e) => setBox(e.nativeEvent.layout)}>
-      {box.width > 0 && p > 0 && p < SHINE_LAPS && (
+      {box.width > 0 && p > 0 && p < laps && (
         <Svg width={box.width} height={box.height}>
           {SHINE_TRAIL.map(({ length, color, opacity }) => (
             <Rect
@@ -394,7 +394,7 @@ function BorderShine({ t }: { t: Animated.Value }) {
   );
 }
 
-/** Layout Option 5: VerdictCard's size and arrangement, with the night's mood colours softened and no graph. The next step stays in the mood's colour, as on the report. */
+/** The report's verdict (and Layout Option 5's): VerdictCard's size and arrangement, with the night's mood colours softened and no graph. The next step stays in the mood's colour, as on the report. */
 export function MellowVerdict({ mood, title, body, action, secondary }: { mood: Mood; title: string; body: string; action: VerdictAction; secondary?: VerdictAction & { icon: IconName } }) {
   return (
     <View style={styles.mellow}>

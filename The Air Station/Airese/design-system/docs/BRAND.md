@@ -235,7 +235,7 @@ Easmed's medical B2B tools and Airese show the same data, but they're built diff
 - Comparison bars: tonight in the ramp, earlier nights in neutral grey (faded colour turns muddy on Deep).
 - Charts always label or shape their marks too, so colour is never the only cue.
 - **Graphs behind text** (the verdict card) keep a readability budget: everything behind the words together (card gradient, glow, fill, line, shine) must leave Moon body text at 7:1 or more. Strengthen the graph only where there's no text.
-- **The verdict card** changes colour with the night (Oct 2026): blue when ordinary, a subtle warm dusk when unusual, wine into plum with a slowly breathing Flare glow for a repeated pattern. Behind the words, the week as a graph in Breath, Lamp or Flare, and one button: Breath, Lamp, or the coral `urgentAction`. No status icons or dial: the words and the graph carry it.
+- **The verdict card** changes colour with the night (Oct 2026): blue when ordinary, a subtle warm dusk when unusual, wine into plum with a slowly breathing Flare glow for a repeated pattern. Behind the words, the week as a graph in Breath, Lamp or Flare, and one button: Breath, Lamp, or the coral `urgentAction`. No status icons or dial: the words and the graph carry it. In v1's report (Nov 2026) the card has the same words and button on softened mood colours, with no graph.
 
 Lamp is the only warm UI colour. **One red, Flare `#FF5A4F`**, used for marks only: the loudest snoring in charts (`loudness.veryLoud`), the repeated-pattern graph line, and form-error marks (`errorMark`: the field ring and icon). Error text uses a light tint of it (`error` `#FFA49B`, 7.5:1 on Deep, 10:1 on Midnight) to keep AAA contrast. Never red for headlines, status marks or written results: the words stay calm.
 
@@ -326,8 +326,11 @@ Also: `ambient` (9 s sine loop, for background breathing), `attention` (1.8 s la
 | Bottom sheet and top sheet: settling back after a short drag | fast |
 | Home banner: the next message fading in | fast |
 | Recording: the screen surfacing out of the record button's blue | slow |
-| Verdict card: the graph drawn by a shine, then the occasional shine | glint |
+| Verdict card: the graph drawn by a shine, then the occasional shine (v2) | glint |
 | Verdict card, repeated pattern: the glow breathing | attention |
+| v1 report, Breathing pauses tile: the flip on arrival | slow |
+| v1 report, Breathing pauses tile: the ring breathing | ambient |
+| v1 report, severe night, Listen: the light around its border and the sound wave | attention |
 
 Overlap steps instead of chaining them, so motion flows. Swipes and scrolls follow the finger, with no easing. Respect the system Reduce Motion setting.
 
